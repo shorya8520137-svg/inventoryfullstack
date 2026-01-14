@@ -2432,3 +2432,98 @@
     color: #111827;
     font-weight: 600;
 }
+
+/* ================= PRODUCT NAME MODAL ================= */
+.productModal {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+    z-index: 1001;
+    min-width: 400px;
+    max-width: 600px;
+}
+
+.productModalHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 20px;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.productModalHeader h3 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: #111827;
+}
+
+.productModalContent {
+    padding: 20px;
+}
+
+.productDetail {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-bottom: 16px;
+}
+
+.productLabel {
+    font-size: 11px;
+    font-weight: 600;
+    color: #6b7280;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.productValue {
+    font-size: 14px;
+    color: #111827;
+    word-break: break-word;
+}
+
+/* ================= PRODUCT NAME CELL ================= */
+.productName {
+    cursor: pointer;
+    color: #3b82f6;
+    text-decoration: underline;
+    text-decoration-style: dotted;
+    max-width: 200px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.productName:hover {
+    color: #2563eb;
+    text-decoration-style: solid;
+}
+
+/* ================= DIMENSION COLUMNS ================= */
+.dimensionValue {
+    font-family: 'Courier New', monospace;
+    font-size: 12px;
+    color: #374151;
+    text-align: center;
+    padding: 4px 8px;
+    background: #f9fafb;
+    border-radius: 4px;
+    display: inline-block;
+    min-width: 40px;
+}
+
+.weightBadge {
+    font-family: 'Courier New', monospace;
+    font-size: 12px;
+    color: #059669;
+    background: #d1fae5;
+    padding: 4px 8px;
+    border-radius: 4px;
+    display: inline-block;
+    font-weight: 600;
+}

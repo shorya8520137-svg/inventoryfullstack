@@ -27,4 +27,8 @@ router.post('/:dispatchId/damage', orderTrackingController.reportDispatchDamage)
 // Example: DELETE /api/order-tracking/17
 router.delete('/:dispatchId', orderTrackingController.deleteDispatch);
 
+// PATCH /api/order-tracking/:dispatchId/status - Update dispatch status
+// Body: { status: 'Delivered' }
+router.patch('/:dispatchId/status', orderTrackingController.updateDispatchStatus);
+
 module.exports = router;

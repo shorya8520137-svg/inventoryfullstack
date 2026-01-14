@@ -860,4 +860,74 @@ exports.deleteDispatch = (req, res) => {
     });
 };
 
+/**
+ * UPDATE DISPATCH STATUS
+ * Updates the status of a dispatch order
+ */
+exports.updateDispatchStatus = (req, res) => {
+    const { dispatchId } = req.params;
+    const { status } = req.body;
+
+    console.log('🔄 Update dispatch status request for:', dispatchId, 'to:', status);
+
+    if (!dispatchId) {
+        return res.status(400).json({
+            success: false,
+            message: 'Dispatch ID is required'
+        });
+    }
+
+    if (!status) {
+        return res.status(400).json({
+            success: false,
+            message: 'Status is required'
+        });
+    }
+
+    // Valid status values
+    const validStatuses = [
+        'Pending', 'Processing', 'Confirmed', 'Packed', 'Dispatched',
+        'In Transit', 'Out for Delivery', 'Delivered', 'Cancelled', 'Returned'
+    ];
+
+    if (!validStatuses.includes(status)) {
+        return res.status(400).json({
+            success: false,
+            message: `Invalid status. Must be one of: ${validStatuses.join(', ')}`
+        });
+    }
+
+    const updateSql = `
+        UPDATE warehouse_dispatch 
+        SET status = ?, updated_at = NOW()
+        WHERE id = ?
+    `;
+
+    db.query(updateSql, [status, dispatchId], (err, result) => {
+        if (err) {
+            console.error('❌ Status update error:', err);
+            return res.status(500).json({
+                success: false,
+                error: err.message
+            });
+        }
+
+        if (result.affectedRows === 0) {
+            return res.status(404).json({
+                success: false,
+                message: 'Dispatch not found'
+            });
+        }
+
+        console.log('✅ Status updated successfully');
+
+        res.json({
+            success: true,
+            message: 'Status updated successfully',
+            dispatch_id: dispatchId,
+            new_status: status
+        });
+    });
+};
+
 module.exports = exports;

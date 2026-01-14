@@ -44,6 +44,9 @@ export default function OrderSheet() {
     // Status update state
     const [updatingStatus, setUpdatingStatus] = useState(null);
     const [openStatusDropdown, setOpenStatusDropdown] = useState(null);
+    
+    // Product name modal state
+    const [showProductModal, setShowProductModal] = useState(null);
 
     const statusOptions = [
         { value: 'Pending', label: 'Pending', color: '#f59e0b', bg: '#fef3c7' },
@@ -81,7 +84,11 @@ export default function OrderSheet() {
                     customer: dispatch.customer,
                     product_name: dispatch.product_name,
                     quantity: dispatch.qty,
+                    length: dispatch.length || 0,
+                    width: dispatch.width || 0,
+                    height: dispatch.height || 0,
                     dimensions: `${dispatch.length || 0}x${dispatch.width || 0}x${dispatch.height || 0}`,
+                    weight: dispatch.actual_weight || 0,
                     awb: dispatch.awb,
                     order_ref: dispatch.order_ref,
                     warehouse: dispatch.warehouse,
@@ -276,7 +283,20 @@ export default function OrderSheet() {
         setOpenStatusDropdown(null);
         
         try {
-            // Update local state
+            // Send status update to backend
+            const response = await fetch(`https://13.235.121.5.nip.io/api/order-tracking/${orderId}/status`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ status: newStatus })
+            });
+            
+            if (!response.ok) {
+                throw new Error('Failed to update status');
+            }
+            
+            // Update local state only after successful backend update
             setOrders(prev => prev.map(order => 
                 order.id === orderId 
                     ? { ...order, status: newStatus }
@@ -712,7 +732,16 @@ export default function OrderSheet() {
                                             Qty
                                         </th>
                                         <th className={styles.th}>
-                                            Dimensions
+                                            Length
+                                        </th>
+                                        <th className={styles.th}>
+                                            Width
+                                        </th>
+                                        <th className={styles.th}>
+                                            Height
+                                        </th>
+                                        <th className={styles.th}>
+                                            Weight
                                         </th>
                                         <th className={styles.th}>
                                             AWB
@@ -774,14 +803,29 @@ export default function OrderSheet() {
                                             <td className={`${styles.td} ${styles.customerCol}`}>
                                                 <div className={styles.cellContent}>{o.customer}</div>
                                             </td>
-                                            <td className={styles.td}><div className={styles.cellContent}>{o.product_name}</div></td>
+                                            <td className={styles.td}>
+                                                <div 
+                                                    className={`${styles.cellContent} ${styles.productName}`}
+                                                    onClick={() => setShowProductModal(o)}
+                                                    title="Click to view full product name"
+                                                >
+                                                    {o.product_name}
+                                                </div>
+                                            </td>
                                             <td className={styles.td}>
                                                 <div className={styles.qtyBadge}>{o.quantity || o.qty || 1}</div>
                                             </td>
                                             <td className={styles.td}>
-                                                <div className={styles.dimensionsBadge}>
-                                                    {o.dimensions || 'N/A'}
-                                                </div>
+                                                <div className={styles.dimensionValue}>{o.length || 0}</div>
+                                            </td>
+                                            <td className={styles.td}>
+                                                <div className={styles.dimensionValue}>{o.width || 0}</div>
+                                            </td>
+                                            <td className={styles.td}>
+                                                <div className={styles.dimensionValue}>{o.height || 0}</div>
+                                            </td>
+                                            <td className={styles.td}>
+                                                <div className={styles.weightBadge}>{o.weight || o.actual_weight || 0} kg</div>
                                             </td>
                                             <td className={styles.td}><div className={styles.cellContent}>{o.awb}</div></td>
                                             <td className={styles.td}><div className={styles.cellContent}>{o.order_ref}</div></td>
@@ -1082,6 +1126,37 @@ export default function OrderSheet() {
                                             </div>
                                         </div>
                                     ))}
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </>
+            )}
+            
+            {/* Product Name Modal */}
+            {showProductModal && (
+                <>
+                    <div className={styles.modalOverlay} onClick={() => setShowProductModal(null)} />
+                    <div className={styles.productModal}>
+                        <div className={styles.productModalHeader}>
+                            <h3>Product Details</h3>
+                            <button className={styles.closeBtn} onClick={() => setShowProductModal(null)}>✕</button>
+                        </div>
+                        <div className={styles.productModalContent}>
+                            <div className={styles.productDetail}>
+                                <span className={styles.productLabel}>Product Name:</span>
+                                <span className={styles.productValue}>{showProductModal.product_name}</span>
+                            </div>
+                            {showProductModal.barcode && (
+                                <div className={styles.productDetail}>
+                                    <span className={styles.productLabel}>Barcode:</span>
+                                    <span className={styles.productValue}>{showProductModal.barcode}</span>
+                                </div>
+                            )}
+                            {showProductModal.variant && (
+                                <div className={styles.productDetail}>
+                                    <span className={styles.productLabel}>Variant:</span>
+                                    <span className={styles.productValue}>{showProductModal.variant}</span>
                                 </div>
                             )}
                         </div>

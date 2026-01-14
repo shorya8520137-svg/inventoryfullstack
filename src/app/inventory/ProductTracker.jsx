@@ -74,7 +74,7 @@ export default function ProductTracker({
                 setError("");
 
                 // ✅ Updated to use new timeline API
-                let url = `/timeline/${encodeURIComponent(barcode)}`;
+                let url = `/api/timeline/${encodeURIComponent(barcode)}`;
 
                 if (warehouseFilter && warehouseFilter !== "ALL") {
                     url += `?warehouse=${encodeURIComponent(warehouseFilter)}`;
