@@ -52,11 +52,53 @@ export default function ProductTracker({
         totalOut: 0,
         finalStock: 0,
     });
+    
+    /* 🚚 DISPATCH DETAILS MODAL */
+    const [showDispatchModal, setShowDispatchModal] = useState(false);
+    const [selectedDispatch, setSelectedDispatch] = useState(null);
+    const [dispatchLoading, setDispatchLoading] = useState(false);
 
     /* 📜 SCROLL TRACKING */
     const [scrollPosition, setScrollPosition] = useState(0);
     const [visibleRowIndex, setVisibleRowIndex] = useState(null);
     const [tableWrapperRef, setTableWrapperRef] = useState(null);
+    
+    /* 🚚 FETCH DISPATCH DETAILS */
+    const fetchDispatchDetails = async (reference) => {
+        // Extract dispatch ID from reference like "DISPATCH_36_89345y398"
+        const parts = reference.split('_');
+        const dispatchId = parts[1]; // Get the ID (36)
+        
+        if (!dispatchId) {
+            console.error('Could not extract dispatch ID from reference:', reference);
+            return;
+        }
+        
+        setDispatchLoading(true);
+        setShowDispatchModal(true);
+        
+        try {
+            const response = await fetch(`https://13.235.121.5.nip.io/api/order-tracking/${dispatchId}/timeline`);
+            const data = await response.json();
+            
+            if (data.success && data.data) {
+                setSelectedDispatch(data.data);
+            } else {
+                console.error('Failed to fetch dispatch details');
+                setSelectedDispatch(null);
+            }
+        } catch (error) {
+            console.error('Error fetching dispatch details:', error);
+            setSelectedDispatch(null);
+        } finally {
+            setDispatchLoading(false);
+        }
+    };
+    
+    const closeDispatchModal = () => {
+        setShowDispatchModal(false);
+        setSelectedDispatch(null);
+    };
 
     /* ================= FETCH DATA ================= */
     useEffect(() => {
@@ -517,7 +559,13 @@ export default function ProductTracker({
                                     <span
                                         className={`${styles.statusTag} ${
                                             styles[row.type]
-                                        }`}
+                                        } ${row.type === 'DISPATCH' || row.type === 'SALE' ? styles.clickable : ''}`}
+                                        onClick={() => {
+                                            if ((row.type === 'DISPATCH' || row.type === 'SALE') && row.reference) {
+                                                fetchDispatchDetails(row.reference);
+                                            }
+                                        }}
+                                        title={row.type === 'DISPATCH' || row.type === 'SALE' ? 'Click to view dispatch details' : ''}
                                     >
                                       {LABELS[row.type] || row.type}
                                     </span>
@@ -538,6 +586,134 @@ export default function ProductTracker({
                     </motion.div>
                 </div>
             </div>
+            
+            {/* 🚚 DISPATCH DETAILS MODAL */}
+            {showDispatchModal && (
+                <>
+                    <div className={styles.dispatchOverlay} onClick={closeDispatchModal} />
+                    <div className={styles.dispatchModal}>
+                        <div className={styles.dispatchHeader}>
+                            <h3>📦 Dispatch Details</h3>
+                            <button className={styles.closeBtn} onClick={closeDispatchModal}>✕</button>
+                        </div>
+                        
+                        <div className={styles.dispatchContent}>
+                            {dispatchLoading ? (
+                                <div className={styles.loadingSpinner}>
+                                    <span>⏳</span>
+                                    <span>Loading dispatch details...</span>
+                                </div>
+                            ) : selectedDispatch ? (
+                                <>
+                                    {/* Dispatch Summary */}
+                                    <div className={styles.dispatchSummary}>
+                                        <div className={styles.summaryGrid}>
+                                            <div className={styles.summaryItem}>
+                                                <span className={styles.summaryLabel}>Customer:</span>
+                                                <span className={styles.summaryValue}>{selectedDispatch.customer || 'N/A'}</span>
+                                            </div>
+                                            <div className={styles.summaryItem}>
+                                                <span className={styles.summaryLabel}>Product:</span>
+                                                <span className={styles.summaryValue}>{selectedDispatch.product_name || 'N/A'}</span>
+                                            </div>
+                                            <div className={styles.summaryItem}>
+                                                <span className={styles.summaryLabel}>AWB:</span>
+                                                <span className={styles.summaryValue}>{selectedDispatch.awb || 'N/A'}</span>
+                                            </div>
+                                            <div className={styles.summaryItem}>
+                                                <span className={styles.summaryLabel}>Order Ref:</span>
+                                                <span className={styles.summaryValue}>{selectedDispatch.order_ref || 'N/A'}</span>
+                                            </div>
+                                            <div className={styles.summaryItem}>
+                                                <span className={styles.summaryLabel}>Quantity:</span>
+                                                <span className={styles.summaryValue}>{selectedDispatch.qty || 0}</span>
+                                            </div>
+                                            <div className={styles.summaryItem}>
+                                                <span className={styles.summaryLabel}>Warehouse:</span>
+                                                <span className={styles.summaryValue}>{selectedDispatch.warehouse || 'N/A'}</span>
+                                            </div>
+                                            <div className={styles.summaryItem}>
+                                                <span className={styles.summaryLabel}>Status:</span>
+                                                <span className={`${styles.summaryValue} ${styles.statusBadge}`}>{selectedDispatch.status || 'N/A'}</span>
+                                            </div>
+                                            <div className={styles.summaryItem}>
+                                                <span className={styles.summaryLabel}>Logistics:</span>
+                                                <span className={styles.summaryValue}>{selectedDispatch.logistics || 'N/A'}</span>
+                                            </div>
+                                            <div className={styles.summaryItem}>
+                                                <span className={styles.summaryLabel}>Payment Mode:</span>
+                                                <span className={styles.summaryValue}>{selectedDispatch.payment_mode || 'N/A'}</span>
+                                            </div>
+                                            <div className={styles.summaryItem}>
+                                                <span className={styles.summaryLabel}>Invoice Amount:</span>
+                                                <span className={styles.summaryValue}>₹{selectedDispatch.invoice_amount || 0}</span>
+                                            </div>
+                                            <div className={styles.summaryItem}>
+                                                <span className={styles.summaryLabel}>Dimensions:</span>
+                                                <span className={styles.summaryValue}>
+                                                    {selectedDispatch.length || 0} × {selectedDispatch.width || 0} × {selectedDispatch.height || 0}
+                                                </span>
+                                            </div>
+                                            <div className={styles.summaryItem}>
+                                                <span className={styles.summaryLabel}>Weight:</span>
+                                                <span className={styles.summaryValue}>{selectedDispatch.actual_weight || 0} kg</span>
+                                            </div>
+                                            {selectedDispatch.barcode && (
+                                                <div className={styles.summaryItem}>
+                                                    <span className={styles.summaryLabel}>Barcode:</span>
+                                                    <span className={styles.summaryValue}>{selectedDispatch.barcode}</span>
+                                                </div>
+                                            )}
+                                            {selectedDispatch.variant && (
+                                                <div className={styles.summaryItem}>
+                                                    <span className={styles.summaryLabel}>Variant:</span>
+                                                    <span className={styles.summaryValue}>{selectedDispatch.variant}</span>
+                                                </div>
+                                            )}
+                                            {selectedDispatch.processed_by && (
+                                                <div className={styles.summaryItem}>
+                                                    <span className={styles.summaryLabel}>Processed By:</span>
+                                                    <span className={styles.summaryValue}>{selectedDispatch.processed_by}</span>
+                                                </div>
+                                            )}
+                                            {selectedDispatch.remarks && (
+                                                <div className={styles.summaryItem} style={{ gridColumn: '1 / -1' }}>
+                                                    <span className={styles.summaryLabel}>Remarks:</span>
+                                                    <span className={styles.summaryValue}>{selectedDispatch.remarks}</span>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                    
+                                    {/* Timeline if available */}
+                                    {selectedDispatch.timeline && selectedDispatch.timeline.length > 0 && (
+                                        <div className={styles.dispatchTimeline}>
+                                            <h4>Timeline History</h4>
+                                            <div className={styles.timelineList}>
+                                                {selectedDispatch.timeline.map((entry, index) => (
+                                                    <div key={index} className={styles.timelineEntry}>
+                                                        <div className={styles.timelineDate}>
+                                                            {entry.timestamp ? new Date(entry.timestamp).toLocaleString() : 'N/A'}
+                                                        </div>
+                                                        <div className={styles.timelineAction}>
+                                                            {entry.description || entry.type || 'Update'}
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+                                </>
+                            ) : (
+                                <div className={styles.noData}>
+                                    <span>⚠️</span>
+                                    <span>No dispatch details available</span>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </>
+            )}
         </div>
     );
 }
