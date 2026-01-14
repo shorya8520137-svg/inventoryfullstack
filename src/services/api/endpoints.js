@@ -3,13 +3,13 @@
 
 export const ENDPOINTS = {
     // Base API URL
-    BASE_URL: 'https://api.hunyhuny.org/api',
+    BASE_URL: 'https://13.235.121.5.nip.io',
     
     // Bulk Upload Endpoints
     BULK_UPLOAD: {
         // Main bulk upload endpoint (as requested)
         UPLOAD: 'POST /api/bulk-upload',
-        FULL_URL: 'https://api.hunyhuny.org/api/bulk-upload',
+        FULL_URL: 'https://13.235.121.5.nip.io/api/bulk-upload',
         
         // Supporting endpoints
         WAREHOUSES: 'GET /api/bulk-upload/warehouses',

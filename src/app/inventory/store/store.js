@@ -5,9 +5,9 @@ import { motion } from 'framer-motion';
 import styles from './store.module.css';
 
 const STORES_API =
-    'https://api.hunyhuny.org/api/store-inventory/stores';
+    'https://13.235.121.5.nip.io/api/store-inventory/stores';
 const INVENTORY_API =
-    'https://api.hunyhuny.org/api/store-inventory/store/inventory';
+    'https://13.235.121.5.nip.io/api/store-inventory/store/inventory';
 
 export default function StoreInventory() {
     const [stores, setStores] = useState([]);

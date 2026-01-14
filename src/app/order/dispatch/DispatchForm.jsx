@@ -3,8 +3,8 @@ import React, { useEffect, useState } from "react";
 import styles from "./dispatchForm.module.css";
 
 /* ✅ UPDATED API ENDPOINTS */
-const API = "https://api.hunyhuny.org/api/dispatch";
-const CREATE_API = "https://api.hunyhuny.org/api/dispatch";
+const API = "https://13.235.121.5.nip.io/api/dispatch";
+const CREATE_API = "https://13.235.121.5.nip.io/api/dispatch";
 
 export default function DispatchForm() {
     const [warehouses, setWarehouses] = useState([]);

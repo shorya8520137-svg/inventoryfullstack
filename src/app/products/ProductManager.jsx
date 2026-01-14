@@ -6,6 +6,8 @@ import styles from './products.module.css';
 import TransferForm from './TransferForm';
 import { productsAPI } from '@/services/api/products';
 
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'https://13.235.121.5.nip.io';
+
 const ProductManager = () => {
     const [products, setProducts] = useState([]);
     const [categories, setCategories] = useState([]);
@@ -85,7 +87,7 @@ const ProductManager = () => {
             try {
                 const token = localStorage.getItem('token');
                 const response = await fetch(
-                    `https://api.hunyhuny.org/api/products?search=${encodeURIComponent(query)}&limit=10`,
+                    `${API_BASE}/api/products?search=${encodeURIComponent(query)}&limit=10`,
                     {
                         headers: {
                             'Authorization': `Bearer ${token}`,
@@ -136,7 +138,7 @@ const ProductManager = () => {
                 category: selectedCategory
             });
 
-            const response = await fetch(`https://api.hunyhuny.org/api/products?${params}`, {
+            const response = await fetch(`${API_BASE}/api/products?${params}`, {
                 headers: {
                     'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json'
@@ -167,7 +169,7 @@ const ProductManager = () => {
     const fetchCategories = async () => {
         try {
             const token = localStorage.getItem('token');
-            const response = await fetch('https://api.hunyhuny.org/api/products/categories/all', {
+            const response = await fetch(`${API_BASE}/api/products/categories/all`, {
                 headers: {
                     'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json'
@@ -264,8 +266,8 @@ const ProductManager = () => {
         try {
             const token = localStorage.getItem('token');
             const url = editingProduct
-                ? `https://api.hunyhuny.org/api/products/${editingProduct.p_id}`
-                : 'https://api.hunyhuny.org/api/products';
+                ? `${API_BASE}/api/products/${editingProduct.p_id}`
+                : `${API_BASE}/api/products`;
 
             const method = editingProduct ? 'PUT' : 'POST';
 
@@ -329,7 +331,7 @@ const ProductManager = () => {
 
         try {
             const token = localStorage.getItem('token');
-            const response = await fetch(`https://api.hunyhuny.org/api/products/${productId}`, {
+            const response = await fetch(`${API_BASE}/api/products/${productId}`, {
                 method: 'DELETE',
                 headers: {
                     'Authorization': `Bearer ${token}`,
@@ -450,7 +452,7 @@ const ProductManager = () => {
 
         try {
             const token = localStorage.getItem('token');
-            const response = await fetch('https://api.hunyhuny.org/api/products/categories', {
+            const response = await fetch(`${API_BASE}/api/products/categories`, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${token}`,
@@ -490,7 +492,7 @@ const ProductManager = () => {
     const handleScanBarcode = async (barcode) => {
         try {
             const token = localStorage.getItem('token');
-            const response = await fetch(`https://api.hunyhuny.org/api/products/inventory/${barcode}`, {
+            const response = await fetch(`${API_BASE}/api/products/inventory/${barcode}`, {
                 headers: {
                     'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json'
@@ -526,7 +528,7 @@ const ProductManager = () => {
             
             // Fetch ALL products (no pagination limit)
             const response = await fetch(
-                `https://api.hunyhuny.org/api/products?limit=10000`,
+                `${API_BASE}/api/products?limit=10000`,
                 {
                     headers: {
                         'Authorization': `Bearer ${token}`,

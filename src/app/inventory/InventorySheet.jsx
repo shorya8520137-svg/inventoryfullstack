@@ -8,6 +8,7 @@ import ProductTracker from "./ProductTracker";
 
 const PAGE_SIZE = 50; // Items to show per page in UI
 const API_LIMIT = 10000; // Fetch all data from API at once
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'https://13.235.121.5.nip.io';
 
 const WAREHOUSES = [
     { code: "GGM_WH", name: "Gurgaon Warehouse", city: "Gurgaon" },
@@ -95,10 +96,10 @@ export default function InventorySheet() {
                 params.append('dateTo', dateTo);
             }
 
-            console.log('🔗 API URL:', `https://api.hunyhuny.org/api/inventory?${params}`);
+            console.log('🔗 API URL:', `${API_BASE}/api/inventory?${params}`);
             console.log('🏢 Selected warehouses for API:', selectedWarehouses);
 
-            const response = await fetch(`https://api.hunyhuny.org/api/inventory?${params}`, {
+            const response = await fetch(`${API_BASE}/api/inventory?${params}`, {
                 method: 'GET',
                 headers: { 'Content-Type': 'application/json' }
             });
@@ -244,7 +245,7 @@ export default function InventorySheet() {
 
         if (query.length >= 2) {
             try {
-                const response = await fetch(`https://api.hunyhuny.org/api/products?search=${encodeURIComponent(query)}&limit=5`, {
+                const response = await fetch(`${API_BASE}/api/products?search=${encodeURIComponent(query)}&limit=5`, {
                     method: 'GET',
                     headers: {
                         'Content-Type': 'application/json'
@@ -414,9 +415,9 @@ export default function InventorySheet() {
             }
 
             console.log('🔍 Loading inventory for warehouse:', warehouseCode);
-            console.log('API URL:', `https://api.hunyhuny.org/api/inventory?${params}`);
+            console.log('API URL:', `${API_BASE}/api/inventory?${params}`);
 
-            const response = await fetch(`https://api.hunyhuny.org/api/inventory?${params}`, {
+            const response = await fetch(`${API_BASE}/api/inventory?${params}`, {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json'
@@ -588,7 +589,7 @@ export default function InventorySheet() {
             console.log('🔽 Exporting with params:', params.toString());
             console.log('🏢 Export warehouses:', exportWarehouses.length === 0 ? 'All Warehouses' : exportWarehouses.join(', '));
 
-            const response = await fetch(`https://api.hunyhuny.org/api/inventory/export?${params}`, {
+            const response = await fetch(`${API_BASE}/api/inventory/export?${params}`, {
                 method: 'GET'
             });
 

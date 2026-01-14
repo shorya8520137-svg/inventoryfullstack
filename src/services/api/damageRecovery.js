@@ -3,7 +3,7 @@
  * Handles damage reporting and stock recovery operations
  */
 
-const API_BASE = 'https://api.hunyhuny.org/api';
+const API_BASE = 'https://13.235.121.5.nip.io';
 
 /**
  * Report damage

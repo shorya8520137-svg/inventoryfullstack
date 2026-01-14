@@ -4,8 +4,8 @@ import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import styles from "./returnModal.module.css";
 
-const API = "https://api.hunyhuny.org/api/dispatch";
-const RETURNS_API = "https://api.hunyhuny.org/api/returns";
+const API = "https://13.235.121.5.nip.io/api/dispatch";
+const RETURNS_API = "https://13.235.121.5.nip.io/api/returns";
 
 export default function ReturnModal({ onClose }) {
     const [warehouseQuery, setWarehouseQuery] = useState("");
