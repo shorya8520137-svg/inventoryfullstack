@@ -3,7 +3,7 @@
 import React, { useEffect, useMemo, useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import styles from "./order.module.css";
-import ChatUI from "./chatui";
+import ChatUI from "./chatui.jsx";
 
 const PAGE_SIZE = 12;
 
