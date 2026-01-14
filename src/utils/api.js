@@ -1,7 +1,7 @@
 // Legacy API utilities - DEPRECATED
 // Use the new API services in src/services/api/ instead
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_BASE || "https://13.235.121.5.nip.io";
+const BASE_URL = process.env.NEXT_PUBLIC_API_BASE || "https://16.171.161.150.nip.io";
 const API_TIMEOUT = parseInt(process.env.NEXT_PUBLIC_API_TIMEOUT) || 30000;
 
 // Legacy function - use apiRequest from src/services/api/index.js instead

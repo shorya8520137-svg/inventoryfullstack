@@ -74,7 +74,7 @@ export default function OrderSheet() {
             setError('');
             
             // Use the updated dispatch tracking API
-            const response = await fetch('https://13.235.121.5.nip.io/api/order-tracking');
+            const response = await fetch('https://16.171.161.150.nip.io/api/order-tracking');
             const data = await response.json();
             
             if (data.success) {
@@ -136,7 +136,7 @@ export default function OrderSheet() {
         setTimelineLoading(true);
         
         try {
-            const response = await fetch(`https://13.235.121.5.nip.io/api/order-tracking/${order.id}/timeline`);
+            const response = await fetch(`https://16.171.161.150.nip.io/api/order-tracking/${order.id}/timeline`);
             const data = await response.json();
             
             if (data.success) {
@@ -284,7 +284,7 @@ export default function OrderSheet() {
         
         try {
             // Send status update to backend
-            const response = await fetch(`https://13.235.121.5.nip.io/api/order-tracking/${orderId}/status`, {
+            const response = await fetch(`https://16.171.161.150.nip.io/api/order-tracking/${orderId}/status`, {
                 method: 'PATCH',
                 headers: {
                     'Content-Type': 'application/json'
@@ -418,7 +418,7 @@ export default function OrderSheet() {
         setDeleting(true);
         
         try {
-            const response = await fetch(`https://13.235.121.5.nip.io/api/order-tracking/${dispatchId}`, {
+            const response = await fetch(`https://16.171.161.150.nip.io/api/order-tracking/${dispatchId}`, {
                 method: 'DELETE',
                 headers: {
                     'Content-Type': 'application/json'

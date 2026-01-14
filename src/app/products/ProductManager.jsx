@@ -6,7 +6,7 @@ import styles from './products.module.css';
 import TransferForm from './TransferForm';
 import { productsAPI } from '@/services/api/products';
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'https://13.235.121.5.nip.io';
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'https://16.171.161.150.nip.io';
 
 const ProductManager = () => {
     const [products, setProducts] = useState([]);

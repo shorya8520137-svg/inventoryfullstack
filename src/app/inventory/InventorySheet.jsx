@@ -8,7 +8,7 @@ import ProductTracker from "./ProductTracker";
 
 const PAGE_SIZE = 50; // Items to show per page in UI
 const API_LIMIT = 10000; // Fetch all data from API at once
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'https://13.235.121.5.nip.io';
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'https://16.171.161.150.nip.io';
 
 const WAREHOUSES = [
     { code: "GGM_WH", name: "Gurgaon Warehouse", city: "Gurgaon" },

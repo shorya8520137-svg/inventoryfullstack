@@ -68,7 +68,7 @@ export default function ConnectionTest() {
 
         // Test 3: CORS check
         try {
-            const corsTest = await fetch(`${process.env.NEXT_PUBLIC_API_BASE || 'https://13.235.121.5.nip.io'}/api/health`, {
+            const corsTest = await fetch(`${process.env.NEXT_PUBLIC_API_BASE || 'https://16.171.161.150.nip.io'}/api/health`, {
                 method: 'OPTIONS'
             });
             
@@ -171,7 +171,7 @@ export default function ConnectionTest() {
                              'Connection Failed'}
                         </div>
                         <div style={{ fontSize: '0.875rem', color: '#6b7280', marginTop: '0.25rem' }}>
-                            API Endpoint: {process.env.NEXT_PUBLIC_API_BASE || 'https://13.235.121.5.nip.io'}
+                            API Endpoint: {process.env.NEXT_PUBLIC_API_BASE || 'https://16.171.161.150.nip.io'}
                         </div>
                     </div>
                 </div>

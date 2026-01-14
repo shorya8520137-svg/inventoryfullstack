@@ -98,7 +98,7 @@ export const productsAPI = {
      * @returns {Promise} Import result with progress updates
      */
     async bulkImportWithProgress(file, onProgress) {
-        const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE || "https://13.235.121.5.nip.io";
+        const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE || "https://16.171.161.150.nip.io";
         
         return new Promise((resolve, reject) => {
             const formData = new FormData();

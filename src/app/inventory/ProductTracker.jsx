@@ -78,7 +78,7 @@ export default function ProductTracker({
         setShowDispatchModal(true);
         
         try {
-            const response = await fetch(`https://13.235.121.5.nip.io/api/order-tracking/${dispatchId}/timeline`);
+            const response = await fetch(`https://16.171.161.150.nip.io/api/order-tracking/${dispatchId}/timeline`);
             const data = await response.json();
             
             if (data.success && data.data) {
