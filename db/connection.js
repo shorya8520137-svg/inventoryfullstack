@@ -1,17 +1,24 @@
 const mysql = require('mysql2');
+require('dotenv').config();
 
-// Database configuration
+// Database configuration from environment variables
 const dbConfig = {
-    host: '65.0.15.252',
-    user: 'vercel_user_2026',
-    password: 'avLwmXdsgd@!123',
-    database: 'inventory_db_2026',
-    port: 3306,
+    host: process.env.DB_HOST || '127.0.0.1',
+    user: process.env.DB_USER || 'inventory_user',
+    password: process.env.DB_PASSWORD || 'StrongPass@123',
+    database: process.env.DB_NAME || 'inventory_db',
+    port: process.env.DB_PORT || 3306,
     acquireTimeout: 60000,
     timeout: 60000,
     reconnect: true,
     multipleStatements: true
 };
+
+console.log('🔧 Database Configuration:');
+console.log(`   Host: ${dbConfig.host}`);
+console.log(`   Port: ${dbConfig.port}`);
+console.log(`   Database: ${dbConfig.database}`);
+console.log(`   User: ${dbConfig.user}`);
 
 // Create connection pool for better performance
 const pool = mysql.createPool(dbConfig);
