@@ -82,7 +82,11 @@ export default function ProductTracker({
             const data = await response.json();
             
             if (data.success && data.data) {
-                setSelectedDispatch(data.data);
+                // The API returns dispatch details at root level and timeline as nested array
+                setSelectedDispatch({
+                    ...data.data,
+                    timeline: data.data.timeline || []
+                });
             } else {
                 console.error('Failed to fetch dispatch details');
                 setSelectedDispatch(null);
@@ -626,7 +630,7 @@ export default function ProductTracker({
                                             </div>
                                             <div className={styles.summaryItem}>
                                                 <span className={styles.summaryLabel}>Quantity:</span>
-                                                <span className={styles.summaryValue}>{selectedDispatch.qty || 0}</span>
+                                                <span className={styles.summaryValue}>{selectedDispatch.qty || selectedDispatch.quantity || 0}</span>
                                             </div>
                                             <div className={styles.summaryItem}>
                                                 <span className={styles.summaryLabel}>Warehouse:</span>
@@ -651,7 +655,7 @@ export default function ProductTracker({
                                             <div className={styles.summaryItem}>
                                                 <span className={styles.summaryLabel}>Dimensions:</span>
                                                 <span className={styles.summaryValue}>
-                                                    {selectedDispatch.length || 0} × {selectedDispatch.width || 0} × {selectedDispatch.height || 0}
+                                                    L: {selectedDispatch.length || 0} × W: {selectedDispatch.width || 0} × H: {selectedDispatch.height || 0}
                                                 </span>
                                             </div>
                                             <div className={styles.summaryItem}>
@@ -668,6 +672,12 @@ export default function ProductTracker({
                                                 <div className={styles.summaryItem}>
                                                     <span className={styles.summaryLabel}>Variant:</span>
                                                     <span className={styles.summaryValue}>{selectedDispatch.variant}</span>
+                                                </div>
+                                            )}
+                                            {selectedDispatch.parcel_type && (
+                                                <div className={styles.summaryItem}>
+                                                    <span className={styles.summaryLabel}>Parcel Type:</span>
+                                                    <span className={styles.summaryValue}>{selectedDispatch.parcel_type}</span>
                                                 </div>
                                             )}
                                             {selectedDispatch.processed_by && (
