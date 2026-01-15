@@ -26,6 +26,13 @@ require("./db/connection");
 // ===============================
 // ROUTES (FRONTEND COMPATIBLE)
 // ===============================
+
+// auth routes
+app.use('/auth', require('./routes/authRoutes'));
+
+// dashboard routes
+app.use('/api/dashboard', require('./routes/dashboardRoutes'));
+
 app.use("/api/dispatch", require("./routes/dispatchRoutes"));
 app.use("/api/dispatch-beta", require("./routes/dispatchRoutes")); // existing
 
