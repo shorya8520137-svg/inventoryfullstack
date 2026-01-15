@@ -290,9 +290,7 @@ exports.getAllDispatches = (req, res) => {
     const sql = `
         SELECT 
             'dispatch' as source_type,
-            COALESCE(wdi.id, wd.id) as id,
-            wd.id as dispatch_id,
-            wdi.id as item_id,
+            wd.id,
             wd.timestamp,
             wd.warehouse,
             wd.order_ref,
@@ -344,8 +342,6 @@ exports.getAllDispatches = (req, res) => {
         SELECT 
             'self_transfer' as source_type,
             ilb.id,
-            ilb.id as dispatch_id,
-            NULL as item_id,
             ilb.event_time as timestamp,
             ilb.location_code as warehouse,
             SUBSTRING_INDEX(ilb.reference, '_', 3) as order_ref,
