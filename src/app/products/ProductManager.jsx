@@ -138,6 +138,8 @@ const ProductManager = () => {
                 category: selectedCategory
             });
 
+            console.log('🔗 Fetching products from:', `${API_BASE}/api/products?${params}`);
+
             const response = await fetch(`${API_BASE}/api/products?${params}`, {
                 headers: {
                     'Authorization': `Bearer ${token}`,
@@ -145,19 +147,25 @@ const ProductManager = () => {
                 }
             });
 
+            console.log('📡 Response status:', response.status, response.ok);
+
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
 
             const data = await response.json();
+            console.log('📦 Received data:', data);
+            
             if (data.success) {
+                console.log('✅ Products:', data.data.products);
+                console.log('✅ Pagination:', data.data.pagination);
                 setProducts(data.data.products);
                 setTotalPages(data.data.pagination.pages);
             } else {
                 showNotification(data.message || 'Failed to fetch products', 'error');
             }
         } catch (error) {
-            console.error('Error fetching products:', error);
+            console.error('❌ Error fetching products:', error);
             showNotification('Failed to load products. Please check your connection.', 'error');
             setProducts([]);
             setTotalPages(1);
