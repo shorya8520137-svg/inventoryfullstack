@@ -2527,3 +2527,39 @@
     display: inline-block;
     font-weight: 600;
 }
+
+
+/* ================= COLUMN FILTERS ================= */
+.thContent {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    align-items: stretch;
+}
+
+.columnFilter {
+    width: 100%;
+    padding: 4px 8px;
+    font-size: 11px;
+    border: 1px solid #d1d5db;
+    border-radius: 4px;
+    background: #ffffff;
+    color: #374151;
+    outline: none;
+    transition: all 0.2s ease;
+}
+
+.columnFilter:focus {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+}
+
+.columnFilter::placeholder {
+    color: #9ca3af;
+    font-size: 10px;
+}
+
+.columnFilter option {
+    padding: 4px;
+    font-size: 11px;
+}

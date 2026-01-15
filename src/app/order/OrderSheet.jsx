@@ -48,6 +48,11 @@ export default function OrderSheet() {
     // Product name modal state
     const [showProductModal, setShowProductModal] = useState(null);
 
+    // Column-specific filters
+    const [productFilter, setProductFilter] = useState("");
+    const [awbFilter, setAwbFilter] = useState("");
+    const [amountSort, setAmountSort] = useState(""); // "asc" or "desc"
+
     const statusOptions = [
         { value: 'Pending', label: 'Pending', color: '#f59e0b', bg: '#fef3c7' },
         { value: 'Processing', label: 'Processing', color: '#3b82f6', bg: '#dbeafe' },
@@ -194,9 +199,9 @@ export default function OrderSheet() {
         return () => clearTimeout(t);
     }, [input, orders]);
 
-    // Search functionality
+    // Search functionality with column filters
     const filteredOrders = useMemo(() => {
-        return orders.filter(order => {
+        let filtered = orders.filter(order => {
             // Token search
             const searchText = `${order.customer} ${order.product_name} ${order.awb} ${order.order_ref} ${order.warehouse} ${order.status}`.toLowerCase();
             const tokenMatch = tokens.length === 0 || tokens.every(token => searchText.includes(token.toLowerCase()));
@@ -209,9 +214,22 @@ export default function OrderSheet() {
             if (fromDate && orderDate < new Date(fromDate)) return false;
             if (toDate && orderDate > new Date(toDate)) return false;
             
+            // Column-specific filters
+            if (productFilter && !order.product_name?.toLowerCase().includes(productFilter.toLowerCase())) return false;
+            if (awbFilter && !order.awb?.toLowerCase().includes(awbFilter.toLowerCase())) return false;
+            
             return true;
         });
-    }, [orders, tokens, fromDate, toDate]);
+
+        // Amount sorting
+        if (amountSort === "asc") {
+            filtered = filtered.sort((a, b) => (a.invoice_amount || 0) - (b.invoice_amount || 0));
+        } else if (amountSort === "desc") {
+            filtered = filtered.sort((a, b) => (b.invoice_amount || 0) - (a.invoice_amount || 0));
+        }
+
+        return filtered;
+    }, [orders, tokens, fromDate, toDate, productFilter, awbFilter, amountSort]);
 
     const paginatedOrders = useMemo(() => {
         const start = (page - 1) * PAGE_SIZE;
@@ -373,7 +391,7 @@ export default function OrderSheet() {
             }
 
             const headers = [
-                "Customer", "Product", "Quantity", "Dimensions", "AWB", "Order Ref", 
+                "Customer", "Product", "Quantity", "Length", "Width", "Height", "Weight", "AWB", "Order Ref", 
                 "Warehouse", "Status", "Payment Mode", "Amount", "Date", "Remarks"
             ];
             
@@ -383,7 +401,10 @@ export default function OrderSheet() {
                     `"${order.customer || ""}"`,
                     `"${order.product_name || ""}"`,
                     order.quantity || order.qty || 1,
-                    `"${order.dimensions || 'N/A'}"`,
+                    order.length || 0,
+                    order.width || 0,
+                    order.height || 0,
+                    order.weight || order.actual_weight || 0,
                     `"${order.awb || ""}"`,
                     `"${order.order_ref || ""}"`,
                     `"${order.warehouse || ""}"`,
@@ -740,7 +761,17 @@ export default function OrderSheet() {
                                             Customer
                                         </th>
                                         <th className={styles.th}>
-                                            Product
+                                            <div className={styles.thContent}>
+                                                Product
+                                                <input
+                                                    type="text"
+                                                    placeholder="Search..."
+                                                    value={productFilter}
+                                                    onChange={(e) => setProductFilter(e.target.value)}
+                                                    className={styles.columnFilter}
+                                                    onClick={(e) => e.stopPropagation()}
+                                                />
+                                            </div>
                                         </th>
                                         <th className={styles.th}>
                                             Qty
@@ -758,7 +789,17 @@ export default function OrderSheet() {
                                             Weight
                                         </th>
                                         <th className={styles.th}>
-                                            AWB
+                                            <div className={styles.thContent}>
+                                                AWB
+                                                <input
+                                                    type="text"
+                                                    placeholder="Search..."
+                                                    value={awbFilter}
+                                                    onChange={(e) => setAwbFilter(e.target.value)}
+                                                    className={styles.columnFilter}
+                                                    onClick={(e) => e.stopPropagation()}
+                                                />
+                                            </div>
                                         </th>
                                         <th className={styles.th}>
                                             Order Ref
@@ -773,7 +814,19 @@ export default function OrderSheet() {
                                             Payment
                                         </th>
                                         <th className={styles.th}>
-                                            Amount
+                                            <div className={styles.thContent}>
+                                                Amount
+                                                <select
+                                                    value={amountSort}
+                                                    onChange={(e) => setAmountSort(e.target.value)}
+                                                    className={styles.columnFilter}
+                                                    onClick={(e) => e.stopPropagation()}
+                                                >
+                                                    <option value="">Sort...</option>
+                                                    <option value="asc">↑ Low to High</option>
+                                                    <option value="desc">↓ High to Low</option>
+                                                </select>
+                                            </div>
                                         </th>
                                         <th className={styles.th}>
                                             Remarks
