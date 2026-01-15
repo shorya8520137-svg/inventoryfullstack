@@ -47,6 +47,9 @@ export default function OrderSheet() {
     
     // Product name modal state
     const [showProductModal, setShowProductModal] = useState(null);
+    
+    // Customer detail modal state
+    const [showCustomerModal, setShowCustomerModal] = useState(null);
 
     // Column-specific filters
     const [productFilter, setProductFilter] = useState("");
@@ -868,13 +871,19 @@ export default function OrderSheet() {
                                                 </button>
                                             </td>
                                             <td className={`${styles.td} ${styles.customerCol}`}>
-                                                <div className={styles.cellContent}>{o.customer}</div>
+                                                <div 
+                                                    className={`${styles.cellContent} ${styles.clickableCell}`}
+                                                    onClick={() => setShowCustomerModal(o)}
+                                                    title="Click to view customer details"
+                                                >
+                                                    {o.customer}
+                                                </div>
                                             </td>
                                             <td className={styles.td}>
                                                 <div 
-                                                    className={`${styles.cellContent} ${styles.productName}`}
+                                                    className={`${styles.cellContent} ${styles.productName} ${styles.clickableCell}`}
                                                     onClick={() => setShowProductModal(o)}
-                                                    title="Click to view full product name"
+                                                    title="Click to view product details"
                                                 >
                                                     {o.product_name}
                                                 </div>
@@ -1203,29 +1212,78 @@ export default function OrderSheet() {
             {/* Product Name Modal */}
             {showProductModal && (
                 <>
-                    <div className={styles.modalOverlay} onClick={() => setShowProductModal(null)} />
-                    <div className={styles.productModal}>
-                        <div className={styles.productModalHeader}>
-                            <h3>Product Details</h3>
-                            <button className={styles.closeBtn} onClick={() => setShowProductModal(null)}>✕</button>
-                        </div>
-                        <div className={styles.productModalContent}>
-                            <div className={styles.productDetail}>
-                                <span className={styles.productLabel}>Product Name:</span>
-                                <span className={styles.productValue}>{showProductModal.product_name}</span>
+                    <div className={styles.detailCardOverlay} onClick={() => setShowProductModal(null)}>
+                        <div className={styles.detailCard} onClick={(e) => e.stopPropagation()}>
+                            <div className={styles.detailCardHeader}>
+                                <h3 className={styles.detailCardTitle}>Product Details</h3>
+                                <button className={styles.detailCardClose} onClick={() => setShowProductModal(null)}>✕</button>
                             </div>
-                            {showProductModal.barcode && (
-                                <div className={styles.productDetail}>
-                                    <span className={styles.productLabel}>Barcode:</span>
-                                    <span className={styles.productValue}>{showProductModal.barcode}</span>
+                            <div className={styles.detailCardContent}>
+                                <div className={styles.detailRow}>
+                                    <span className={styles.detailLabel}>Product Name</span>
+                                    <span className={styles.detailValue}>{showProductModal.product_name}</span>
                                 </div>
-                            )}
-                            {showProductModal.variant && (
-                                <div className={styles.productDetail}>
-                                    <span className={styles.productLabel}>Variant:</span>
-                                    <span className={styles.productValue}>{showProductModal.variant}</span>
+                                {showProductModal.barcode && (
+                                    <div className={styles.detailRow}>
+                                        <span className={styles.detailLabel}>Barcode</span>
+                                        <span className={styles.detailValue}>{showProductModal.barcode}</span>
+                                    </div>
+                                )}
+                                {showProductModal.variant && (
+                                    <div className={styles.detailRow}>
+                                        <span className={styles.detailLabel}>Variant</span>
+                                        <span className={styles.detailValue}>{showProductModal.variant}</span>
+                                    </div>
+                                )}
+                                <div className={styles.detailRow}>
+                                    <span className={styles.detailLabel}>Quantity</span>
+                                    <span className={styles.detailValue}>{showProductModal.quantity}</span>
                                 </div>
-                            )}
+                            </div>
+                        </div>
+                    </div>
+                </>
+            )}
+
+            {/* Customer Detail Modal - 2026 Nested Card Style */}
+            {showCustomerModal && (
+                <>
+                    <div className={styles.detailCardOverlay} onClick={() => setShowCustomerModal(null)}>
+                        <div className={styles.detailCard} onClick={(e) => e.stopPropagation()}>
+                            <div className={styles.detailCardHeader}>
+                                <h3 className={styles.detailCardTitle}>Customer Details</h3>
+                                <button className={styles.detailCardClose} onClick={() => setShowCustomerModal(null)}>✕</button>
+                            </div>
+                            <div className={styles.detailCardContent}>
+                                <div className={styles.detailRow}>
+                                    <span className={styles.detailLabel}>Customer Name</span>
+                                    <span className={styles.detailValue}>{showCustomerModal.customer}</span>
+                                </div>
+                                <div className={styles.detailRow}>
+                                    <span className={styles.detailLabel}>Order Reference</span>
+                                    <span className={styles.detailValue}>{showCustomerModal.order_ref}</span>
+                                </div>
+                                <div className={styles.detailRow}>
+                                    <span className={styles.detailLabel}>AWB Number</span>
+                                    <span className={styles.detailValue}>{showCustomerModal.awb}</span>
+                                </div>
+                                <div className={styles.detailRow}>
+                                    <span className={styles.detailLabel}>Payment Mode</span>
+                                    <span className={styles.detailValue}>{showCustomerModal.payment_mode}</span>
+                                </div>
+                                <div className={styles.detailRow}>
+                                    <span className={styles.detailLabel}>Amount</span>
+                                    <span className={styles.detailValue}>₹{showCustomerModal.invoice_amount}</span>
+                                </div>
+                                <div className={styles.detailRow}>
+                                    <span className={styles.detailLabel}>Status</span>
+                                    <span className={styles.detailValue}>{showCustomerModal.status}</span>
+                                </div>
+                                <div className={styles.detailRow}>
+                                    <span className={styles.detailLabel}>Warehouse</span>
+                                    <span className={styles.detailValue}>{showCustomerModal.warehouse}</span>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </>
