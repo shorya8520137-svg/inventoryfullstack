@@ -1,4 +1,4 @@
-const db = require('../db/connection');
+const db = require('../db/connection').promise();
 
 exports.bulkUpload = async (req, res) => {
     const rows = req.body?.rows;

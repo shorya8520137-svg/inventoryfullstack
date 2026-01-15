@@ -1,4 +1,4 @@
-const db = require('../db/connection');
+const db = require('../db/connection').promise();
 const csv = require('csv-parser');
 const XLSX = require('xlsx');
 const fs = require('fs');
