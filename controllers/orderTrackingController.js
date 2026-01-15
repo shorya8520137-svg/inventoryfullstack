@@ -350,6 +350,7 @@ exports.getAllDispatches = (req, res) => {
             ilb.barcode,
             ilb.qty,
             NULL as variant,
+            0 as selling_price,
             NULL as awb,
             'Self Transfer' as logistics,
             'Self Transfer' as parcel_type,
