@@ -368,21 +368,23 @@ class PermissionsController {
     
     static async getRoles(req, res) {
         try {
-            const [roles] = await db.execute(`
+            const result = await db.execute(`
                 SELECT r.*, 
-                       COUNT(u.id) as user_count,
-                       COUNT(rp.permission_id) as permission_count
+                       COUNT(DISTINCT u.id) as user_count,
+                       COUNT(DISTINCT rp.permission_id) as permission_count
                 FROM roles r
                 LEFT JOIN users u ON r.id = u.role_id
                 LEFT JOIN role_permissions rp ON r.id = rp.role_id
                 WHERE r.is_active = true
                 GROUP BY r.id
-                ORDER BY r.name
+                ORDER BY r.priority
             `);
+            
+            const roles = Array.isArray(result) ? result[0] : result;
             
             // Get permissions for each role
             for (let role of roles) {
-                const [permissions] = await db.execute(`
+                const permResult = await db.execute(`
                     SELECT p.name, p.display_name, p.category
                     FROM permissions p
                     JOIN role_permissions rp ON p.id = rp.permission_id
@@ -390,6 +392,7 @@ class PermissionsController {
                     ORDER BY p.category, p.name
                 `, [role.id]);
                 
+                const permissions = Array.isArray(permResult) ? permResult[0] : permResult;
                 role.permissions = permissions;
             }
             
@@ -456,11 +459,13 @@ class PermissionsController {
     
     static async getPermissions(req, res) {
         try {
-            const [permissions] = await db.execute(`
+            const result = await db.execute(`
                 SELECT * FROM permissions 
                 WHERE is_active = true 
                 ORDER BY category, name
             `);
+            
+            const permissions = Array.isArray(result) ? result[0] : result;
             
             // Group by category
             const groupedPermissions = permissions.reduce((acc, perm) => {
