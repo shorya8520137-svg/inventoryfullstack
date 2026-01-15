@@ -290,7 +290,9 @@ exports.getAllDispatches = (req, res) => {
     const sql = `
         SELECT 
             'dispatch' as source_type,
-            wd.id,
+            COALESCE(wdi.id, wd.id) as id,
+            wd.id as dispatch_id,
+            wdi.id as item_id,
             wd.timestamp,
             wd.warehouse,
             wd.order_ref,
@@ -342,6 +344,8 @@ exports.getAllDispatches = (req, res) => {
         SELECT 
             'self_transfer' as source_type,
             ilb.id,
+            ilb.id as dispatch_id,
+            NULL as item_id,
             ilb.event_time as timestamp,
             ilb.location_code as warehouse,
             SUBSTRING_INDEX(ilb.reference, '_', 3) as order_ref,
@@ -869,9 +873,9 @@ exports.deleteDispatch = (req, res) => {
  */
 exports.updateDispatchStatus = (req, res) => {
     const { dispatchId } = req.params;
-    const { status } = req.body;
+    const { status, barcode } = req.body;
 
-    console.log('🔄 Update dispatch status request for:', dispatchId, 'to:', status);
+    console.log('🔄 Update dispatch status request for:', dispatchId, 'barcode:', barcode, 'to:', status);
 
     if (!dispatchId) {
         return res.status(400).json({
@@ -900,13 +904,15 @@ exports.updateDispatchStatus = (req, res) => {
         });
     }
 
-    const updateSql = `
-        UPDATE warehouse_dispatch 
-        SET status = ?
-        WHERE id = ?
-    `;
+    // If barcode is provided, update only that specific product in the dispatch
+    // Otherwise update the entire dispatch (backward compatibility)
+    const updateSql = barcode 
+        ? `UPDATE warehouse_dispatch SET status = ? WHERE id = ? AND barcode = ?`
+        : `UPDATE warehouse_dispatch SET status = ? WHERE id = ?`;
+    
+    const params = barcode ? [status, dispatchId, barcode] : [status, dispatchId];
 
-    db.query(updateSql, [status, dispatchId], (err, result) => {
+    db.query(updateSql, params, (err, result) => {
         if (err) {
             console.error('❌ Status update error:', err);
             return res.status(500).json({

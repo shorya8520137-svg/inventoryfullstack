@@ -81,6 +81,8 @@ export default function OrderSheet() {
                 // Map real dispatch data to frontend format
                 const mappedOrders = data.data.map(dispatch => ({
                     id: dispatch.id,
+                    dispatch_id: dispatch.dispatch_id,
+                    item_id: dispatch.item_id,
                     customer: dispatch.customer,
                     product_name: dispatch.product_name,
                     quantity: dispatch.qty,
@@ -282,14 +284,26 @@ export default function OrderSheet() {
         setUpdatingStatus(orderId);
         setOpenStatusDropdown(null);
         
+        // Find the order to get its barcode and dispatch_id
+        const order = orders.find(o => o.id === orderId);
+        if (!order) {
+            setSuccessMsg("Order not found");
+            setTimeout(() => setSuccessMsg(""), 2000);
+            setUpdatingStatus(null);
+            return;
+        }
+        
         try {
-            // Send status update to backend
-            const response = await fetch(`https://16.171.161.150.nip.io/api/order-tracking/${orderId}/status`, {
+            // Send status update to backend with barcode for specific product update
+            const response = await fetch(`https://16.171.161.150.nip.io/api/order-tracking/${order.dispatch_id || orderId}/status`, {
                 method: 'PATCH',
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ status: newStatus })
+                body: JSON.stringify({ 
+                    status: newStatus,
+                    barcode: order.barcode  // Send barcode to update specific product
+                })
             });
             
             if (!response.ok) {
