@@ -690,169 +690,217 @@ exports.deleteDispatch = (req, res) => {
             }
 
             const dispatch = dispatchData[0];
-            const { barcode, qty, warehouse, product_name } = dispatch;
+            const { warehouse } = dispatch;
 
-            // CORRECT LOGIC: Restore stock to existing stock_batches
-            // Find the most recent batches that were affected (LIFO for restoration)
-            const getBatchesSql = `
-                SELECT id, qty_available, status
-                FROM stock_batches 
-                WHERE barcode = ? AND warehouse = ? 
-                ORDER BY created_at DESC
-                LIMIT 10
-            `;
+            // Check if dispatch has items in warehouse_dispatch_items
+            const getItemsSql = `SELECT * FROM warehouse_dispatch_items WHERE dispatch_id = ?`;
 
-            db.query(getBatchesSql, [barcode, warehouse], (err, batches) => {
+            db.query(getItemsSql, [dispatchId], (err, items) => {
                 if (err) {
                     return db.rollback(() =>
                         res.status(500).json({ success: false, error: err.message })
                     );
                 }
 
-                if (batches.length === 0) {
-                    return db.rollback(() =>
-                        res.status(400).json({ 
-                            success: false, 
-                            message: 'No stock batches found for this product' 
-                        })
-                    );
-                }
+                // If items exist, restore ALL products from items table
+                // Otherwise, restore from main dispatch record (backward compatibility)
+                const productsToRestore = items.length > 0 
+                    ? items.map(item => ({
+                        barcode: item.barcode,
+                        product_name: item.product_name,
+                        qty: item.qty
+                    }))
+                    : [{
+                        barcode: dispatch.barcode,
+                        product_name: dispatch.product_name,
+                        qty: dispatch.qty
+                    }];
 
-                // Restore stock using LIFO (Last In, First Out) - reverse of dispatch FIFO
-                let remainingQty = qty;
-                const batchUpdates = [];
+                console.log(`🔄 Restoring stock for ${productsToRestore.length} products`);
 
-                for (const batch of batches) {
-                    if (remainingQty <= 0) break;
+                // Restore stock for EACH product
+                let restoredCount = 0;
+                const totalProducts = productsToRestore.length;
 
-                    // Add back the quantity to this batch
-                    const restoreQty = remainingQty; // Restore all remaining to this batch
-                    const newQty = batch.qty_available + restoreQty;
-                    const newStatus = 'active'; // Always set to active when restoring
-
-                    batchUpdates.push({
-                        id: batch.id,
-                        newQty,
-                        newStatus,
-                        restoreQty
+                productsToRestore.forEach(product => {
+                    restoreProductStock(product, () => {
+                        restoredCount++;
+                        if (restoredCount === totalProducts) {
+                            // All products restored, now delete dispatch
+                            deleteDispatchAndItems();
+                        }
                     });
+                });
 
-                    remainingQty = 0; // All quantity restored to this batch
-                }
+                function restoreProductStock(product, callback) {
+                    const { barcode, product_name, qty } = product;
 
-                // If we couldn't restore to existing batches, create a new one
-                if (remainingQty > 0) {
-                    const createBatchSql = `
-                        INSERT INTO stock_batches (
-                            barcode, product_name, warehouse, qty_available, 
-                            status, created_at, batch_ref, source_type
-                        ) VALUES (?, ?, ?, ?, 'active', NOW(), ?, 'DISPATCH_REVERSAL')
+                    // CORRECT LOGIC: Restore stock to existing stock_batches
+                    // Find the most recent batches that were affected (LIFO for restoration)
+                    const getBatchesSql = `
+                        SELECT id, qty_available, status
+                        FROM stock_batches 
+                        WHERE barcode = ? AND warehouse = ? 
+                        ORDER BY created_at DESC
+                        LIMIT 10
                     `;
 
-                    const batchRef = `RESTORE_DISPATCH_${dispatchId}_${Date.now()}`;
-
-                    db.query(createBatchSql, [
-                        barcode, product_name, warehouse, remainingQty, batchRef
-                    ], (err) => {
+                    db.query(getBatchesSql, [barcode, warehouse], (err, batches) => {
                         if (err) {
                             return db.rollback(() =>
                                 res.status(500).json({ success: false, error: err.message })
                             );
                         }
 
-                        // Continue with existing batch updates
-                        updateBatchesAndComplete();
-                    });
-                } else {
-                    // All quantity can be restored to existing batches
-                    updateBatchesAndComplete();
-                }
-
-                function updateBatchesAndComplete() {
-                    if (batchUpdates.length === 0) {
-                        // No batch updates needed, just add ledger and delete dispatch
-                        addLedgerAndDeleteDispatch();
-                        return;
-                    }
-
-                    let updateCount = 0;
-                    const totalUpdates = batchUpdates.length;
-
-                    batchUpdates.forEach(update => {
-                        const updateBatchSql = `
-                            UPDATE stock_batches 
-                            SET qty_available = ?, status = ? 
-                            WHERE id = ?
-                        `;
-
-                        db.query(updateBatchSql, [update.newQty, update.newStatus, update.id], (err) => {
-                            if (err) {
-                                return db.rollback(() =>
-                                    res.status(500).json({ success: false, error: err.message })
-                                );
-                            }
-
-                            updateCount++;
-
-                            if (updateCount === totalUpdates) {
-                                addLedgerAndDeleteDispatch();
-                            }
-                        });
-                    });
-                }
-
-                function addLedgerAndDeleteDispatch() {
-                    // Add reversal entry to inventory ledger
-                    const ledgerSql = `
-                        INSERT INTO inventory_ledger_base (
-                            event_time, movement_type, barcode, product_name,
-                            location_code, qty, direction, reference
-                        ) VALUES (NOW(), 'DISPATCH_REVERSAL', ?, ?, ?, ?, 'IN', ?)
-                    `;
-
-                    db.query(ledgerSql, [
-                        barcode, product_name, warehouse, qty, `DISPATCH_DELETE_${dispatchId}`
-                    ], (err) => {
-                        if (err) {
-                            console.log('⚠️ Ledger insert failed:', err);
-                            // Continue anyway - stock restoration is more important
+                        if (batches.length === 0) {
+                            return db.rollback(() =>
+                                res.status(400).json({ 
+                                    success: false, 
+                                    message: `No stock batches found for product ${product_name}` 
+                                })
+                            );
                         }
 
-                        // Delete the dispatch record
-                        const deleteDispatchSql = `DELETE FROM warehouse_dispatch WHERE id = ?`;
+                        // Restore stock using LIFO (Last In, First Out) - reverse of dispatch FIFO
+                        let remainingQty = qty;
+                        const batchUpdates = [];
 
-                        db.query(deleteDispatchSql, [dispatchId], (err) => {
-                            if (err) {
-                                return db.rollback(() =>
-                                    res.status(500).json({ success: false, error: err.message })
-                                );
-                            }
+                        for (const batch of batches) {
+                            if (remainingQty <= 0) break;
 
-                            // Delete related dispatch items
-                            const deleteItemsSql = `DELETE FROM warehouse_dispatch_items WHERE dispatch_id = ?`;
+                            // Add back the quantity to this batch
+                            const restoreQty = remainingQty; // Restore all remaining to this batch
+                            const newQty = batch.qty_available + restoreQty;
+                            const newStatus = 'active'; // Always set to active when restoring
 
-                            db.query(deleteItemsSql, [dispatchId], (err) => {
+                            batchUpdates.push({
+                                id: batch.id,
+                                newQty,
+                                newStatus,
+                                restoreQty
+                            });
+
+                            remainingQty = 0; // All quantity restored to this batch
+                        }
+
+                        // If we couldn't restore to existing batches, create a new one
+                        if (remainingQty > 0) {
+                            const createBatchSql = `
+                                INSERT INTO stock_batches (
+                                    barcode, product_name, warehouse, qty_available, 
+                                    status, created_at, batch_ref, source_type
+                                ) VALUES (?, ?, ?, ?, 'active', NOW(), ?, 'DISPATCH_REVERSAL')
+                            `;
+
+                            const batchRef = `RESTORE_DISPATCH_${dispatchId}_${Date.now()}`;
+
+                            db.query(createBatchSql, [
+                                barcode, product_name, warehouse, remainingQty, batchRef
+                            ], (err) => {
                                 if (err) {
-                                    console.log('⚠️ Failed to delete dispatch items:', err);
-                                    // Continue anyway
+                                    return db.rollback(() =>
+                                        res.status(500).json({ success: false, error: err.message })
+                                    );
                                 }
 
-                                db.commit(err => {
+                                // Continue with existing batch updates
+                                updateBatchesForProduct();
+                            });
+                        } else {
+                            // All quantity can be restored to existing batches
+                            updateBatchesForProduct();
+                        }
+
+                        function updateBatchesForProduct() {
+                            if (batchUpdates.length === 0) {
+                                // No batch updates needed, just add ledger
+                                addLedgerForProduct();
+                                return;
+                            }
+
+                            let updateCount = 0;
+                            const totalUpdates = batchUpdates.length;
+
+                            batchUpdates.forEach(update => {
+                                const updateBatchSql = `
+                                    UPDATE stock_batches 
+                                    SET qty_available = ?, status = ? 
+                                    WHERE id = ?
+                                `;
+
+                                db.query(updateBatchSql, [update.newQty, update.newStatus, update.id], (err) => {
                                     if (err) {
                                         return db.rollback(() =>
-                                            res.status(500).json({ success: false, message: err.message })
+                                            res.status(500).json({ success: false, error: err.message })
                                         );
                                     }
 
-                                    res.json({
-                                        success: true,
-                                        message: 'Dispatch deleted successfully and stock restored',
-                                        deleted_dispatch_id: dispatchId,
-                                        restored_quantity: qty,
-                                        restored_product: product_name,
-                                        warehouse: warehouse,
-                                        stock_restoration: 'Stock quantities restored to stock_batches table'
-                                    });
+                                    updateCount++;
+
+                                    if (updateCount === totalUpdates) {
+                                        addLedgerForProduct();
+                                    }
+                                });
+                            });
+                        }
+
+                        function addLedgerForProduct() {
+                            // Add reversal entry to inventory ledger
+                            const ledgerSql = `
+                                INSERT INTO inventory_ledger_base (
+                                    event_time, movement_type, barcode, product_name,
+                                    location_code, qty, direction, reference
+                                ) VALUES (NOW(), 'DISPATCH_REVERSAL', ?, ?, ?, ?, 'IN', ?)
+                            `;
+
+                            db.query(ledgerSql, [
+                                barcode, product_name, warehouse, qty, `DISPATCH_DELETE_${dispatchId}`
+                            ], (err) => {
+                                if (err) {
+                                    console.log('⚠️ Ledger insert failed:', err);
+                                    // Continue anyway - stock restoration is more important
+                                }
+
+                                callback();
+                            });
+                        }
+                    });
+                }
+
+                function deleteDispatchAndItems() {
+                    // Delete the dispatch record
+                    const deleteDispatchSql = `DELETE FROM warehouse_dispatch WHERE id = ?`;
+
+                    db.query(deleteDispatchSql, [dispatchId], (err) => {
+                        if (err) {
+                            return db.rollback(() =>
+                                res.status(500).json({ success: false, error: err.message })
+                            );
+                        }
+
+                        // Delete related dispatch items
+                        const deleteItemsSql = `DELETE FROM warehouse_dispatch_items WHERE dispatch_id = ?`;
+
+                        db.query(deleteItemsSql, [dispatchId], (err) => {
+                            if (err) {
+                                console.log('⚠️ Failed to delete dispatch items:', err);
+                                // Continue anyway
+                            }
+
+                            db.commit(err => {
+                                if (err) {
+                                    return db.rollback(() =>
+                                        res.status(500).json({ success: false, message: err.message })
+                                    );
+                                }
+
+                                res.json({
+                                    success: true,
+                                    message: 'Dispatch deleted successfully and stock restored',
+                                    deleted_dispatch_id: dispatchId,
+                                    restored_products: totalProducts,
+                                    warehouse: warehouse,
+                                    stock_restoration: `Stock restored for ${totalProducts} product(s)`
                                 });
                             });
                         });
