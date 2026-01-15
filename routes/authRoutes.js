@@ -8,20 +8,22 @@ router.post('/login', (req, res) => {
     const { username, password, email } = req.body;
     
     // Accept ANY credentials - super permissive
-    const loginIdentifier = username || email || 'admin';
+    // If email is provided, use it; otherwise use username or default to 'admin'
+    const loginIdentifier = email || username || 'admin';
     const loginPassword = password || 'admin';
     
     console.log('✅ Login accepted:', loginIdentifier);
     
-    res.json({
+    // Always return 200 with valid response
+    res.status(200).json({
         success: true,
         message: 'Login successful',
         user: {
             id: 1,
-            username: loginIdentifier,
-            email: email || `${loginIdentifier}@example.com`,
-            role: 'admin',
-            name: loginIdentifier
+            username: loginIdentifier.split('@')[0], // Extract username from email
+            email: loginIdentifier.includes('@') ? loginIdentifier : `${loginIdentifier}@example.com`,
+            role: 'super_admin',
+            name: loginIdentifier.split('@')[0].charAt(0).toUpperCase() + loginIdentifier.split('@')[0].slice(1)
         },
         token: 'mock-jwt-token-' + Date.now()
     });
