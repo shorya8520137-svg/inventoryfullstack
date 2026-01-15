@@ -26,13 +26,6 @@ require("./db/connection");
 // ===============================
 // ROUTES (FRONTEND COMPATIBLE)
 // ===============================
-
-// auth routes
-app.use('/auth', require('./routes/authRoutes'));
-
-// dashboard routes
-app.use('/api/dashboard', require('./routes/dashboardRoutes'));
-
 app.use("/api/dispatch", require("./routes/dispatchRoutes"));
 app.use("/api/dispatch-beta", require("./routes/dispatchRoutes")); // existing
 
@@ -59,6 +52,9 @@ app.use('/api/order-tracking', require('./routes/orderTrackingRoutes'));
 
 // self transfer routes
 app.use('/api/self-transfer', require('./routes/selfTransferRoutes'));
+
+// auth routes (no /api prefix for backward compatibility)
+app.use('/auth', require('./routes/authRoutes'));
 
 // permissions routes
 app.use('/api', require('./routes/permissionsRoutes'));
