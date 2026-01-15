@@ -1,7 +1,7 @@
 // Test API Connection Script
-const https = require('https');
+const http = require('http');
 
-const API_BASE = 'https://16.171.161.150.nip.io';
+const API_BASE = 'http://16.171.161.150:5000';
 
 const endpoints = [
     '/',
@@ -18,7 +18,7 @@ async function testEndpoint(endpoint) {
         const url = `${API_BASE}${endpoint}`;
         console.log(`Testing: ${url}`);
         
-        const req = https.get(url, { rejectUnauthorized: false }, (res) => {
+        const req = http.get(url, (res) => {
             let data = '';
             res.on('data', chunk => data += chunk);
             res.on('end', () => {
