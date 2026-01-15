@@ -104,7 +104,7 @@ export const productsAPI = {
             const formData = new FormData();
             formData.append('file', file);
 
-            fetch(`${API_BASE_URL}/products/bulk/import/progress`, {
+            fetch(`${API_BASE_URL}/api/products/bulk/import/progress`, {
                 method: 'POST',
                 body: formData
             }).then(response => {
