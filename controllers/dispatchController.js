@@ -208,29 +208,47 @@ exports.createDispatch = (req, res) => {
                     const barcode = extractBarcode(product.name);
                     const productName = extractProductName(product.name);
                     const qty = parseInt(product.qty) || 1;
+                    const variant = product.variant || '';
+                    const sellingPrice = parseFloat(product.selling_price) || 0;
 
-                    updateSingleProductStock(barcode, productName, qty, dispatchId, awb, () => {
-                        updatedProducts++;
-                        if (updatedProducts === totalProducts) {
-                            // All products processed, commit transaction
-                            db.commit(err => {
-                                if (err) {
-                                    return db.rollback(() =>
-                                        res.status(500).json({ success: false, message: err.message })
-                                    );
-                                }
+                    // Insert into warehouse_dispatch_items
+                    const itemSql = `
+                        INSERT INTO warehouse_dispatch_items (
+                            dispatch_id, product_name, variant, barcode, qty, selling_price
+                        ) VALUES (?, ?, ?, ?, ?, ?)
+                    `;
 
-                                res.status(201).json({
-                                    success: true,
-                                    message: 'Dispatch created successfully',
-                                    dispatch_id: dispatchId,
-                                    order_ref,
-                                    awb,
-                                    products_dispatched: totalProducts,
-                                    total_quantity: products.reduce((sum, p) => sum + (parseInt(p.qty) || 1), 0)
-                                });
-                            });
+                    db.query(itemSql, [dispatchId, productName, variant, barcode, qty, sellingPrice], (itemErr) => {
+                        if (itemErr) {
+                            return db.rollback(() =>
+                                res.status(500).json({ success: false, message: itemErr.message })
+                            );
                         }
+
+                        // After inserting item, update stock
+                        updateSingleProductStock(barcode, productName, qty, dispatchId, awb, () => {
+                            updatedProducts++;
+                            if (updatedProducts === totalProducts) {
+                                // All products processed, commit transaction
+                                db.commit(err => {
+                                    if (err) {
+                                        return db.rollback(() =>
+                                            res.status(500).json({ success: false, message: err.message })
+                                        );
+                                    }
+
+                                    res.status(201).json({
+                                        success: true,
+                                        message: 'Dispatch created successfully',
+                                        dispatch_id: dispatchId,
+                                        order_ref,
+                                        awb,
+                                        products_dispatched: totalProducts,
+                                        total_quantity: products.reduce((sum, p) => sum + (parseInt(p.qty) || 1), 0)
+                                    });
+                                });
+                            }
+                        });
                     });
                 });
             }
@@ -284,21 +302,39 @@ exports.createDispatch = (req, res) => {
                     }
 
                     const dispatchId = dispatchResult.insertId;
-                    updateSingleProductStock(barcode, product_name, quantity, dispatchId, awb, () => {
-                        db.commit(err => {
-                            if (err) {
-                                return db.rollback(() =>
-                                    res.status(500).json({ success: false, message: err.message })
-                                );
-                            }
+                    
+                    // Insert into warehouse_dispatch_items for single product
+                    const itemSql = `
+                        INSERT INTO warehouse_dispatch_items (
+                            dispatch_id, product_name, variant, barcode, qty, selling_price
+                        ) VALUES (?, ?, ?, ?, ?, ?)
+                    `;
+                    
+                    const sellingPrice = parseFloat(invoice_amount) || 0;
+                    
+                    db.query(itemSql, [dispatchId, product_name, variant || '', barcode, quantity, sellingPrice], (itemErr) => {
+                        if (itemErr) {
+                            return db.rollback(() =>
+                                res.status(500).json({ success: false, message: itemErr.message })
+                            );
+                        }
+                        
+                        updateSingleProductStock(barcode, product_name, quantity, dispatchId, awb, () => {
+                            db.commit(err => {
+                                if (err) {
+                                    return db.rollback(() =>
+                                        res.status(500).json({ success: false, message: err.message })
+                                    );
+                                }
 
-                            res.status(201).json({
-                                success: true,
-                                message: 'Dispatch created successfully',
-                                dispatch_id: dispatchId,
-                                awb,
-                                quantity_dispatched: quantity,
-                                reference: `DISPATCH_${dispatchId}_${awb}`
+                                res.status(201).json({
+                                    success: true,
+                                    message: 'Dispatch created successfully',
+                                    dispatch_id: dispatchId,
+                                    awb,
+                                    quantity_dispatched: quantity,
+                                    reference: `DISPATCH_${dispatchId}_${awb}`
+                                });
                             });
                         });
                     });
