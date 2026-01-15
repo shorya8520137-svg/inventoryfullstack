@@ -129,40 +129,90 @@ exports.createSelfTransfer = (req, res) => {
         function processSelfTransfer() {
             console.log('✅ Stock validation passed, processing transfer...');
             
-            let processedProducts = 0;
             const transferReference = `SELF_TRANSFER_${orderRef}_${Date.now()}`;
 
-            products.forEach((product) => {
-                const barcode = extractBarcode(product.name);
-                const productName = extractProductName(product.name);
-                const qty = parseInt(product.qty) || 1;
+            // First, create the main self_transfer record
+            const createTransferSql = `
+                INSERT INTO self_transfer (
+                    transfer_reference, order_ref, transfer_type,
+                    source_location, destination_location,
+                    awb_number, logistics, payment_mode, executive,
+                    invoice_amount, length, width, height, weight, remarks, status
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Completed')
+            `;
 
-                // Process each product transfer
-                processSingleProductTransfer(barcode, productName, qty, transferReference, () => {
-                    processedProducts++;
-                    if (processedProducts === totalProducts) {
-                        // All products processed, commit transaction
-                        db.commit(err => {
-                            if (err) {
-                                return db.rollback(() =>
-                                    res.status(500).json({ success: false, message: err.message })
-                                );
+            db.query(createTransferSql, [
+                transferReference, orderRef, transferType,
+                hostLocation, receiverLocation,
+                awbNumber, selectedLogistics, selectedPaymentMode, selectedExecutive,
+                parseFloat(invoiceAmount) || 0,
+                parseFloat(dimensions?.length) || 0,
+                parseFloat(dimensions?.width) || 0,
+                parseFloat(dimensions?.height) || 0,
+                parseFloat(weight) || 0,
+                remarks
+            ], (err, transferResult) => {
+                if (err) {
+                    console.log('❌ Failed to create self_transfer record:', err);
+                    return db.rollback(() =>
+                        res.status(500).json({ success: false, message: err.message })
+                    );
+                }
+
+                const transferId = transferResult.insertId;
+                console.log(`✅ Self transfer record created with ID: ${transferId}`);
+
+                // Now process each product
+                let processedProducts = 0;
+
+                products.forEach((product) => {
+                    const barcode = extractBarcode(product.name);
+                    const productName = extractProductName(product.name);
+                    const qty = parseInt(product.qty) || 1;
+                    const variant = product.variant || '';
+
+                    // Insert into self_transfer_items
+                    const createItemSql = `
+                        INSERT INTO self_transfer_items (
+                            transfer_id, product_name, barcode, variant, qty
+                        ) VALUES (?, ?, ?, ?, ?)
+                    `;
+
+                    db.query(createItemSql, [transferId, productName, barcode, variant, qty], (itemErr) => {
+                        if (itemErr) {
+                            console.log('⚠️ Failed to create transfer item:', itemErr);
+                            // Continue anyway
+                        }
+
+                        // Process stock transfer for this product
+                        processSingleProductTransfer(barcode, productName, qty, transferReference, () => {
+                            processedProducts++;
+                            if (processedProducts === totalProducts) {
+                                // All products processed, commit transaction
+                                db.commit(err => {
+                                    if (err) {
+                                        return db.rollback(() =>
+                                            res.status(500).json({ success: false, message: err.message })
+                                        );
+                                    }
+
+                                    console.log('✅ Self Transfer completed successfully');
+                                    res.status(201).json({
+                                        success: true,
+                                        message: 'Self Transfer created successfully',
+                                        transfer_id: transferId,
+                                        transfer_reference: transferReference,
+                                        order_ref: orderRef,
+                                        host_location: hostLocation,
+                                        receiver_location: receiverLocation,
+                                        products_transferred: totalProducts,
+                                        total_quantity: products.reduce((sum, p) => sum + (parseInt(p.qty) || 1), 0),
+                                        transfer_type: transferType
+                                    });
+                                });
                             }
-
-                            console.log('✅ Self Transfer completed successfully');
-                            res.status(201).json({
-                                success: true,
-                                message: 'Self Transfer created successfully',
-                                transfer_reference: transferReference,
-                                order_ref: orderRef,
-                                host_location: hostLocation,
-                                receiver_location: receiverLocation,
-                                products_transferred: totalProducts,
-                                total_quantity: products.reduce((sum, p) => sum + (parseInt(p.qty) || 1), 0),
-                                transfer_type: transferType
-                            });
                         });
-                    }
+                    });
                 });
             });
         }

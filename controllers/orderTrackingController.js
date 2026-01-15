@@ -344,29 +344,30 @@ exports.getAllDispatches = (req, res) => {
             ilb.id,
             ilb.event_time as timestamp,
             ilb.location_code as warehouse,
-            SUBSTRING_INDEX(ilb.reference, '_', 3) as order_ref,
-            CONCAT('Self Transfer (', ilb.direction, ')') as customer,
+            st.order_ref,
+            CONCAT('Self Transfer from ', st.source_location) as customer,
             ilb.product_name,
             ilb.barcode,
             ilb.qty,
             NULL as variant,
             0 as selling_price,
-            NULL as awb,
-            'Self Transfer' as logistics,
+            st.awb_number as awb,
+            st.logistics,
             'Self Transfer' as parcel_type,
-            NULL as length,
-            NULL as width,
-            NULL as height,
-            NULL as actual_weight,
-            'Internal' as payment_mode,
-            0 as invoice_amount,
-            'System' as processed_by,
-            CONCAT('Self Transfer ', ilb.direction, ' - ', ilb.reference) as remarks,
-            'Completed' as status,
+            st.length,
+            st.width,
+            st.height,
+            st.weight as actual_weight,
+            st.payment_mode,
+            st.invoice_amount,
+            st.executive as processed_by,
+            st.remarks,
+            st.status,
             0 as damage_count,
             0 as recovery_count,
             COALESCE(sb2.current_stock, 0) as current_stock
         FROM inventory_ledger_base ilb
+        LEFT JOIN self_transfer st ON ilb.reference = st.transfer_reference
         LEFT JOIN (
             SELECT barcode, SUM(qty_available) as current_stock 
             FROM stock_batches 
@@ -374,6 +375,7 @@ exports.getAllDispatches = (req, res) => {
             GROUP BY barcode
         ) sb2 ON ilb.barcode = sb2.barcode
         WHERE ilb.movement_type = 'SELF_TRANSFER'
+        AND ilb.direction = 'IN'
         ${warehouse ? 'AND ilb.location_code = ?' : ''}
         ${dateFrom ? 'AND ilb.event_time >= ?' : ''}
         ${dateTo ? 'AND ilb.event_time <= ?' : ''}
