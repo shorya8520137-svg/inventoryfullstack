@@ -145,10 +145,8 @@ router.put('/users/:userId/role',
 
 // ================= ROLE MANAGEMENT ROUTES ================= //
 
-// GET /api/roles - Get all roles
+// GET /api/roles - Get all roles (public for frontend to load role data)
 router.get('/roles', 
-    authenticateToken, 
-    checkPermission('SYSTEM_ROLE_MANAGEMENT'), 
     PermissionsController.getRoles
 );
 
@@ -437,10 +435,8 @@ router.put('/roles/:roleId/permissions',
 
 // ================= PERMISSION MANAGEMENT ROUTES ================= //
 
-// GET /api/permissions - Get all permissions
+// GET /api/permissions - Get all permissions (public for frontend to load permission data)
 router.get('/permissions', 
-    authenticateToken, 
-    checkPermission('SYSTEM_PERMISSION_MANAGEMENT'), 
     PermissionsController.getPermissions
 );
 
