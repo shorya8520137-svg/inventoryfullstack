@@ -902,7 +902,7 @@ exports.updateDispatchStatus = (req, res) => {
 
     const updateSql = `
         UPDATE warehouse_dispatch 
-        SET status = ?, updated_at = NOW()
+        SET status = ?
         WHERE id = ?
     `;
 
