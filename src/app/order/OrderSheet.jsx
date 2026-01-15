@@ -636,48 +636,20 @@ export default function OrderSheet() {
                     </div>
                 </header>
 
-                {/* Stats Cards */}
-                <div className={styles.statsCards}>
-                    <div className={styles.statCard}>
-                        <div className={styles.statIcon}>📦</div>
-                        <div className={styles.statContent}>
-                            <div className={styles.statNumber}>{filteredOrders.length}</div>
-                            <div className={styles.statLabel}>Total Orders</div>
-                        </div>
-                    </div>
-                    <div className={styles.statCard}>
-                        <div className={styles.statIcon}>🏢</div>
-                        <div className={styles.statContent}>
-                            <div className={styles.statNumber}>{getUniqueWarehouses().length}</div>
-                            <div className={styles.statLabel}>Warehouses</div>
-                        </div>
-                    </div>
-                    <div className={styles.statCard}>
-                        <div className={styles.statIcon}>🚚</div>
-                        <div className={styles.statContent}>
-                            <div className={styles.statNumber}>
-                                {filteredOrders.filter(o => o.status === 'Dispatched' || o.status === 'Delivered').length}
-                            </div>
-                            <div className={styles.statLabel}>Dispatched</div>
-                        </div>
-                    </div>
-                    <div className={styles.statCard}>
-                        <div className={styles.statIcon}>💰</div>
-                        <div className={styles.statContent}>
-                            <div className={styles.statNumber}>
-                                ₹{filteredOrders.reduce((sum, o) => sum + (parseFloat(o.invoice_amount) || 0), 0).toLocaleString()}
-                            </div>
-                            <div className={styles.statLabel}>Total Value</div>
-                        </div>
-                    </div>
-                </div>
-
+                {/* AI-Powered Smart Search Bar */}
                 <div className={styles.filterBar}>
-                    <div className={styles.searchWrapper} ref={searchRef}>
-                        {tokens.map((t, i) => (
-                            <span key={i} className={styles.chip} tabIndex={0}>
-                                {t}
-                                <button
+                    <div className={styles.smartSearchWrapper} ref={searchRef}>
+                        <div className={styles.searchIcon}>
+                            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                                <path d="M9 17C13.4183 17 17 13.4183 17 9C17 4.58172 13.4183 1 9 1C4.58172 1 1 4.58172 1 9C1 13.4183 4.58172 17 9 17Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                <path d="M19 19L14.65 14.65" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                            </svg>
+                        </div>
+                        <div className={styles.searchInputContainer}>
+                            {tokens.map((t, i) => (
+                                <span key={i} className={styles.chip} tabIndex={0}>
+                                    {t}
+                                    <button
                                     onClick={() => removeToken(t)}
                                     className={styles.chipClose}
                                     tabIndex={-1}
@@ -687,30 +659,39 @@ export default function OrderSheet() {
                             </span>
                         ))}
 
-                        <input
-                            className={styles.searchInput}
-                            placeholder="Search orders (Press / to focus)"
-                            value={input}
-                            onChange={(e) => setInput(e.target.value)}
+                            <input
+                                className={styles.smartSearchInput}
+                                placeholder="Search by customer, product, AWB, order ref..."
+                                value={input}
+                                onChange={(e) => setInput(e.target.value)}
                             onKeyDown={(e) => {
                                 if (e.key === "Enter") addToken(input);
                             }}
                         />
 
                         {showSuggest && suggestions.length > 0 && (
-                            <ul className={styles.suggestionList} role="listbox">
+                            <ul className={styles.aiSuggestionList} role="listbox">
                                 {suggestions.map((s, i) => (
                                     <li
                                         key={i}
                                         role="option"
                                         onMouseDown={() => addToken(s)}
-                                        className={styles.suggestionItem}
+                                        className={styles.aiSuggestionItem}
                                         tabIndex={0}
                                     >
+                                        <span className={styles.suggestionIcon}>✨</span>
                                         {s}
                                     </li>
                                 ))}
                             </ul>
+                        )}
+                        </div>
+                        {input && (
+                            <div className={styles.aiIndicator}>
+                                <span className={styles.aiDot}></span>
+                                <span className={styles.aiDot}></span>
+                                <span className={styles.aiDot}></span>
+                            </div>
                         )}
                     </div>
 
