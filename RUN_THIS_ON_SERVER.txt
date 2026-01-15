@@ -1,14 +1,35 @@
--- Drop tables if they exist (to fix collation mismatch)
+# =====================================================
+# COPY AND PASTE THESE COMMANDS ON SERVER
+# =====================================================
+
+# Step 1: SSH to server
+ssh -i "C:\Users\Admin\awsconection.pem" ubuntu@16.171.161.150
+
+# Step 2: Navigate to project
+cd inventoryfullstack
+
+# Step 3: Pull latest code
+git pull origin main
+
+# Step 4: Make script executable
+chmod +x fix-collation-issue.sh
+
+# Step 5: Run the fix script
+bash fix-collation-issue.sh
+
+# =====================================================
+# OR RUN THESE SQL COMMANDS DIRECTLY:
+# =====================================================
+
+sudo mysql inventory_db << 'EOF'
 DROP TABLE IF EXISTS self_transfer_items;
 DROP TABLE IF EXISTS self_transfer;
 
--- Create self_transfer table to store complete transfer details including dimensions
--- Using utf8mb4_0900_ai_ci to match existing tables
-CREATE TABLE IF NOT EXISTS self_transfer (
+CREATE TABLE self_transfer (
     id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     transfer_reference VARCHAR(255) NOT NULL UNIQUE,
     order_ref VARCHAR(100),
-    transfer_type VARCHAR(50) NOT NULL, -- 'warehouse-to-warehouse', 'store-to-store', etc.
+    transfer_type VARCHAR(50) NOT NULL,
     source_location VARCHAR(100) NOT NULL,
     destination_location VARCHAR(100) NOT NULL,
     awb_number VARCHAR(100),
@@ -30,8 +51,7 @@ CREATE TABLE IF NOT EXISTS self_transfer (
     INDEX idx_created (created_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
--- Create self_transfer_items table for individual products
-CREATE TABLE IF NOT EXISTS self_transfer_items (
+CREATE TABLE self_transfer_items (
     id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     transfer_id INT UNSIGNED NOT NULL,
     product_name VARCHAR(255) NOT NULL,
@@ -42,3 +62,10 @@ CREATE TABLE IF NOT EXISTS self_transfer_items (
     INDEX idx_transfer_id (transfer_id),
     INDEX idx_barcode (barcode)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+EOF
+
+# Step 6: Verify tables created
+sudo mysql -e "SELECT TABLE_NAME, TABLE_COLLATION FROM information_schema.TABLES WHERE TABLE_SCHEMA = 'inventory_db' AND TABLE_NAME IN ('self_transfer', 'self_transfer_items');"
+
+# Step 7: Test API
+curl -s https://16.171.161.150.nip.io/api/order-tracking | jq '.success'
