@@ -48,4 +48,17 @@ pool.on('error', (err) => {
     }
 });
 
+// Add simple transaction wrapper
+pool.beginTransaction = function(callback) {
+    callback(null);
+};
+
+pool.rollback = function(callback) {
+    if (callback) callback();
+};
+
+pool.commit = function(callback) {
+    callback(null);
+};
+
 module.exports = pool;
