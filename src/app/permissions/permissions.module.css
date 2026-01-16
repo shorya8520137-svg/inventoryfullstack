@@ -768,3 +768,166 @@
         grid-template-columns: 1fr;
     }
 }
+
+/* ================= ENHANCED AUDIT LOG STYLES ================= */
+.filtersContainer {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 24px;
+}
+
+.filterRow {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 16px;
+    align-items: end;
+}
+
+.filterGroup {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.filterGroup label {
+    font-size: 13px;
+    font-weight: 500;
+    color: #64748b;
+}
+
+.filterSelect,
+.filterInput {
+    padding: 10px 12px;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    font-size: 14px;
+    color: #1e293b;
+    background: white;
+    transition: all 0.2s ease;
+}
+
+.filterSelect:focus,
+.filterInput:focus {
+    outline: none;
+    border-color: #6366f1;
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+}
+
+.clearButton {
+    padding: 10px 16px;
+    background: #ef4444;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.clearButton:hover {
+    background: #dc2626;
+    transform: translateY(-1px);
+}
+
+.refreshButton {
+    padding: 8px 16px;
+    background: #6366f1;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.refreshButton:hover {
+    background: #4f46e5;
+    transform: translateY(-1px);
+}
+
+.auditMessage {
+    font-size: 15px;
+    font-weight: 500;
+    color: #1e293b;
+    margin-bottom: 8px;
+    line-height: 1.5;
+}
+
+.auditMeta {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 13px;
+}
+
+.auditAction {
+    padding: 4px 10px;
+    background: rgba(99, 102, 241, 0.1);
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.auditResource {
+    padding: 4px 10px;
+    background: #f1f5f9;
+    border-radius: 6px;
+    color: #64748b;
+    font-weight: 500;
+    font-size: 12px;
+}
+
+.auditTime {
+    color: #94a3b8;
+    margin-left: auto;
+}
+
+.emptyState {
+    text-align: center;
+    padding: 60px 20px;
+}
+
+.emptyIcon {
+    font-size: 64px;
+    margin-bottom: 16px;
+    opacity: 0.5;
+}
+
+.emptyState h3 {
+    font-size: 18px;
+    font-weight: 600;
+    color: #1e293b;
+    margin: 0 0 8px 0;
+}
+
+.emptyState p {
+    font-size: 14px;
+    color: #64748b;
+    margin: 0;
+}
+
+/* Responsive filters */
+@media (max-width: 1024px) {
+    .filterRow {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 640px) {
+    .filterRow {
+        grid-template-columns: 1fr;
+    }
+    
+    .filtersContainer {
+        padding: 16px;
+    }
+}
