@@ -30,30 +30,40 @@ const authenticateToken = (req, res, next) => {
 
 // Middleware for checking permissions
 const checkPermission = (requiredPermission) => {
-    return async (req, res, next) => {
+    return (req, res, next) => {
         try {
             const db = require('../db/connection');
             
             // Get user permissions
-            const [permissions] = await db.execute(`
+            const query = `
                 SELECT p.name
                 FROM permissions p
                 JOIN role_permissions rp ON p.id = rp.permission_id
                 JOIN users u ON rp.role_id = u.role_id
                 WHERE u.id = ? AND p.is_active = true
-            `, [req.user.userId]);
+            `;
             
-            const userPermissions = permissions.map(p => p.name);
-            
-            // Super admin has all permissions
-            if (req.user.role === 'SUPER_ADMIN' || userPermissions.includes(requiredPermission)) {
-                next();
-            } else {
-                res.status(403).json({
-                    success: false,
-                    message: 'Insufficient permissions'
-                });
-            }
+            db.query(query, [req.user.userId], (err, permissions) => {
+                if (err) {
+                    console.error('Permission check error:', err);
+                    return res.status(500).json({
+                        success: false,
+                        message: 'Permission check failed'
+                    });
+                }
+                
+                const userPermissions = permissions.map(p => p.name);
+                
+                // Super admin has all permissions
+                if (req.user.role === 'SUPER_ADMIN' || userPermissions.includes(requiredPermission)) {
+                    next();
+                } else {
+                    res.status(403).json({
+                        success: false,
+                        message: 'Insufficient permissions'
+                    });
+                }
+            });
         } catch (error) {
             console.error('Permission check error:', error);
             res.status(500).json({
