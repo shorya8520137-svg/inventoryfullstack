@@ -82,6 +82,16 @@ export default function ProductTracker({
             const response = await fetch(`https://16.171.161.150.nip.io/api/order-tracking/${dispatchId}/timeline`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
+            
+            // Handle 404 - dispatch not found
+            if (response.status === 404) {
+                console.error('Dispatch ID not found:', dispatchId);
+                setSelectedDispatch(null);
+                setShowDispatchModal(false);
+                alert(`Dispatch order #${dispatchId} not found in the system. It may have been deleted or the ID is invalid.`);
+                return;
+            }
+            
             const data = await response.json();
             
             if (data.success && data.data) {
@@ -93,10 +103,14 @@ export default function ProductTracker({
             } else {
                 console.error('Failed to fetch dispatch details');
                 setSelectedDispatch(null);
+                setShowDispatchModal(false);
+                alert('Failed to load dispatch details. Please try again.');
             }
         } catch (error) {
             console.error('Error fetching dispatch details:', error);
             setSelectedDispatch(null);
+            setShowDispatchModal(false);
+            alert('Error loading dispatch details. Please check your connection and try again.');
         } finally {
             setDispatchLoading(false);
         }

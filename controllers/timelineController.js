@@ -111,7 +111,7 @@ exports.getProductTimeline = (req, res) => {
             });
         }
 
-        console.log('✅ Timeline found:', timeline.length, 'entries for warehouse:', warehouse);
+        console.log('✅ Timeline found:', timeline.length, 'entries for warehouse:', warehouse || 'ALL');
 
         // Get current stock status for the specific warehouse
         const stockSql = `
