@@ -387,7 +387,11 @@ function RolesTab({ roles, permissions, onCreateRole, onEditRole, onDeleteRole, 
 
             <div className={styles.rolesGrid}>
                 {roles.map((role) => (
-                    <div key={role.id} className={styles.roleCard}>
+                    <div 
+                        key={role.id} 
+                        className={styles.roleCard}
+                        style={{ '--role-color': role.color || '#6366f1' }}
+                    >
                         <div className={styles.roleHeader}>
                             <div className={styles.roleIcon} style={{ backgroundColor: role.color || '#6366f1' }}>
                                 {role.display_name?.charAt(0) || role.name?.charAt(0)}
@@ -412,13 +416,13 @@ function RolesTab({ roles, permissions, onCreateRole, onEditRole, onDeleteRole, 
                                 className={styles.editButton}
                                 onClick={() => onEditRole(role)}
                             >
-                                Edit
+                                ✏️ Edit
                             </button>
                             <button
                                 className={styles.deleteButton}
                                 onClick={() => onDeleteRole(role.id)}
                             >
-                                Delete
+                                🗑️ Delete
                             </button>
                         </div>
                     </div>

@@ -95,7 +95,7 @@ class PermissionsController {
                     );
                     
                     // Log audit
-                    this.createAuditLog(user.id, 'LOGIN', 'USER', user.id, { ip: req.ip });
+                    PermissionsController.createAuditLog(user.id, 'LOGIN', 'USER', user.id, { ip: req.ip });
                     
                     res.json({
                         success: true,
@@ -125,7 +125,7 @@ class PermissionsController {
     static logout(req, res) {
         try {
             // Log audit
-            this.createAuditLog(req.user?.userId, 'LOGOUT', 'USER', req.user?.userId, { ip: req.ip });
+            PermissionsController.createAuditLog(req.user?.userId, 'LOGOUT', 'USER', req.user?.userId, { ip: req.ip });
             
             res.json({
                 success: true,
@@ -327,7 +327,7 @@ class PermissionsController {
                     }
                     
                     // Log audit
-                    this.createAuditLog(req.user?.userId, 'CREATE', 'USER', result.insertId, {
+                    PermissionsController.createAuditLog(req.user?.userId, 'CREATE', 'USER', result.insertId, {
                         name, email, role_id, is_active
                     });
                     
@@ -348,13 +348,20 @@ class PermissionsController {
         }
     }
     
-    static async updateUser(req, res) {
-        try {
-            const { userId } = req.params;
-            const { name, email, roleId, status } = req.body;
+    static updateUser(req, res) {
+        const { userId } = req.params;
+        const { name, email, roleId, status } = req.body;
+        
+        // Check if user exists
+        db.query('SELECT id FROM users WHERE id = ?', [userId], (err, existingUsers) => {
+            if (err) {
+                console.error('Database error:', err);
+                return res.status(500).json({
+                    success: false,
+                    message: 'Database error'
+                });
+            }
             
-            // Check if user exists
-            const [existingUsers] = await db.execute('SELECT id FROM users WHERE id = ?', [userId]);
             if (existingUsers.length === 0) {
                 return res.status(404).json({
                     success: false,
@@ -363,37 +370,47 @@ class PermissionsController {
             }
             
             // Update user
-            await db.execute(`
+            const updateSql = `
                 UPDATE users 
                 SET name = ?, email = ?, role_id = ?, status = ?, updated_at = NOW()
                 WHERE id = ?
-            `, [name, email, roleId, status, userId]);
+            `;
             
-            // Log audit
-            await this.createAuditLog(req.user?.userId, 'UPDATE', 'USER', userId, {
-                name, email, roleId, status
+            db.query(updateSql, [name, email, roleId, status, userId], (updateErr) => {
+                if (updateErr) {
+                    console.error('Update user error:', updateErr);
+                    return res.status(500).json({
+                        success: false,
+                        message: 'Failed to update user'
+                    });
+                }
+                
+                // Log audit
+                PermissionsController.createAuditLog(req.user?.userId, 'UPDATE', 'USER', userId, {
+                    name, email, roleId, status
+                });
+                
+                res.json({
+                    success: true,
+                    message: 'User updated successfully'
+                });
             });
-            
-            res.json({
-                success: true,
-                message: 'User updated successfully'
-            });
-            
-        } catch (error) {
-            console.error('Update user error:', error);
-            res.status(500).json({
-                success: false,
-                message: 'Failed to update user'
-            });
-        }
+        });
     }
     
-    static async deleteUser(req, res) {
-        try {
-            const { userId } = req.params;
+    static deleteUser(req, res) {
+        const { userId } = req.params;
+        
+        // Check if user exists
+        db.query('SELECT id FROM users WHERE id = ?', [userId], (err, existingUsers) => {
+            if (err) {
+                console.error('Database error:', err);
+                return res.status(500).json({
+                    success: false,
+                    message: 'Database error'
+                });
+            }
             
-            // Check if user exists
-            const [existingUsers] = await db.execute('SELECT id FROM users WHERE id = ?', [userId]);
             if (existingUsers.length === 0) {
                 return res.status(404).json({
                     success: false,
@@ -402,129 +419,172 @@ class PermissionsController {
             }
             
             // Delete user
-            await db.execute('DELETE FROM users WHERE id = ?', [userId]);
-            
-            // Log audit
-            await this.createAuditLog(req.user?.userId, 'DELETE', 'USER', userId, {});
-            
-            res.json({
-                success: true,
-                message: 'User deleted successfully'
+            db.query('DELETE FROM users WHERE id = ?', [userId], (deleteErr) => {
+                if (deleteErr) {
+                    console.error('Delete user error:', deleteErr);
+                    return res.status(500).json({
+                        success: false,
+                        message: 'Failed to delete user'
+                    });
+                }
+                
+                // Log audit
+                PermissionsController.createAuditLog(req.user?.userId, 'DELETE', 'USER', userId, {});
+                
+                res.json({
+                    success: true,
+                    message: 'User deleted successfully'
+                });
             });
-            
-        } catch (error) {
-            console.error('Delete user error:', error);
-            res.status(500).json({
-                success: false,
-                message: 'Failed to delete user'
-            });
-        }
+        });
     }
     
     // ================= ROLE MANAGEMENT ================= //
     
     static async getRoles(req, res) {
-        try {
-            const result = await db.execute(`
-                SELECT r.*, 
-                       COUNT(DISTINCT u.id) as user_count,
-                       COUNT(DISTINCT rp.permission_id) as permission_count
-                FROM roles r
-                LEFT JOIN users u ON r.id = u.role_id
-                LEFT JOIN role_permissions rp ON r.id = rp.role_id
-                WHERE r.is_active = true
-                GROUP BY r.id
-                ORDER BY r.priority
-            `);
-            
-            // db.execute() returns [rows, fields]
-            const roles = result[0];
+        const sql = `
+            SELECT r.*, 
+                   COUNT(DISTINCT u.id) as user_count,
+                   COUNT(DISTINCT rp.permission_id) as permission_count
+            FROM roles r
+            LEFT JOIN users u ON r.id = u.role_id
+            LEFT JOIN role_permissions rp ON r.id = rp.role_id
+            WHERE r.is_active = true
+            GROUP BY r.id
+            ORDER BY r.priority
+        `;
+        
+        db.query(sql, (err, roles) => {
+            if (err) {
+                console.error('Get roles error:', err);
+                return res.status(500).json({
+                    success: false,
+                    message: 'Failed to fetch roles'
+                });
+            }
             
             // Get permissions for each role
-            for (let role of roles) {
-                const permResult = await db.execute(`
+            let completed = 0;
+            const total = roles.length;
+            
+            if (total === 0) {
+                return res.json({
+                    success: true,
+                    data: []
+                });
+            }
+            
+            roles.forEach(role => {
+                const permSql = `
                     SELECT p.name, p.display_name, p.category
                     FROM permissions p
                     JOIN role_permissions rp ON p.id = rp.permission_id
                     WHERE rp.role_id = ? AND p.is_active = true
                     ORDER BY p.category, p.name
-                `, [role.id]);
+                `;
                 
-                // db.execute() returns [rows, fields]
-                role.permissions = permResult[0] || [];
-            }
-            
-            res.json({
-                success: true,
-                data: roles
+                db.query(permSql, [role.id], (err2, permissions) => {
+                    role.permissions = err2 ? [] : permissions;
+                    completed++;
+                    
+                    if (completed === total) {
+                        res.json({
+                            success: true,
+                            data: roles
+                        });
+                    }
+                });
             });
-            
-        } catch (error) {
-            console.error('Get roles error:', error);
-            res.status(500).json({
-                success: false,
-                message: 'Failed to fetch roles'
-            });
-        }
+        });
     }
     
-    static async createRole(req, res) {
-        try {
-            const { name, displayName, description, color = '#6366f1', permissionIds = [] } = req.body;
-            
-            if (!name || !displayName) {
-                return res.status(400).json({
+    static createRole(req, res) {
+        const { name, displayName, display_name, description, color = '#6366f1', permissionIds = [] } = req.body;
+        
+        // Accept both camelCase and snake_case
+        const finalDisplayName = displayName || display_name;
+        
+        if (!name || !finalDisplayName) {
+            return res.status(400).json({
+                success: false,
+                message: 'Name and display name are required'
+            });
+        }
+        
+        // Create role
+        const insertSql = `
+            INSERT INTO roles (name, display_name, description, color)
+            VALUES (?, ?, ?, ?)
+        `;
+        
+        db.query(insertSql, [name, finalDisplayName, description, color], (err, result) => {
+            if (err) {
+                console.error('Create role error:', err);
+                return res.status(500).json({
                     success: false,
-                    message: 'Name and display name are required'
+                    message: 'Failed to create role'
                 });
             }
-            
-            // Create role
-            const [result] = await db.execute(`
-                INSERT INTO roles (name, display_name, description, color)
-                VALUES (?, ?, ?, ?)
-            `, [name, displayName, description, color]);
             
             const roleId = result.insertId;
             
             // Assign permissions
             if (permissionIds.length > 0) {
                 const values = permissionIds.map(permId => `(${roleId}, ${permId})`).join(',');
-                await db.execute(`INSERT INTO role_permissions (role_id, permission_id) VALUES ${values}`);
+                const permSql = `INSERT INTO role_permissions (role_id, permission_id) VALUES ${values}`;
+                
+                db.query(permSql, (permErr) => {
+                    if (permErr) {
+                        console.error('Assign permissions error:', permErr);
+                        return res.status(500).json({
+                            success: false,
+                            message: 'Role created but failed to assign permissions'
+                        });
+                    }
+                    
+                    // Log audit
+                    PermissionsController.createAuditLog(req.user?.userId, 'CREATE', 'ROLE', roleId, {
+                        name, displayName: finalDisplayName, description, color, permissionIds
+                    });
+                    
+                    res.status(201).json({
+                        success: true,
+                        message: 'Role created successfully',
+                        data: { id: roleId }
+                    });
+                });
+            } else {
+                // No permissions to assign
+                PermissionsController.createAuditLog(req.user?.userId, 'CREATE', 'ROLE', roleId, {
+                    name, displayName: finalDisplayName, description, color, permissionIds
+                });
+                
+                res.status(201).json({
+                    success: true,
+                    message: 'Role created successfully',
+                    data: { id: roleId }
+                });
             }
-            
-            // Log audit
-            await this.createAuditLog(req.user?.userId, 'CREATE', 'ROLE', roleId, {
-                name, displayName, description, color, permissionIds
-            });
-            
-            res.status(201).json({
-                success: true,
-                message: 'Role created successfully',
-                data: { id: roleId }
-            });
-            
-        } catch (error) {
-            console.error('Create role error:', error);
-            res.status(500).json({
-                success: false,
-                message: 'Failed to create role'
-            });
-        }
+        });
     }
     
     // ================= PERMISSION MANAGEMENT ================= //
     
-    static async getPermissions(req, res) {
-        try {
-            const result = await db.execute(`
-                SELECT * FROM permissions 
-                WHERE is_active = true 
-                ORDER BY category, name
-            `);
-            
-            // db.execute() returns [rows, fields]
-            const permissions = result[0];
+    static getPermissions(req, res) {
+        const sql = `
+            SELECT * FROM permissions 
+            WHERE is_active = true 
+            ORDER BY category, name
+        `;
+        
+        db.query(sql, (err, permissions) => {
+            if (err) {
+                console.error('Get permissions error:', err);
+                return res.status(500).json({
+                    success: false,
+                    message: 'Failed to fetch permissions'
+                });
+            }
             
             // Group by category
             const groupedPermissions = permissions.reduce((acc, perm) => {
@@ -542,143 +602,180 @@ class PermissionsController {
                     grouped: groupedPermissions
                 }
             });
-            
-        } catch (error) {
-            console.error('Get permissions error:', error);
-            res.status(500).json({
-                success: false,
-                message: 'Failed to fetch permissions'
-            });
-        }
+        });
     }
     
     // ================= AUDIT LOG ================= //
     
-    static async getAuditLogs(req, res) {
-        try {
-            const { page = 1, limit = 50, userId, action, resource } = req.query;
-            const offset = (page - 1) * limit;
-            
-            let whereClause = '1=1';
-            let params = [];
-            
-            if (userId) {
-                whereClause += ' AND al.user_id = ?';
-                params.push(userId);
+    static getAuditLogs(req, res) {
+        const { page = 1, limit = 50, userId, action, resource } = req.query;
+        const offset = (page - 1) * limit;
+        
+        let whereClause = '1=1';
+        let params = [];
+        
+        if (userId) {
+            whereClause += ' AND al.user_id = ?';
+            params.push(userId);
+        }
+        
+        if (action) {
+            whereClause += ' AND al.action = ?';
+            params.push(action);
+        }
+        
+        if (resource) {
+            whereClause += ' AND al.resource = ?';
+            params.push(resource);
+        }
+        
+        const logsSql = `
+            SELECT al.*, u.name as user_name, u.email as user_email
+            FROM audit_logs al
+            LEFT JOIN users u ON al.user_id = u.id
+            WHERE ${whereClause}
+            ORDER BY al.created_at DESC
+            LIMIT ? OFFSET ?
+        `;
+        
+        db.query(logsSql, [...params, parseInt(limit), parseInt(offset)], (err, logs) => {
+            if (err) {
+                console.error('Get audit logs error:', err);
+                return res.status(500).json({
+                    success: false,
+                    message: 'Failed to fetch audit logs'
+                });
             }
             
-            if (action) {
-                whereClause += ' AND al.action = ?';
-                params.push(action);
-            }
-            
-            if (resource) {
-                whereClause += ' AND al.resource = ?';
-                params.push(resource);
-            }
-            
-            const [logs] = await db.execute(`
-                SELECT al.*, u.name as user_name, u.email as user_email
-                FROM audit_logs al
-                LEFT JOIN users u ON al.user_id = u.id
-                WHERE ${whereClause}
-                ORDER BY al.created_at DESC
-                LIMIT ? OFFSET ?
-            `, [...params, parseInt(limit), parseInt(offset)]);
-            
-            const [countResult] = await db.execute(`
+            const countSql = `
                 SELECT COUNT(*) as total
                 FROM audit_logs al
                 WHERE ${whereClause}
-            `, params);
+            `;
             
-            res.json({
-                success: true,
-                data: {
-                    logs,
-                    pagination: {
-                        page: parseInt(page),
-                        limit: parseInt(limit),
-                        total: countResult[0].total,
-                        pages: Math.ceil(countResult[0].total / limit)
-                    }
+            db.query(countSql, params, (countErr, countResult) => {
+                if (countErr) {
+                    console.error('Count audit logs error:', countErr);
+                    return res.status(500).json({
+                        success: false,
+                        message: 'Failed to fetch audit logs count'
+                    });
                 }
+                
+                res.json({
+                    success: true,
+                    data: {
+                        logs,
+                        pagination: {
+                            page: parseInt(page),
+                            limit: parseInt(limit),
+                            total: countResult[0].total,
+                            pages: Math.ceil(countResult[0].total / limit)
+                        }
+                    }
+                });
             });
-            
-        } catch (error) {
-            console.error('Get audit logs error:', error);
-            res.status(500).json({
-                success: false,
-                message: 'Failed to fetch audit logs'
-            });
-        }
+        });
     }
     
     // ================= SYSTEM STATS ================= //
     
-    static async getSystemStats(req, res) {
-        try {
-            const [userStats] = await db.execute(`
-                SELECT 
-                    COUNT(*) as total_users,
-                    SUM(CASE WHEN status = 'active' THEN 1 ELSE 0 END) as active_users,
-                    SUM(CASE WHEN status = 'inactive' THEN 1 ELSE 0 END) as inactive_users
-                FROM users
-            `);
+    static getSystemStats(req, res) {
+        const userStatsSql = `
+            SELECT 
+                COUNT(*) as total_users,
+                SUM(CASE WHEN status = 'active' THEN 1 ELSE 0 END) as active_users,
+                SUM(CASE WHEN status = 'inactive' THEN 1 ELSE 0 END) as inactive_users
+            FROM users
+        `;
+        
+        db.query(userStatsSql, (err, userStats) => {
+            if (err) {
+                console.error('Get user stats error:', err);
+                return res.status(500).json({
+                    success: false,
+                    message: 'Failed to fetch system stats'
+                });
+            }
             
-            const [roleStats] = await db.execute(`
+            const roleStatsSql = `
                 SELECT r.name, r.display_name, COUNT(u.id) as user_count
                 FROM roles r
                 LEFT JOIN users u ON r.id = u.role_id
                 WHERE r.is_active = true
                 GROUP BY r.id
                 ORDER BY user_count DESC
-            `);
+            `;
             
-            const [permissionStats] = await db.execute(`
-                SELECT category, COUNT(*) as permission_count
-                FROM permissions
-                WHERE is_active = true
-                GROUP BY category
-                ORDER BY permission_count DESC
-            `);
-            
-            const [recentActivity] = await db.execute(`
-                SELECT COUNT(*) as activity_count
-                FROM audit_logs
-                WHERE created_at >= DATE_SUB(NOW(), INTERVAL 24 HOUR)
-            `);
-            
-            res.json({
-                success: true,
-                data: {
-                    users: userStats[0],
-                    roles: roleStats,
-                    permissions: permissionStats,
-                    recentActivity: recentActivity[0].activity_count
+            db.query(roleStatsSql, (roleErr, roleStats) => {
+                if (roleErr) {
+                    console.error('Get role stats error:', roleErr);
+                    return res.status(500).json({
+                        success: false,
+                        message: 'Failed to fetch system stats'
+                    });
                 }
+                
+                const permStatsSql = `
+                    SELECT category, COUNT(*) as permission_count
+                    FROM permissions
+                    WHERE is_active = true
+                    GROUP BY category
+                    ORDER BY permission_count DESC
+                `;
+                
+                db.query(permStatsSql, (permErr, permissionStats) => {
+                    if (permErr) {
+                        console.error('Get permission stats error:', permErr);
+                        return res.status(500).json({
+                            success: false,
+                            message: 'Failed to fetch system stats'
+                        });
+                    }
+                    
+                    const activitySql = `
+                        SELECT COUNT(*) as activity_count
+                        FROM audit_logs
+                        WHERE created_at >= DATE_SUB(NOW(), INTERVAL 24 HOUR)
+                    `;
+                    
+                    db.query(activitySql, (actErr, recentActivity) => {
+                        if (actErr) {
+                            console.error('Get activity stats error:', actErr);
+                            return res.status(500).json({
+                                success: false,
+                                message: 'Failed to fetch system stats'
+                            });
+                        }
+                        
+                        res.json({
+                            success: true,
+                            data: {
+                                users: userStats[0],
+                                roles: roleStats,
+                                permissions: permissionStats,
+                                recentActivity: recentActivity[0].activity_count
+                            }
+                        });
+                    });
+                });
             });
-            
-        } catch (error) {
-            console.error('Get system stats error:', error);
-            res.status(500).json({
-                success: false,
-                message: 'Failed to fetch system stats'
-            });
-        }
+        });
     }
     
     // ================= HELPER METHODS ================= //
     
-    static async createAuditLog(userId, action, resource, resourceId, details) {
-        try {
-            await db.execute(`
-                INSERT INTO audit_logs (user_id, action, resource, resource_id, details)
-                VALUES (?, ?, ?, ?, ?)
-            `, [userId, action, resource, resourceId, JSON.stringify(details)]);
-        } catch (error) {
-            console.error('Create audit log error:', error);
-        }
+    static createAuditLog(userId, action, resource, resourceId, details) {
+        const sql = `
+            INSERT INTO audit_logs (user_id, action, resource, resource_id, details)
+            VALUES (?, ?, ?, ?, ?)
+        `;
+        
+        db.query(sql, [userId, action, resource, resourceId, JSON.stringify(details)], (err) => {
+            if (err) {
+                console.error('Create audit log error:', err);
+            }
+        });
     }
 }
 
