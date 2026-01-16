@@ -462,10 +462,12 @@ export default function OrderSheet() {
         setDeleting(true);
         
         try {
+            const token = localStorage.getItem('token');
             const response = await fetch(`https://16.171.161.150.nip.io/api/order-tracking/${dispatchId}`, {
                 method: 'DELETE',
                 headers: {
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
                 }
             });
             

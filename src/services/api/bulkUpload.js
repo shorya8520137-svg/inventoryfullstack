@@ -24,17 +24,8 @@ export const bulkUploadAPI = {
         const token = localStorage.getItem('token');
         
         return new Promise((resolve, reject) => {
-            const eventSource = new EventSource(`${API_BASE_URL}/bulk-upload/progress`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify({ rows })
-            });
-
             // For browsers that don't support POST with EventSource, use fetch with streaming
-            fetch(`${API_BASE_URL}/bulk-upload/progress`, {
+            fetch(`${API_BASE_URL}/api/bulk-upload/progress`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -104,7 +95,7 @@ export const bulkUploadAPI = {
      * @returns {Promise} List of warehouses
      */
     async getWarehouses() {
-        return apiRequest('/bulk-upload/warehouses');
+        return apiRequest('/api/bulk-upload/warehouses');
     },
 
     /**
