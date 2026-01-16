@@ -321,11 +321,15 @@ export default function OrderSheet() {
         }
         
         try {
+            // Get token from localStorage
+            const token = localStorage.getItem('token');
+            
             // Send status update to backend with barcode for specific product update
             const response = await fetch(`https://16.171.161.150.nip.io/api/order-tracking/${order.dispatch_id || orderId}/status`, {
                 method: 'PATCH',
                 headers: {
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
                 },
                 body: JSON.stringify({ 
                     status: newStatus,

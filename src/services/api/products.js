@@ -99,6 +99,7 @@ export const productsAPI = {
      */
     async bulkImportWithProgress(file, onProgress) {
         const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE || "https://16.171.161.150.nip.io";
+        const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
         
         return new Promise((resolve, reject) => {
             const formData = new FormData();
@@ -106,6 +107,9 @@ export const productsAPI = {
 
             fetch(`${API_BASE_URL}/api/products/bulk/import/progress`, {
                 method: 'POST',
+                headers: {
+                    ...(token && { 'Authorization': `Bearer ${token}` })
+                },
                 body: formData
             }).then(response => {
                 if (!response.ok) {

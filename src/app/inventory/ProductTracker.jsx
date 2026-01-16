@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import styles from "./productTracker.module.css";
-import { api } from "../../utils/api";
+import { apiRequest } from "../../utils/api";
 
 /* ================= LABEL MAP ================= */
 const LABELS = {
@@ -129,7 +129,7 @@ export default function ProductTracker({
                     url += `?warehouse=${encodeURIComponent(warehouseFilter)}`;
                 }
 
-                const data = await api(url);
+                const data = await apiRequest(url);
                 if (!mounted) return;
 
                 // Handle new timeline API response format from controller
