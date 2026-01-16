@@ -95,10 +95,12 @@ export default function ProductTracker({
             const data = await response.json();
             
             if (data.success && data.data) {
-                // The API returns dispatch details at root level and timeline as nested array
+                // The API returns { dispatch: {...}, timeline: [...], summary: {...} }
+                // Flatten dispatch fields to root level for easier access in modal
                 setSelectedDispatch({
-                    ...data.data,
-                    timeline: data.data.timeline || []
+                    ...data.data.dispatch,  // Spread dispatch fields to root
+                    timeline: data.data.timeline || [],
+                    summary: data.data.summary || {}
                 });
             } else {
                 console.error('Failed to fetch dispatch details');
