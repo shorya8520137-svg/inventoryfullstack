@@ -76,8 +76,8 @@ app.use('/api/self-transfer', require('./routes/selfTransferRoutes'));
 // auth routes (no /api prefix for backward compatibility)
 app.use('/auth', require('./routes/authRoutes'));
 
-// permissions routes - TEMPORARILY DISABLED TO FIX SERVER CRASH
-// app.use('/api', require('./routes/permissionsRoutes'));
+// permissions routes
+app.use('/api', require('./routes/permissionsRoutes'));
 
 // ===============================
 // HEALTH CHECK

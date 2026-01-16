@@ -437,26 +437,8 @@ class PermissionsController {
                 ORDER BY r.priority
             `);
             
-            console.log('getRoles result type:', typeof result, 'isArray:', Array.isArray(result));
-            console.log('getRoles result:', JSON.stringify(result).substring(0, 200));
-            
-            // Handle different result formats
-            let roles;
-            if (Array.isArray(result)) {
-                roles = result[0] || result;
-            } else if (result && result.rows) {
-                roles = result.rows;
-            } else {
-                roles = result;
-            }
-            
-            if (!Array.isArray(roles)) {
-                console.error('Roles is not an array:', roles);
-                return res.status(500).json({
-                    success: false,
-                    message: 'Invalid database response format'
-                });
-            }
+            // db.execute() returns [rows, fields]
+            const roles = result[0];
             
             // Get permissions for each role
             for (let role of roles) {
@@ -468,8 +450,8 @@ class PermissionsController {
                     ORDER BY p.category, p.name
                 `, [role.id]);
                 
-                const permissions = Array.isArray(permResult) ? (permResult[0] || permResult) : permResult;
-                role.permissions = Array.isArray(permissions) ? permissions : [];
+                // db.execute() returns [rows, fields]
+                role.permissions = permResult[0] || [];
             }
             
             res.json({
@@ -541,25 +523,8 @@ class PermissionsController {
                 ORDER BY category, name
             `);
             
-            console.log('getPermissions result type:', typeof result, 'isArray:', Array.isArray(result));
-            
-            // Handle different result formats
-            let permissions;
-            if (Array.isArray(result)) {
-                permissions = result[0] || result;
-            } else if (result && result.rows) {
-                permissions = result.rows;
-            } else {
-                permissions = result;
-            }
-            
-            if (!Array.isArray(permissions)) {
-                console.error('Permissions is not an array:', permissions);
-                return res.status(500).json({
-                    success: false,
-                    message: 'Invalid database response format'
-                });
-            }
+            // db.execute() returns [rows, fields]
+            const permissions = result[0];
             
             // Group by category
             const groupedPermissions = permissions.reduce((acc, perm) => {
