@@ -35,7 +35,10 @@ export default function DamageRecoveryModal({ onClose }) {
             return;
         }
 
-        fetch(`${API}/warehouses`)
+        const token = localStorage.getItem('token');
+        fetch(`${API}/warehouses`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        })
             .then(r => r.json())
             .then(data => {
                 const allWarehouses = Array.isArray(data) ? data : [];
@@ -71,7 +74,10 @@ export default function DamageRecoveryModal({ onClose }) {
             return;
         }
 
-        fetch(`${API}/search-products?query=${encodeURIComponent(value)}`)
+        const token = localStorage.getItem('token');
+        fetch(`${API}/search-products?query=${encodeURIComponent(value)}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        })
             .then(r => r.json())
             .then(data => {
                 updated[rowIndex].products = Array.isArray(data) ? data : (data.data || []);
@@ -101,6 +107,7 @@ export default function DamageRecoveryModal({ onClose }) {
             setLoading(true);
             setMsg("");
 
+            const token = localStorage.getItem('token');
             await Promise.all(
                 validRows.map(r => {
                     const endpoint = action === "damage" 
@@ -108,7 +115,10 @@ export default function DamageRecoveryModal({ onClose }) {
                         : "https://16.171.161.150.nip.io/api/damage-recovery/recover";
                     return fetch(endpoint, {
                         method: "POST",
-                        headers: { "Content-Type": "application/json" },
+                        headers: { 
+                            "Content-Type": "application/json",
+                            "Authorization": `Bearer ${token}`
+                        },
                         body: JSON.stringify({
                             product_type: r.selectedProduct.product_name,
                             barcode: r.selectedProduct.barcode,
