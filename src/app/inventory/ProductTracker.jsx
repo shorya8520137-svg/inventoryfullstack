@@ -761,7 +761,7 @@ export default function ProductTracker({
                     <div className={styles.dispatchOverlay} onClick={closeDispatchModal} />
                     <div className={styles.dispatchModal}>
                         <div className={styles.dispatchHeader}>
-                            <h3>📦 Dispatch Details</h3>
+                            <h3>Dispatch Details</h3>
                             <button className={styles.closeBtn} onClick={closeDispatchModal}>✕</button>
                         </div>
                         
@@ -777,11 +777,11 @@ export default function ProductTracker({
                                     <div className={styles.dispatchSummary}>
                                         <div className={styles.summaryGrid}>
                                             <div className={styles.summaryItem}>
-                                                <span className={styles.summaryLabel}>Customer:</span>
+                                                <span className={styles.summaryLabel}>CUSTOMER:</span>
                                                 <span className={styles.summaryValue}>{selectedDispatch.customer || 'N/A'}</span>
                                             </div>
                                             <div className={styles.summaryItem}>
-                                                <span className={styles.summaryLabel}>Product:</span>
+                                                <span className={styles.summaryLabel}>PRODUCT:</span>
                                                 <span className={styles.summaryValue}>{selectedDispatch.product_name || 'N/A'}</span>
                                             </div>
                                             <div className={styles.summaryItem}>
@@ -789,73 +789,47 @@ export default function ProductTracker({
                                                 <span className={styles.summaryValue}>{selectedDispatch.awb || 'N/A'}</span>
                                             </div>
                                             <div className={styles.summaryItem}>
-                                                <span className={styles.summaryLabel}>Order Ref:</span>
+                                                <span className={styles.summaryLabel}>ORDER REF:</span>
                                                 <span className={styles.summaryValue}>{selectedDispatch.order_ref || 'N/A'}</span>
                                             </div>
                                             <div className={styles.summaryItem}>
-                                                <span className={styles.summaryLabel}>Quantity:</span>
+                                                <span className={styles.summaryLabel}>QUANTITY:</span>
                                                 <span className={styles.summaryValue}>{selectedDispatch.qty || selectedDispatch.quantity || 0}</span>
                                             </div>
                                             <div className={styles.summaryItem}>
-                                                <span className={styles.summaryLabel}>Warehouse:</span>
+                                                <span className={styles.summaryLabel}>WAREHOUSE:</span>
                                                 <span className={styles.summaryValue}>{selectedDispatch.warehouse || 'N/A'}</span>
                                             </div>
                                             <div className={styles.summaryItem}>
-                                                <span className={styles.summaryLabel}>Status:</span>
-                                                <span className={`${styles.summaryValue} ${styles.statusBadge}`}>{selectedDispatch.status || 'N/A'}</span>
+                                                <span className={styles.summaryLabel}>STATUS:</span>
+                                                <span className={styles.statusBadge}>{selectedDispatch.status || 'N/A'}</span>
                                             </div>
                                             <div className={styles.summaryItem}>
-                                                <span className={styles.summaryLabel}>Logistics:</span>
+                                                <span className={styles.summaryLabel}>LOGISTICS:</span>
                                                 <span className={styles.summaryValue}>{selectedDispatch.logistics || 'N/A'}</span>
                                             </div>
                                             <div className={styles.summaryItem}>
-                                                <span className={styles.summaryLabel}>Payment Mode:</span>
+                                                <span className={styles.summaryLabel}>PAYMENT MODE:</span>
                                                 <span className={styles.summaryValue}>{selectedDispatch.payment_mode || 'N/A'}</span>
                                             </div>
                                             <div className={styles.summaryItem}>
-                                                <span className={styles.summaryLabel}>Invoice Amount:</span>
+                                                <span className={styles.summaryLabel}>INVOICE AMOUNT:</span>
                                                 <span className={styles.summaryValue}>₹{selectedDispatch.invoice_amount || 0}</span>
                                             </div>
                                             <div className={styles.summaryItem}>
-                                                <span className={styles.summaryLabel}>Dimensions:</span>
+                                                <span className={styles.summaryLabel}>DIMENSIONS:</span>
                                                 <span className={styles.summaryValue}>
                                                     L: {selectedDispatch.length || 0} × W: {selectedDispatch.width || 0} × H: {selectedDispatch.height || 0}
                                                 </span>
                                             </div>
                                             <div className={styles.summaryItem}>
-                                                <span className={styles.summaryLabel}>Weight:</span>
+                                                <span className={styles.summaryLabel}>WEIGHT:</span>
                                                 <span className={styles.summaryValue}>{selectedDispatch.actual_weight || 0} kg</span>
                                             </div>
-                                            {selectedDispatch.barcode && (
-                                                <div className={styles.summaryItem}>
-                                                    <span className={styles.summaryLabel}>Barcode:</span>
-                                                    <span className={styles.summaryValue}>{selectedDispatch.barcode}</span>
-                                                </div>
-                                            )}
-                                            {selectedDispatch.variant && (
-                                                <div className={styles.summaryItem}>
-                                                    <span className={styles.summaryLabel}>Variant:</span>
-                                                    <span className={styles.summaryValue}>{selectedDispatch.variant}</span>
-                                                </div>
-                                            )}
-                                            {selectedDispatch.parcel_type && (
-                                                <div className={styles.summaryItem}>
-                                                    <span className={styles.summaryLabel}>Parcel Type:</span>
-                                                    <span className={styles.summaryValue}>{selectedDispatch.parcel_type}</span>
-                                                </div>
-                                            )}
-                                            {selectedDispatch.processed_by && (
-                                                <div className={styles.summaryItem}>
-                                                    <span className={styles.summaryLabel}>Processed By:</span>
-                                                    <span className={styles.summaryValue}>{selectedDispatch.processed_by}</span>
-                                                </div>
-                                            )}
-                                            {selectedDispatch.remarks && (
-                                                <div className={styles.summaryItem} style={{ gridColumn: '1 / -1' }}>
-                                                    <span className={styles.summaryLabel}>Remarks:</span>
-                                                    <span className={styles.summaryValue}>{selectedDispatch.remarks}</span>
-                                                </div>
-                                            )}
+                                            <div className={styles.summaryItem}>
+                                                <span className={styles.summaryLabel}>BARCODE:</span>
+                                                <span className={styles.summaryValue}>{selectedDispatch.barcode || barcode}</span>
+                                            </div>
                                         </div>
                                     </div>
                                 </>
