@@ -1,0 +1,110 @@
+SIMPLE FIX FOR PERMISSIONS SYSTEM
+==================================
+
+The server keeps crashing because the permissions controller has syntax errors.
+
+QUICKEST SOLUTION:
+------------------
+
+Option 1: Disable permissions routes temporarily and test other APIs
+---------------------------------------------------------------------
+1. SSH: ssh -i "C:\Users\Admin\awsconection.pem" ubuntu@16.171.161.150
+2. cd inventoryfullstack
+3. Comment out permissions routes in server.js:
+   sed -i 's|app.use("/api", require("./routes/permissionsRoutes"));|// app.use("/api", require("./routes/permissionsRoutes"));|g' server.js
+4. Restart: pkill -9 node && sleep 2 && nohup node server.js > server.log 2>&1 &
+5. Test: curl http://localhost:5000/api/products
+
+This will get the server running so you can test the main APIs.
+
+Option 2: Use the working auth controller only
+-----------------------------------------------
+The auth routes (login/logout) work fine. The issue is with the permissions management routes.
+
+1. Keep auth routes enabled
+2. Disable only the permissions management routes
+3. Test login with all 6 users
+4. Test main APIs (products, inventory, dispatch, etc.)
+
+MANUAL COMMANDS TO RUN:
+-----------------------
+
+# Connect to server
+ssh -i "C:\Users\Admin\awsconection.pem" ubuntu@16.171.161.150
+
+# Go to project
+cd inventoryfullstack
+
+# Check what's wrong
+tail -30 server.log
+
+# If you see "Unexpected identifier" or syntax error in controller:
+# Restore the original working controller from git
+git checkout controllers/permissionsController.js
+
+# Or restore from backup
+cp controllers/permissionsController.js.backup controllers/permissionsController.js
+
+# Restart server
+pkill -9 node
+sleep 2
+nohup node server.js > server.log 2>&1 &
+
+# Wait and check
+sleep 5
+ps aux | grep "node server" | grep -v grep
+
+# If server is running, test login
+curl -X POST http://localhost:5000/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"admin@company.com","password":"admin@123"}'
+
+# If login works, test the comprehensive script
+node comprehensive-permissions-test.js
+
+WHAT TO EXPECT:
+---------------
+
+If everything works:
+- Server starts successfully
+- Admin can login
+- Other test users can login
+- Main APIs work (products, inventory, etc.)
+- Permissions routes might return errors (that's OK for now)
+
+The goal is to get the server running and test that:
+1. JWT authentication works
+2. All 6 test users can login
+3. Main APIs are accessible
+4. Role-based permissions are enforced
+
+The permissions MANAGEMENT page (CRUD for users/roles) can be fixed later.
+The important part is that LOGIN and PERMISSIONS CHECKING works.
+
+FILES LOCATION:
+---------------
+
+Server: /home/ubuntu/inventoryfullstack/
+- server.js
+- controllers/permissionsController.js
+- controllers/authController.js
+- routes/permissionsRoutes.js
+- routes/authRoutes.js
+- comprehensive-permissions-test.js
+
+Local: C:\Users\Admin\WebstormProjects\stockiqfullstack\stockiqfullstacktest\
+- controllers/permissionsController-fixed.js (has all methods with callbacks)
+- comprehensive-permissions-test.js
+- create-test-users.sql
+
+PRIORITY:
+---------
+
+1. Get server running ✅
+2. Test login for all 6 users ✅
+3. Test main APIs work ✅
+4. Test permissions are enforced ✅
+5. Fix permissions management routes (users/roles CRUD) - LATER
+
+The permissions management UI is a nice-to-have.
+The critical part is authentication and authorization working.

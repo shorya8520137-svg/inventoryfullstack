@@ -43,17 +43,27 @@ export default function TransferForm({ onClose }) {
 
     /* ------------------ LOAD DROPDOWNS ------------------ */
     useEffect(() => {
+        const token = localStorage.getItem('token');
+        
         // Load warehouses from dispatch API
-        fetch(`${API}/warehouses`).then(r => r.json()).then(setWarehouses);
+        fetch(`${API}/warehouses`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        }).then(r => r.json()).then(setWarehouses);
         
         // Load logistics from dispatch API
-        fetch(`${API}/logistics`).then(r => r.json()).then(setLogistics);
+        fetch(`${API}/logistics`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        }).then(r => r.json()).then(setLogistics);
         
         // Load executives from dispatch API
-        fetch(`${API}/processed-persons`).then(r => r.json()).then(setExecutives);
+        fetch(`${API}/processed-persons`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        }).then(r => r.json()).then(setExecutives);
         
         // Load stores from products API
-        fetch(`${PRODUCTS_API}/stores`)
+        fetch(`${PRODUCTS_API}/stores`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        })
             .then(r => r.json())
             .then(data => {
                 if (data.success) {
@@ -82,7 +92,10 @@ export default function TransferForm({ onClose }) {
         updated[index].name = value;
 
         if (value.length > 2) {
-            const res = await fetch(`${API}/search-products?query=${value}`);
+            const token = localStorage.getItem('token');
+            const res = await fetch(`${API}/search-products?query=${value}`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
             updated[index].suggestions = await res.json();
         } else {
             updated[index].suggestions = [];
@@ -146,9 +159,13 @@ export default function TransferForm({ onClose }) {
             setLoading(true);
             setError("");
 
+            const token = localStorage.getItem('token');
             const res = await fetch(`https://16.171.161.150.nip.io/api/self-transfer/create`, {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
+                headers: { 
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`
+                },
                 body: JSON.stringify(payload),
             });
 

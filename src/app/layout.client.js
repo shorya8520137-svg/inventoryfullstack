@@ -34,9 +34,9 @@ export default function ClientLayout({ children }) {
         return null;
     }
 
-    // If on login page and already logged in, redirect to dashboard
+    // If on login page and already logged in, redirect to products
     if (!loading && user && isLoginPage) {
-        router.push("/dashboard");
+        router.push("/products");
         return null;
     }
 
@@ -67,10 +67,10 @@ export default function ClientLayout({ children }) {
     return (
         <SidebarProvider>
             {/* 🔑 ROOT LAYOUT */}
-            <div className="flex h-screen w-screen bg-slate-50">
+            <div className="flex h-screen w-screen bg-gradient-to-br from-slate-50 to-slate-100">
 
                 {/* SIDEBAR */}
-                <Sidebar className="shrink-0">
+                <Sidebar className="shrink-0 border-r border-slate-200 bg-white/80 backdrop-blur-sm">
                     <SidebarContent>
                         <InventoryMenu 
                             onOpenOperation={(tab) => {
@@ -81,17 +81,18 @@ export default function ClientLayout({ children }) {
                     </SidebarContent>
                 </Sidebar>
 
-                {/* 🔑 MAIN CONTENT — THIS FIXES SCROLLING */}
+                {/* 🔑 MAIN CONTENT — PROFESSIONAL SCROLLING */}
                 <div className="flex-1 min-w-0 h-full flex flex-col">
                     {/* TOP NAVIGATION BAR */}
                     <TopNavBar />
                     
                     {/* MAIN CONTENT */}
-                    <main
-                        className="flex-1 min-w-0 overflow-x-auto overflow-y-auto relative"
-                        style={{ backgroundColor: 'hsl(var(--background))' }}
-                    >
-                        {children}
+                    <main className="flex-1 min-w-0 overflow-hidden relative bg-gradient-to-br from-slate-50/50 to-white">
+                        <div className="h-full overflow-y-auto overflow-x-hidden custom-scrollbar">
+                            <div className="min-h-full p-6">
+                                {children}
+                            </div>
+                        </div>
                     </main>
                 </div>
 
@@ -104,27 +105,27 @@ export default function ClientLayout({ children }) {
                 {/* Individual Operation Modals */}
                 {operationsOpen && operationTab === "dispatch" && (
                     <div 
-                        className="fixed inset-0 bg-black/20 backdrop-blur-sm flex items-center justify-center z-[1001] p-4"
+                        className="fixed inset-0 bg-black/40 backdrop-blur-md flex items-center justify-center z-[1001] p-4"
                         onClick={(e) => {
                             if (e.target === e.currentTarget) {
                                 setOperationsOpen(false);
                             }
                         }}
                     >
-                        <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-hidden relative">
-                            <div className="flex items-center justify-between p-4 border-b bg-white">
-                                <h2 className="text-lg font-semibold">Dispatch</h2>
+                        <div className="card-modern max-w-4xl w-full max-h-[90vh] overflow-hidden relative">
+                            <div className="flex items-center justify-between p-6 border-b border-slate-200 bg-white">
+                                <h2 className="text-xl font-semibold text-slate-900">Dispatch Management</h2>
                                 <button 
                                     onClick={() => setOperationsOpen(false)}
-                                    className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                                    className="button-secondary p-2 rounded-lg transition-all hover:bg-slate-100"
                                 >
-                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                                         <line x1="18" y1="6" x2="6" y2="18"></line>
                                         <line x1="6" y1="6" x2="18" y2="18"></line>
                                     </svg>
                                 </button>
                             </div>
-                            <div className="overflow-y-auto max-h-[calc(90vh-80px)]">
+                            <div className="overflow-y-auto max-h-[calc(90vh-100px)] custom-scrollbar">
                                 <DispatchForm />
                             </div>
                         </div>
@@ -133,27 +134,27 @@ export default function ClientLayout({ children }) {
 
                 {operationsOpen && operationTab === "damage" && (
                     <div 
-                        className="fixed inset-0 bg-black/20 backdrop-blur-sm flex items-center justify-center z-[1001] p-4"
+                        className="fixed inset-0 bg-black/40 backdrop-blur-md flex items-center justify-center z-[1001] p-4"
                         onClick={(e) => {
                             if (e.target === e.currentTarget) {
                                 setOperationsOpen(false);
                             }
                         }}
                     >
-                        <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-hidden relative">
-                            <div className="flex items-center justify-between p-4 border-b bg-white">
-                                <h2 className="text-lg font-semibold">Damage / Recovery</h2>
+                        <div className="card-modern max-w-2xl w-full max-h-[90vh] overflow-hidden relative">
+                            <div className="flex items-center justify-between p-6 border-b border-slate-200 bg-white">
+                                <h2 className="text-xl font-semibold text-slate-900">Damage / Recovery</h2>
                                 <button 
                                     onClick={() => setOperationsOpen(false)}
-                                    className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                                    className="button-secondary p-2 rounded-lg transition-all hover:bg-slate-100"
                                 >
-                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                                         <line x1="18" y1="6" x2="6" y2="18"></line>
                                         <line x1="6" y1="6" x2="18" y2="18"></line>
                                     </svg>
                                 </button>
                             </div>
-                            <div className="overflow-y-auto max-h-[calc(90vh-80px)]">
+                            <div className="overflow-y-auto max-h-[calc(90vh-100px)] custom-scrollbar">
                                 <DamageRecoveryModal onClose={() => setOperationsOpen(false)} />
                             </div>
                         </div>
@@ -162,27 +163,27 @@ export default function ClientLayout({ children }) {
 
                 {operationsOpen && operationTab === "return" && (
                     <div 
-                        className="fixed inset-0 bg-black/20 backdrop-blur-sm flex items-center justify-center z-[1001] p-4"
+                        className="fixed inset-0 bg-black/40 backdrop-blur-md flex items-center justify-center z-[1001] p-4"
                         onClick={(e) => {
                             if (e.target === e.currentTarget) {
                                 setOperationsOpen(false);
                             }
                         }}
                     >
-                        <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-hidden relative">
-                            <div className="flex items-center justify-between p-4 border-b bg-white">
-                                <h2 className="text-lg font-semibold">Return</h2>
+                        <div className="card-modern max-w-2xl w-full max-h-[90vh] overflow-hidden relative">
+                            <div className="flex items-center justify-between p-6 border-b border-slate-200 bg-white">
+                                <h2 className="text-xl font-semibold text-slate-900">Return Management</h2>
                                 <button 
                                     onClick={() => setOperationsOpen(false)}
-                                    className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                                    className="button-secondary p-2 rounded-lg transition-all hover:bg-slate-100"
                                 >
-                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                                         <line x1="18" y1="6" x2="6" y2="18"></line>
                                         <line x1="6" y1="6" x2="18" y2="18"></line>
                                     </svg>
                                 </button>
                             </div>
-                            <div className="overflow-y-auto max-h-[calc(90vh-80px)]">
+                            <div className="overflow-y-auto max-h-[calc(90vh-100px)] custom-scrollbar">
                                 <ReturnModal onClose={() => setOperationsOpen(false)} />
                             </div>
                         </div>
@@ -191,31 +192,31 @@ export default function ClientLayout({ children }) {
 
                 {operationsOpen && operationTab === "recover" && (
                     <div 
-                        className="fixed inset-0 bg-black/20 backdrop-blur-sm flex items-center justify-center z-[1001] p-4"
+                        className="fixed inset-0 bg-black/40 backdrop-blur-md flex items-center justify-center z-[1001] p-4"
                         onClick={(e) => {
                             if (e.target === e.currentTarget) {
                                 setOperationsOpen(false);
                             }
                         }}
                     >
-                        <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-hidden relative">
-                            <div className="flex items-center justify-between p-4 border-b bg-white">
-                                <h2 className="text-lg font-semibold">Recover</h2>
+                        <div className="card-modern max-w-2xl w-full max-h-[90vh] overflow-hidden relative">
+                            <div className="flex items-center justify-between p-6 border-b border-slate-200 bg-white">
+                                <h2 className="text-xl font-semibold text-slate-900">Recovery Operations</h2>
                                 <button 
                                     onClick={() => setOperationsOpen(false)}
-                                    className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                                    className="button-secondary p-2 rounded-lg transition-all hover:bg-slate-100"
                                 >
-                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                                         <line x1="18" y1="6" x2="6" y2="18"></line>
                                         <line x1="6" y1="6" x2="18" y2="18"></line>
                                     </svg>
                                 </button>
                             </div>
-                            <div className="overflow-y-auto max-h-[calc(90vh-80px)] p-8">
-                                <div className="text-center text-gray-500">
-                                    <div className="text-4xl mb-4">🔧</div>
-                                    <h3 className="text-lg font-medium mb-2">Recovery Operations</h3>
-                                    <p>Recovery functionality coming soon...</p>
+                            <div className="overflow-y-auto max-h-[calc(90vh-100px)] custom-scrollbar p-8">
+                                <div className="text-center text-slate-500">
+                                    <div className="text-6xl mb-6">🔧</div>
+                                    <h3 className="text-xl font-semibold mb-3 text-slate-700">Recovery Operations</h3>
+                                    <p className="text-slate-600">Recovery functionality coming soon...</p>
                                 </div>
                             </div>
                         </div>
@@ -224,27 +225,27 @@ export default function ClientLayout({ children }) {
 
                 {operationsOpen && operationTab === "bulk" && (
                     <div 
-                        className="fixed inset-0 bg-black/20 backdrop-blur-sm flex items-center justify-center z-[1001] p-4"
+                        className="fixed inset-0 bg-black/40 backdrop-blur-md flex items-center justify-center z-[1001] p-4"
                         onClick={(e) => {
                             if (e.target === e.currentTarget) {
                                 setOperationsOpen(false);
                             }
                         }}
                     >
-                        <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-hidden relative">
-                            <div className="flex items-center justify-between p-4 border-b bg-white">
-                                <h2 className="text-lg font-semibold">Bulk Upload</h2>
+                        <div className="card-modern max-w-4xl w-full max-h-[90vh] overflow-hidden relative">
+                            <div className="flex items-center justify-between p-6 border-b border-slate-200 bg-white">
+                                <h2 className="text-xl font-semibold text-slate-900">Bulk Upload</h2>
                                 <button 
                                     onClick={() => setOperationsOpen(false)}
-                                    className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                                    className="button-secondary p-2 rounded-lg transition-all hover:bg-slate-100"
                                 >
-                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                                         <line x1="18" y1="6" x2="6" y2="18"></line>
                                         <line x1="6" y1="6" x2="18" y2="18"></line>
                                     </svg>
                                 </button>
                             </div>
-                            <div className="overflow-y-auto max-h-[calc(90vh-80px)]">
+                            <div className="overflow-y-auto max-h-[calc(90vh-100px)] custom-scrollbar">
                                 <InventoryEntry onClose={() => setOperationsOpen(false)} />
                             </div>
                         </div>

@@ -82,7 +82,10 @@ export default function OrderSheet() {
             setError('');
             
             // Use the updated dispatch tracking API
-            const response = await fetch('https://16.171.161.150.nip.io/api/order-tracking');
+            const token = localStorage.getItem('token');
+            const response = await fetch('https://16.171.161.150.nip.io/api/order-tracking', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
             const data = await response.json();
             
             if (data.success) {
@@ -146,7 +149,10 @@ export default function OrderSheet() {
         setTimelineLoading(true);
         
         try {
-            const response = await fetch(`https://16.171.161.150.nip.io/api/order-tracking/${order.id}/timeline`);
+            const token = localStorage.getItem('token');
+            const response = await fetch(`https://16.171.161.150.nip.io/api/order-tracking/${order.id}/timeline`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
             const data = await response.json();
             
             if (data.success) {

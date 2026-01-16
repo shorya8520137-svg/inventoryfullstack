@@ -25,7 +25,10 @@ export default function ReturnModal({ onClose }) {
        WAREHOUSE SEARCH
     -------------------------------- */
     useEffect(() => {
-        fetch(`${API}/warehouses`)
+        const token = localStorage.getItem('token');
+        fetch(`${API}/warehouses`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        })
             .then(r => r.json())
             .then(data => {
                 const allWarehouses = Array.isArray(data) ? data : [];
@@ -54,7 +57,10 @@ export default function ReturnModal({ onClose }) {
             return;
         }
 
-        fetch(`${API}/search-products?query=${productQuery}`)
+        const token = localStorage.getItem('token');
+        fetch(`${API}/search-products?query=${productQuery}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        })
             .then(r => r.json())
             .then(data => {
                 setProducts(Array.isArray(data) ? data : (data.data || []));
@@ -75,9 +81,13 @@ export default function ReturnModal({ onClose }) {
             setLoading(true);
             setMsg("");
 
+            const token = localStorage.getItem('token');
             const res = await fetch(RETURNS_API, {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
+                headers: { 
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`
+                },
                 body: JSON.stringify({
                     product_type: selectedProduct.product_name,
                     barcode: selectedProduct.barcode,

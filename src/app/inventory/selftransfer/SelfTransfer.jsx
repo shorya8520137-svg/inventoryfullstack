@@ -29,13 +29,19 @@ export default function SelfTransfer() {
 
     /* LOAD DATA (UNCHANGED) */
     const loadLedger = useCallback(async () => {
-        const res = await fetch(`${API_BASE}/api/inventory-ledger`);
+        const token = localStorage.getItem('token');
+        const res = await fetch(`${API_BASE}/api/inventory-ledger`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
         const data = await res.json();
         if (data.success) setLedger(data.data || []);
     }, []);
 
     const loadSummary = useCallback(async () => {
-        const res = await fetch(`${API_BASE}/api/inventory-ledger/summary`);
+        const token = localStorage.getItem('token');
+        const res = await fetch(`${API_BASE}/api/inventory-ledger/summary`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
         const data = await res.json();
         if (data.success) setSummary(data.data);
     }, []);

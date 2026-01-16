@@ -17,7 +17,10 @@ export default function StoreInventory() {
     const [loading, setLoading] = useState(false);
 
     useEffect(() => {
-        fetch(STORES_API)
+        const token = localStorage.getItem('token');
+        fetch(STORES_API, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        })
             .then(res => res.json())
             .then(res => {
                 setStores(res || []);
@@ -29,7 +32,10 @@ export default function StoreInventory() {
         if (!activeStore) return;
 
         setLoading(true);
-        fetch(`${INVENTORY_API}?store_id=${activeStore.id}`)
+        const token = localStorage.getItem('token');
+        fetch(`${INVENTORY_API}?store_id=${activeStore.id}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        })
             .then(res => res.json())
             .then(res => setData(res || []))
             .finally(() => setLoading(false));

@@ -1,61 +1,119 @@
 const jwt = require('jsonwebtoken');
 const db = require('../db/connection');
 
-// Authentication middleware
+// JWT Secret (should be in .env file)
+const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-this-in-production';
+const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '24h';
+
+/**
+ * Generate JWT Token
+ */
+const generateToken = (user) => {
+    const payload = {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        role_id: user.role_id,
+        role_name: user.role_name || user.role,
+        iat: Math.floor(Date.now() / 1000)
+    };
+
+    return jwt.sign(payload, JWT_SECRET, { 
+        expiresIn: JWT_EXPIRES_IN,
+        issuer: 'inventory-system',
+        audience: 'inventory-users'
+    });
+};
+
+/**
+ * Verify JWT Token Middleware
+ */
 const authenticateToken = (req, res, next) => {
     const authHeader = req.headers['authorization'];
-    const token = authHeader && authHeader.split(' ')[1];
+    const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
 
     if (!token) {
         return res.status(401).json({
             success: false,
-            message: 'Access token required'
+            message: 'Access token required',
+            error: 'NO_TOKEN'
         });
     }
 
-    jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key', (err, user) => {
+    jwt.verify(token, JWT_SECRET, (err, decoded) => {
         if (err) {
+            console.log('JWT verification failed:', err.message);
+            
+            if (err.name === 'TokenExpiredError') {
+                return res.status(401).json({
+                    success: false,
+                    message: 'Token expired',
+                    error: 'TOKEN_EXPIRED'
+                });
+            }
+            
+            if (err.name === 'JsonWebTokenError') {
+                return res.status(401).json({
+                    success: false,
+                    message: 'Invalid token',
+                    error: 'INVALID_TOKEN'
+                });
+            }
+
             return res.status(403).json({
                 success: false,
-                message: 'Invalid or expired token'
+                message: 'Token verification failed',
+                error: 'TOKEN_VERIFICATION_FAILED'
             });
         }
-        req.user = user;
+
+        // Add user info to request
+        req.user = decoded;
         next();
     });
 };
 
-// Permission checking middleware
-const checkPermission = (requiredPermission) => {
+/**
+ * Check if user has specific permission
+ */
+const checkPermission = (permissionName) => {
     return async (req, res, next) => {
         try {
-            // Super admin has all permissions
-            if (req.user.role === 'SUPER_ADMIN') {
-                return next();
-            }
+            const userId = req.user.id;
+            const roleId = req.user.role_id;
 
-            // Get user permissions from database
-            const [permissions] = await db.execute(`
-                SELECT p.name
+            // Check if user has the permission through their role
+            const permissionQuery = `
+                SELECT p.name 
                 FROM permissions p
                 JOIN role_permissions rp ON p.id = rp.permission_id
-                JOIN users u ON rp.role_id = u.role_id
-                WHERE u.id = ? AND p.is_active = true
-            `, [req.user.userId]);
+                WHERE rp.role_id = ? AND p.name = ?
+                LIMIT 1
+            `;
 
-            const userPermissions = permissions.map(p => p.name);
+            db.query(permissionQuery, [roleId, permissionName], (err, results) => {
+                if (err) {
+                    console.error('Permission check error:', err);
+                    return res.status(500).json({
+                        success: false,
+                        message: 'Permission check failed'
+                    });
+                }
 
-            if (userPermissions.includes(requiredPermission)) {
+                if (results.length === 0) {
+                    return res.status(403).json({
+                        success: false,
+                        message: 'Insufficient permissions',
+                        required_permission: permissionName,
+                        user_role: req.user.role_name
+                    });
+                }
+
                 next();
-            } else {
-                res.status(403).json({
-                    success: false,
-                    message: `Insufficient permissions. Required: ${requiredPermission}`
-                });
-            }
+            });
         } catch (error) {
-            console.error('Permission check error:', error);
-            res.status(500).json({
+            console.error('Permission middleware error:', error);
+            return res.status(500).json({
                 success: false,
                 message: 'Permission check failed'
             });
@@ -63,119 +121,33 @@ const checkPermission = (requiredPermission) => {
     };
 };
 
-// Multiple permissions check (user needs at least one)
-const checkAnyPermission = (requiredPermissions) => {
-    return async (req, res, next) => {
-        try {
-            // Super admin has all permissions
-            if (req.user.role === 'SUPER_ADMIN') {
-                return next();
-            }
+/**
+ * Get user permissions
+ */
+const getUserPermissions = async (userId, roleId) => {
+    return new Promise((resolve, reject) => {
+        const query = `
+            SELECT DISTINCT p.name, p.display_name, p.category
+            FROM permissions p
+            JOIN role_permissions rp ON p.id = rp.permission_id
+            WHERE rp.role_id = ?
+            ORDER BY p.category, p.name
+        `;
 
-            // Get user permissions from database
-            const [permissions] = await db.execute(`
-                SELECT p.name
-                FROM permissions p
-                JOIN role_permissions rp ON p.id = rp.permission_id
-                JOIN users u ON rp.role_id = u.role_id
-                WHERE u.id = ? AND p.is_active = true
-            `, [req.user.userId]);
-
-            const userPermissions = permissions.map(p => p.name);
-
-            // Check if user has any of the required permissions
-            const hasPermission = requiredPermissions.some(perm => userPermissions.includes(perm));
-
-            if (hasPermission) {
-                next();
+        db.query(query, [roleId], (err, results) => {
+            if (err) {
+                reject(err);
             } else {
-                res.status(403).json({
-                    success: false,
-                    message: `Insufficient permissions. Required one of: ${requiredPermissions.join(', ')}`
-                });
+                resolve(results);
             }
-        } catch (error) {
-            console.error('Permission check error:', error);
-            res.status(500).json({
-                success: false,
-                message: 'Permission check failed'
-            });
-        }
-    };
-};
-
-// Role checking middleware
-const checkRole = (requiredRoles) => {
-    return (req, res, next) => {
-        const userRole = req.user.role;
-
-        if (Array.isArray(requiredRoles)) {
-            if (requiredRoles.includes(userRole)) {
-                next();
-            } else {
-                res.status(403).json({
-                    success: false,
-                    message: `Insufficient role. Required one of: ${requiredRoles.join(', ')}`
-                });
-            }
-        } else {
-            if (userRole === requiredRoles) {
-                next();
-            } else {
-                res.status(403).json({
-                    success: false,
-                    message: `Insufficient role. Required: ${requiredRoles}`
-                });
-            }
-        }
-    };
-};
-
-// Optional authentication (doesn't fail if no token)
-const optionalAuth = (req, res, next) => {
-    const authHeader = req.headers['authorization'];
-    const token = authHeader && authHeader.split(' ')[1];
-
-    if (!token) {
-        req.user = null;
-        return next();
-    }
-
-    jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key', (err, user) => {
-        if (err) {
-            req.user = null;
-        } else {
-            req.user = user;
-        }
-        next();
+        });
     });
-};
-
-// Audit logging helper
-const createAuditLog = async (userId, action, resource, resourceId, details, req) => {
-    try {
-        await db.execute(`
-            INSERT INTO audit_logs (user_id, action, resource, resource_id, details, ip_address, user_agent)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
-        `, [
-            userId,
-            action,
-            resource,
-            resourceId,
-            JSON.stringify(details),
-            req?.ip || req?.connection?.remoteAddress,
-            req?.get('User-Agent')
-        ]);
-    } catch (error) {
-        console.error('Create audit log error:', error);
-    }
 };
 
 module.exports = {
+    generateToken,
     authenticateToken,
     checkPermission,
-    checkAnyPermission,
-    checkRole,
-    optionalAuth,
-    createAuditLog
+    getUserPermissions,
+    JWT_SECRET
 };

@@ -1,101 +1,261 @@
-// Legacy API utilities - DEPRECATED
-// Use the new API services in src/services/api/ instead
+// API Utility Functions for JWT Authentication
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_BASE || "https://16.171.161.150.nip.io";
-const API_TIMEOUT = parseInt(process.env.NEXT_PUBLIC_API_TIMEOUT) || 30000;
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'https://16.171.161.150.nip.io';
 
-// Legacy function - use apiRequest from src/services/api/index.js instead
-export async function api(path, method = "GET", body, options = {}) {
-    console.warn('DEPRECATED: Use apiRequest from @/services/api instead');
+/**
+ * Get JWT token from localStorage
+ */
+export const getToken = () => {
+    if (typeof window !== 'undefined') {
+        return localStorage.getItem('token');
+    }
+    return null;
+};
+
+/**
+ * Get user data from localStorage
+ */
+export const getUser = () => {
+    if (typeof window !== 'undefined') {
+        const user = localStorage.getItem('user');
+        return user ? JSON.parse(user) : null;
+    }
+    return null;
+};
+
+/**
+ * Remove token and user data (logout)
+ */
+export const clearAuth = () => {
+    if (typeof window !== 'undefined') {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+    }
+};
+
+/**
+ * Check if user is authenticated
+ */
+export const isAuthenticated = () => {
+    return !!getToken();
+};
+
+/**
+ * Make authenticated API request
+ */
+export const apiRequest = async (endpoint, options = {}) => {
+    const token = getToken();
+    const url = `${API_BASE}${endpoint}`;
     
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), API_TIMEOUT);
+    const config = {
+        headers: {
+            'Content-Type': 'application/json',
+            ...(token && { 'Authorization': `Bearer ${token}` }),
+            ...options.headers,
+        },
+        ...options,
+    };
 
     try {
-        const res = await fetch(`${BASE_URL}${path}`, {
-            method,
-            headers: {
-                "Content-Type": "application/json",
-                ...options.headers,
-            },
-            body: body ? JSON.stringify(body) : undefined,
-            signal: controller.signal,
-            ...options,
-        });
-
-        clearTimeout(timeoutId);
-
-        if (!res.ok) {
-            const errorData = await res.json().catch(() => ({}));
-            throw new Error(errorData.message || `API error ${res.status}`);
+        const response = await fetch(url, config);
+        
+        // Handle 401 Unauthorized - redirect to login
+        if (response.status === 401) {
+            clearAuth();
+            if (typeof window !== 'undefined') {
+                window.location.href = '/login';
+            }
+            throw new Error('Authentication required');
         }
 
-        return res.json();
+        const data = await response.json();
+        
+        if (!response.ok) {
+            throw new Error(data.message || `HTTP error! status: ${response.status}`);
+        }
+        
+        return data;
     } catch (error) {
-        clearTimeout(timeoutId);
-        if (error.name === 'AbortError') {
-            throw new Error('Request timeout');
-        }
+        console.error('API Request Error:', error);
         throw error;
     }
-}
+};
 
-// Legacy function - use checkAPIHealth from src/services/api instead
-export async function testConnection() {
-    console.warn('DEPRECATED: Use checkAPIHealth from @/services/api instead');
+/**
+ * API Methods
+ */
+export const api = {
+    // Authentication
+    login: (credentials) => 
+        fetch(`${API_BASE}/api/auth/login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(credentials),
+        }).then(res => res.json()),
     
-    try {
-        const response = await fetch(`${BASE_URL}/health`, {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-        });
-        
-        if (response.ok) {
-            const data = await response.json();
-            return { success: true, data };
-        } else {
-            return { success: false, error: `HTTP ${response.status}` };
-        }
-    } catch (error) {
-        return { success: false, error: error.message };
-    }
-}
-
-// Legacy bulk upload functions - use bulkUploadAPI from src/services/api instead
-export const bulkUploadAPI = {
-    async uploadInventory(rows) {
-        console.warn('DEPRECATED: Use bulkUploadAPI.upload from @/services/api instead');
-        return api('/bulk-upload', 'POST', { rows });
+    getCurrentUser: () => apiRequest('/api/auth/me'),
+    
+    logout: () => apiRequest('/api/auth/logout', { method: 'POST' }),
+    
+    // Products
+    getProducts: (params = {}) => {
+        const query = new URLSearchParams(params).toString();
+        return apiRequest(`/api/products${query ? `?${query}` : ''}`);
     },
-
-    async getWarehouses() {
-        console.warn('DEPRECATED: Use bulkUploadAPI.getWarehouses from @/services/api instead');
-        return api('/bulk-upload/warehouses');
+    
+    createProduct: (product) => 
+        apiRequest('/api/products', {
+            method: 'POST',
+            body: JSON.stringify(product),
+        }),
+    
+    updateProduct: (id, product) => 
+        apiRequest(`/api/products/${id}`, {
+            method: 'PUT',
+            body: JSON.stringify(product),
+        }),
+    
+    deleteProduct: (id) => 
+        apiRequest(`/api/products/${id}`, { method: 'DELETE' }),
+    
+    // Inventory
+    getInventory: (params = {}) => {
+        const query = new URLSearchParams(params).toString();
+        return apiRequest(`/api/inventory${query ? `?${query}` : ''}`);
     },
-
-    async getUploadHistory() {
-        console.warn('DEPRECATED: Use bulkUploadAPI.getHistory from @/services/api instead');
-        return api('/bulk-upload/history');
-    }
+    
+    // Dispatch
+    getDispatches: (params = {}) => {
+        const query = new URLSearchParams(params).toString();
+        return apiRequest(`/api/dispatch${query ? `?${query}` : ''}`);
+    },
+    
+    createDispatch: (dispatch) => 
+        apiRequest('/api/dispatch', {
+            method: 'POST',
+            body: JSON.stringify(dispatch),
+        }),
+    
+    // Order Tracking
+    getOrderTracking: (params = {}) => {
+        const query = new URLSearchParams(params).toString();
+        return apiRequest(`/api/order-tracking${query ? `?${query}` : ''}`);
+    },
+    
+    updateOrderStatus: (id, status) => 
+        apiRequest(`/api/order-tracking/${id}/status`, {
+            method: 'PATCH',
+            body: JSON.stringify({ status }),
+        }),
+    
+    deleteOrder: (id) => 
+        apiRequest(`/api/order-tracking/${id}`, { method: 'DELETE' }),
+    
+    // Self Transfer
+    getSelfTransfers: (params = {}) => {
+        const query = new URLSearchParams(params).toString();
+        return apiRequest(`/api/self-transfer${query ? `?${query}` : ''}`);
+    },
+    
+    createSelfTransfer: (transfer) => 
+        apiRequest('/api/self-transfer', {
+            method: 'POST',
+            body: JSON.stringify(transfer),
+        }),
+    
+    // Bulk Upload
+    bulkUpload: (formData) => 
+        apiRequest('/api/bulk-upload', {
+            method: 'POST',
+            headers: {}, // Let browser set Content-Type for FormData
+            body: formData,
+        }),
+    
+    // Damage Recovery
+    getDamageRecovery: (params = {}) => {
+        const query = new URLSearchParams(params).toString();
+        return apiRequest(`/api/damage-recovery${query ? `?${query}` : ''}`);
+    },
+    
+    createDamageRecord: (damage) => 
+        apiRequest('/api/damage-recovery', {
+            method: 'POST',
+            body: JSON.stringify(damage),
+        }),
+    
+    // Returns
+    getReturns: (params = {}) => {
+        const query = new URLSearchParams(params).toString();
+        return apiRequest(`/api/returns${query ? `?${query}` : ''}`);
+    },
+    
+    createReturn: (returnData) => 
+        apiRequest('/api/returns', {
+            method: 'POST',
+            body: JSON.stringify(returnData),
+        }),
+    
+    // Timeline
+    getTimeline: (params = {}) => {
+        const query = new URLSearchParams(params).toString();
+        return apiRequest(`/api/timeline${query ? `?${query}` : ''}`);
+    },
+    
+    // Permissions Management
+    getUsers: (params = {}) => {
+        const query = new URLSearchParams(params).toString();
+        return apiRequest(`/api/users${query ? `?${query}` : ''}`);
+    },
+    
+    createUser: (user) => 
+        apiRequest('/api/users', {
+            method: 'POST',
+            body: JSON.stringify(user),
+        }),
+    
+    updateUser: (id, user) => 
+        apiRequest(`/api/users/${id}`, {
+            method: 'PUT',
+            body: JSON.stringify(user),
+        }),
+    
+    deleteUser: (id) => 
+        apiRequest(`/api/users/${id}`, { method: 'DELETE' }),
+    
+    getRoles: () => apiRequest('/api/roles'),
+    
+    createRole: (role) => 
+        apiRequest('/api/roles', {
+            method: 'POST',
+            body: JSON.stringify(role),
+        }),
+    
+    updateRole: (id, role) => 
+        apiRequest(`/api/roles/${id}`, {
+            method: 'PUT',
+            body: JSON.stringify(role),
+        }),
+    
+    deleteRole: (id) => 
+        apiRequest(`/api/roles/${id}`, { method: 'DELETE' }),
+    
+    getPermissions: () => apiRequest('/api/permissions'),
+    
+    getRolePermissions: (roleId) => 
+        apiRequest(`/api/roles/${roleId}/permissions`),
+    
+    updateRolePermissions: (roleId, permissionIds) => 
+        apiRequest(`/api/roles/${roleId}/permissions`, {
+            method: 'PUT',
+            body: JSON.stringify({ permissionIds }),
+        }),
+    
+    getAuditLogs: (params = {}) => {
+        const query = new URLSearchParams(params).toString();
+        return apiRequest(`/api/audit-logs${query ? `?${query}` : ''}`);
+    },
+    
+    getSystemStats: () => apiRequest('/api/system/stats'),
 };
 
-// Legacy inventory functions - use inventoryAPI from src/services/api instead
-export const inventoryAPI = {
-    async getInventory(filters = {}) {
-        console.warn('DEPRECATED: Use inventoryAPI.getInventory from @/services/api instead');
-        const params = new URLSearchParams(filters);
-        return api(`/inventory?${params}`);
-    },
-
-    async getInventoryByWarehouse(warehouse) {
-        console.warn('DEPRECATED: Use inventoryAPI.getInventoryByWarehouse from @/services/api instead');
-        return api(`/inventory/by-warehouse/${warehouse}`);
-    },
-
-    async exportInventory(format = 'csv') {
-        console.warn('DEPRECATED: Use inventoryAPI.exportInventory from @/services/api instead');
-        return api(`/inventory/export?format=${format}`);
-    }
-};
+export default api;

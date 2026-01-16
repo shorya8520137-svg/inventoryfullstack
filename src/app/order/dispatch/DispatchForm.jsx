@@ -43,8 +43,11 @@ export default function DispatchForm() {
     /* ------------------ YOUR ORIGINAL DROPDOWNS ------------------ */
     useEffect(() => {
         console.log('🔄 Loading dropdown data...');
+        const token = localStorage.getItem('token');
         
-        fetch(`${API}/warehouses`)
+        fetch(`${API}/warehouses`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        })
             .then(r => {
                 console.log('📦 Warehouses response status:', r.status);
                 return r.json();
@@ -55,7 +58,9 @@ export default function DispatchForm() {
             })
             .catch(err => console.error('❌ Warehouses error:', err));
             
-        fetch(`${API}/logistics`)
+        fetch(`${API}/logistics`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        })
             .then(r => {
                 console.log('🚚 Logistics response status:', r.status);
                 return r.json();
@@ -66,7 +71,9 @@ export default function DispatchForm() {
             })
             .catch(err => console.error('❌ Logistics error:', err));
             
-        fetch(`${API}/processed-persons`)
+        fetch(`${API}/processed-persons`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        })
             .then(r => {
                 console.log('👤 Executives response status:', r.status);
                 return r.json();
@@ -85,10 +92,13 @@ export default function DispatchForm() {
         console.log('📦 Checking stock for:', { barcode, warehouse: form.selectedWarehouse });
 
         try {
+            const token = localStorage.getItem('token');
             const url = `${API}/check-inventory?warehouse=${encodeURIComponent(form.selectedWarehouse)}&barcode=${barcode}&qty=1`;
             console.log('📦 Stock check URL:', url);
             
-            const res = await fetch(url);
+            const res = await fetch(url, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
             const data = await res.json();
             
             console.log('📦 Stock check result:', data);
@@ -118,10 +128,13 @@ export default function DispatchForm() {
         });
 
         try {
+            const token = localStorage.getItem('token');
             const url = `${API}/check-inventory?warehouse=${encodeURIComponent(form.selectedWarehouse)}&barcode=${barcode}&qty=${qty}`;
             console.log('🔍 Validation URL:', url);
             
-            const res = await fetch(url);
+            const res = await fetch(url, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
             const result = await res.json();
             
             console.log('🔍 Validation result:', result);
@@ -147,7 +160,10 @@ export default function DispatchForm() {
 
         if (value.length > 2) {
             try {
-                const res = await fetch(`${API}/search-products?query=${encodeURIComponent(value)}`);
+                const token = localStorage.getItem('token');
+                const res = await fetch(`${API}/search-products?query=${encodeURIComponent(value)}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
                 if (res.ok) {
                     const data = await res.json();
                     // Handle both array response and object with data property
@@ -239,9 +255,13 @@ export default function DispatchForm() {
             setLoading(true);
             setError("");
 
+            const token = localStorage.getItem('token');
             const res = await fetch(`${CREATE_API}/create`, {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
+                headers: { 
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`
+                },
                 body: JSON.stringify(payload),
             });
 

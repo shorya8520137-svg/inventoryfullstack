@@ -78,7 +78,10 @@ export default function ProductTracker({
         setShowDispatchModal(true);
         
         try {
-            const response = await fetch(`https://16.171.161.150.nip.io/api/order-tracking/${dispatchId}/timeline`);
+            const token = localStorage.getItem('token');
+            const response = await fetch(`https://16.171.161.150.nip.io/api/order-tracking/${dispatchId}/timeline`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
             const data = await response.json();
             
             if (data.success && data.data) {

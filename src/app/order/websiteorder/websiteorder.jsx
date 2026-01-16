@@ -20,7 +20,10 @@ export default function WebsiteOrder() {
 
     /* ---------------- FETCH ---------------- */
     useEffect(() => {
-        fetch(`${API}?page=1&limit=100`)
+        const token = localStorage.getItem('token');
+        fetch(`${API}?page=1&limit=100`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        })
             .then(r => r.json())
             .then(res => setOrders(res.orders || []))
             .finally(() => setLoading(false));

@@ -14,7 +14,8 @@ import {
     Settings,
     Box,
     LogOut,
-    Plus
+    Plus,
+    Shield
 } from "lucide-react";
 import { cva } from "class-variance-authority";
 import { motion, AnimatePresence } from "framer-motion";
@@ -415,6 +416,21 @@ const InventoryMenu = ({ onOpenOperation }) => {
                                 </button>
                             )}
                         </MenuItemWithSub>
+                    )}
+
+                    {/* PERMISSIONS & USER MANAGEMENT */}
+                    {(hasPermission(PERMISSIONS.SYSTEM_USER_MANAGEMENT) || 
+                      hasPermission(PERMISSIONS.SYSTEM_ROLE_MANAGEMENT) || 
+                      hasPermission(PERMISSIONS.SYSTEM_AUDIT_LOG)) && (
+                        <SidebarMenuItem>
+                            <Link 
+                                href="/permissions" 
+                                className={cn(sidebarMenuButtonVariants({ active: pathname === "/permissions", collapsed }))}
+                            >
+                                <Shield size={collapsed ? 20 : 18} />
+                                {!collapsed && <span>Permissions</span>}
+                            </Link>
+                        </SidebarMenuItem>
                     )}
 
                     {/* ACCESS CONTROL - DISABLED - Code removed for cleaner build */}

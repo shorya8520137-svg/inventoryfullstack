@@ -6,14 +6,23 @@
 const API_BASE = 'https://16.171.161.150.nip.io';
 
 /**
+ * Get JWT token from localStorage
+ */
+const getAuthHeaders = () => {
+    const token = localStorage.getItem('token');
+    return {
+        'Content-Type': 'application/json',
+        ...(token && { 'Authorization': `Bearer ${token}` })
+    };
+};
+
+/**
  * Report damage
  */
 export const reportDamage = async (damageData) => {
     const response = await fetch(`${API_BASE}/damage-recovery/damage`, {
         method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
+        headers: getAuthHeaders(),
         body: JSON.stringify(damageData)
     });
 
@@ -31,9 +40,7 @@ export const reportDamage = async (damageData) => {
 export const recoverStock = async (recoveryData) => {
     const response = await fetch(`${API_BASE}/damage-recovery/recover`, {
         method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
+        headers: getAuthHeaders(),
         body: JSON.stringify(recoveryData)
     });
 
@@ -59,9 +66,7 @@ export const getDamageRecoveryLog = async (filters = {}) => {
 
     const response = await fetch(`${API_BASE}/damage-recovery/log?${params}`, {
         method: 'GET',
-        headers: {
-            'Content-Type': 'application/json'
-        }
+        headers: getAuthHeaders()
     });
 
     if (!response.ok) {
@@ -86,9 +91,7 @@ export const getDamageRecoverySummary = async (filters = {}) => {
 
     const response = await fetch(`${API_BASE}/damage-recovery/summary?${params}`, {
         method: 'GET',
-        headers: {
-            'Content-Type': 'application/json'
-        }
+        headers: getAuthHeaders()
     });
 
     if (!response.ok) {
@@ -108,9 +111,7 @@ export const getProductSuggestions = async (search, warehouse = null) => {
 
     const response = await fetch(`${API_BASE}/damage-recovery/suggestions/products?${params}`, {
         method: 'GET',
-        headers: {
-            'Content-Type': 'application/json'
-        }
+        headers: getAuthHeaders()
     });
 
     if (!response.ok) {

@@ -1,4 +1,4 @@
-const db = require('../db/connection').promise();
+const db = require('../db/connection');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 
@@ -17,80 +17,100 @@ class PermissionsController {
             }
             
             // Get user with role information
-            const result = await db.execute(`
+            const userQuery = `
                 SELECT u.*, r.name as role_name, r.display_name as role_display_name
                 FROM users u
                 JOIN roles r ON u.role_id = r.id
                 WHERE u.email = ?
-            `, [email]);
+            `;
             
-            const users = Array.isArray(result) ? result[0] : result;
-            
-            if (!users || users.length === 0) {
-                return res.status(401).json({
-                    success: false,
-                    message: 'Invalid credentials'
-                });
-            }
-            
-            const user = users[0];
-            
-            // Verify password - check both password and password_hash columns
-            let isValidPassword = false;
-            if (user.password_hash) {
-                isValidPassword = await bcrypt.compare(password, user.password_hash);
-            } else if (user.password) {
-                // For plain text passwords (temporary - should be hashed)
-                isValidPassword = (password === user.password);
-            }
-            
-            if (!isValidPassword) {
-                return res.status(401).json({
-                    success: false,
-                    message: 'Invalid credentials'
-                });
-            }
-            
-            // Get user permissions
-            const permResult = await db.execute(`
-                SELECT p.name, p.display_name, p.category
-                FROM permissions p
-                JOIN role_permissions rp ON p.id = rp.permission_id
-                WHERE rp.role_id = ? AND p.is_active = true
-            `, [user.role_id]);
-            
-            const permissions = Array.isArray(permResult) ? permResult[0] : permResult;
-            
-            // Update last login
-            await db.execute('UPDATE users SET last_login = NOW() WHERE id = ?', [user.id]);
-            
-            // Generate JWT token
-            const token = jwt.sign(
-                { 
-                    userId: user.id, 
-                    email: user.email, 
-                    role: user.role_name,
-                    roleId: user.role_id
-                },
-                process.env.JWT_SECRET || 'your-secret-key',
-                { expiresIn: '24h' }
-            );
-            
-            // Log audit
-            await this.createAuditLog(user.id, 'LOGIN', 'USER', user.id, { ip: req.ip });
-            
-            res.json({
-                success: true,
-                message: 'Login successful',
-                token,
-                user: {
-                    id: user.id,
-                    name: user.name,
-                    email: user.email,
-                    role: user.role_name,
-                    roleDisplayName: user.role_display_name,
-                    permissions: permissions.map(p => p.name)
+            db.query(userQuery, [email], async (err, users) => {
+                if (err) {
+                    console.error('Database error:', err);
+                    return res.status(500).json({
+                        success: false,
+                        message: 'Database error'
+                    });
                 }
+                
+                if (!users || users.length === 0) {
+                    return res.status(401).json({
+                        success: false,
+                        message: 'Invalid credentials'
+                    });
+                }
+                
+                const user = users[0];
+                
+                // Verify password - check both password and password_hash columns
+                let isValidPassword = false;
+                if (user.password_hash) {
+                    isValidPassword = await bcrypt.compare(password, user.password_hash);
+                } else if (user.password) {
+                    // For plain text passwords (temporary - should be hashed)
+                    isValidPassword = (password === user.password);
+                }
+                
+                if (!isValidPassword) {
+                    return res.status(401).json({
+                        success: false,
+                        message: 'Invalid credentials'
+                    });
+                }
+                
+                // Get user permissions
+                const permQuery = `
+                    SELECT p.name, p.display_name, p.category
+                    FROM permissions p
+                    JOIN role_permissions rp ON p.id = rp.permission_id
+                    WHERE rp.role_id = ? AND p.is_active = true
+                `;
+                
+                db.query(permQuery, [user.role_id], async (permErr, permissions) => {
+                    if (permErr) {
+                        console.error('Permissions error:', permErr);
+                        return res.status(500).json({
+                            success: false,
+                            message: 'Failed to load permissions'
+                        });
+                    }
+                    
+                    // Update last login
+                    db.query('UPDATE users SET last_login = NOW() WHERE id = ?', [user.id], (updateErr) => {
+                        if (updateErr) {
+                            console.warn('Failed to update last login:', updateErr);
+                        }
+                    });
+                    
+                    // Generate JWT token
+                    const token = jwt.sign(
+                        { 
+                            userId: user.id, 
+                            email: user.email, 
+                            role: user.role_name,
+                            roleId: user.role_id
+                        },
+                        process.env.JWT_SECRET || 'your-secret-key',
+                        { expiresIn: '24h' }
+                    );
+                    
+                    // Log audit
+                    this.createAuditLog(user.id, 'LOGIN', 'USER', user.id, { ip: req.ip });
+                    
+                    res.json({
+                        success: true,
+                        message: 'Login successful',
+                        token,
+                        user: {
+                            id: user.id,
+                            name: user.name,
+                            email: user.email,
+                            role: user.role_name,
+                            roleDisplayName: user.role_display_name,
+                            permissions: permissions.map(p => p.name)
+                        }
+                    });
+                });
             });
             
         } catch (error) {
@@ -102,10 +122,10 @@ class PermissionsController {
         }
     }
     
-    static async logout(req, res) {
+    static logout(req, res) {
         try {
             // Log audit
-            await this.createAuditLog(req.user?.userId, 'LOGOUT', 'USER', req.user?.userId, { ip: req.ip });
+            this.createAuditLog(req.user?.userId, 'LOGOUT', 'USER', req.user?.userId, { ip: req.ip });
             
             res.json({
                 success: true,
@@ -120,7 +140,7 @@ class PermissionsController {
         }
     }
     
-    static async refreshToken(req, res) {
+    static refreshToken(req, res) {
         try {
             const token = req.headers.authorization?.replace('Bearer ', '');
             
@@ -161,31 +181,29 @@ class PermissionsController {
     
     // ================= USER MANAGEMENT ================= //
     
-    static async getUsers(req, res) {
+    static getUsers(req, res) {
         try {
-            const [users] = await db.execute(`
-                SELECT u.id, u.name, u.email, u.status, u.last_login, u.created_at,
+            const query = `
+                SELECT u.id, u.name, u.email, u.is_active, u.last_login, u.created_at,
                        r.name as role_name, r.display_name as role_display_name, r.color as role_color
                 FROM users u
                 JOIN roles r ON u.role_id = r.id
                 ORDER BY u.created_at DESC
-            `);
+            `;
             
-            // Get permissions for each user
-            for (let user of users) {
-                const [permissions] = await db.execute(`
-                    SELECT p.name
-                    FROM permissions p
-                    JOIN role_permissions rp ON p.id = rp.permission_id
-                    WHERE rp.role_id = ? AND p.is_active = true
-                `, [user.role_id]);
+            db.query(query, (err, users) => {
+                if (err) {
+                    console.error('Get users error:', err);
+                    return res.status(500).json({
+                        success: false,
+                        message: 'Failed to fetch users'
+                    });
+                }
                 
-                user.permissions = permissions.map(p => p.name);
-            }
-            
-            res.json({
-                success: true,
-                data: users
+                res.json({
+                    success: true,
+                    data: users
+                });
             });
             
         } catch (error) {
@@ -197,40 +215,60 @@ class PermissionsController {
         }
     }
     
-    static async getUserById(req, res) {
+    static getUserById(req, res) {
         try {
             const { userId } = req.params;
             
-            const [users] = await db.execute(`
-                SELECT u.id, u.name, u.email, u.status, u.last_login, u.created_at,
+            const query = `
+                SELECT u.id, u.name, u.email, u.is_active, u.last_login, u.created_at,
                        r.name as role_name, r.display_name as role_display_name, r.color as role_color
                 FROM users u
                 JOIN roles r ON u.role_id = r.id
                 WHERE u.id = ?
-            `, [userId]);
+            `;
             
-            if (users.length === 0) {
-                return res.status(404).json({
-                    success: false,
-                    message: 'User not found'
+            db.query(query, [userId], (err, users) => {
+                if (err) {
+                    console.error('Get user error:', err);
+                    return res.status(500).json({
+                        success: false,
+                        message: 'Failed to fetch user'
+                    });
+                }
+                
+                if (users.length === 0) {
+                    return res.status(404).json({
+                        success: false,
+                        message: 'User not found'
+                    });
+                }
+                
+                const user = users[0];
+                
+                // Get user permissions
+                const permQuery = `
+                    SELECT p.name, p.display_name, p.category
+                    FROM permissions p
+                    JOIN role_permissions rp ON p.id = rp.permission_id
+                    WHERE rp.role_id = ? AND p.is_active = true
+                `;
+                
+                db.query(permQuery, [user.role_id], (permErr, permissions) => {
+                    if (permErr) {
+                        console.error('Get permissions error:', permErr);
+                        return res.status(500).json({
+                            success: false,
+                            message: 'Failed to fetch user permissions'
+                        });
+                    }
+                    
+                    user.permissions = permissions;
+                    
+                    res.json({
+                        success: true,
+                        data: user
+                    });
                 });
-            }
-            
-            const user = users[0];
-            
-            // Get user permissions
-            const [permissions] = await db.execute(`
-                SELECT p.name, p.display_name, p.category
-                FROM permissions p
-                JOIN role_permissions rp ON p.id = rp.permission_id
-                WHERE rp.role_id = ? AND p.is_active = true
-            `, [user.role_id]);
-            
-            user.permissions = permissions;
-            
-            res.json({
-                success: true,
-                data: user
             });
             
         } catch (error) {
@@ -244,9 +282,9 @@ class PermissionsController {
     
     static async createUser(req, res) {
         try {
-            const { name, email, password, roleId, status = 'active' } = req.body;
+            const { name, email, password, role_id, is_active = 1 } = req.body;
             
-            if (!name || !email || !password || !roleId) {
+            if (!name || !email || !password || !role_id) {
                 return res.status(400).json({
                     success: false,
                     message: 'Name, email, password, and role are required'
@@ -254,32 +292,51 @@ class PermissionsController {
             }
             
             // Check if email already exists
-            const [existingUsers] = await db.execute('SELECT id FROM users WHERE email = ?', [email]);
-            if (existingUsers.length > 0) {
-                return res.status(400).json({
-                    success: false,
-                    message: 'Email already exists'
+            db.query('SELECT id FROM users WHERE email = ?', [email], async (err, existingUsers) => {
+                if (err) {
+                    console.error('Database error:', err);
+                    return res.status(500).json({
+                        success: false,
+                        message: 'Database error'
+                    });
+                }
+                
+                if (existingUsers.length > 0) {
+                    return res.status(400).json({
+                        success: false,
+                        message: 'Email already exists'
+                    });
+                }
+                
+                // Hash password
+                const passwordHash = await bcrypt.hash(password, 10);
+                
+                // Create user
+                const insertQuery = `
+                    INSERT INTO users (name, email, password, role_id, is_active)
+                    VALUES (?, ?, ?, ?, ?)
+                `;
+                
+                db.query(insertQuery, [name, email, passwordHash, role_id, is_active], (insertErr, result) => {
+                    if (insertErr) {
+                        console.error('Create user error:', insertErr);
+                        return res.status(500).json({
+                            success: false,
+                            message: 'Failed to create user'
+                        });
+                    }
+                    
+                    // Log audit
+                    this.createAuditLog(req.user?.userId, 'CREATE', 'USER', result.insertId, {
+                        name, email, role_id, is_active
+                    });
+                    
+                    res.status(201).json({
+                        success: true,
+                        message: 'User created successfully',
+                        data: { id: result.insertId }
+                    });
                 });
-            }
-            
-            // Hash password
-            const passwordHash = await bcrypt.hash(password, 10);
-            
-            // Create user
-            const [result] = await db.execute(`
-                INSERT INTO users (name, email, password_hash, role_id, status)
-                VALUES (?, ?, ?, ?, ?)
-            `, [name, email, passwordHash, roleId, status]);
-            
-            // Log audit
-            await this.createAuditLog(req.user?.userId, 'CREATE', 'USER', result.insertId, {
-                name, email, roleId, status
-            });
-            
-            res.status(201).json({
-                success: true,
-                message: 'User created successfully',
-                data: { id: result.insertId }
             });
             
         } catch (error) {

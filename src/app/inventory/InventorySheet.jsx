@@ -99,9 +99,13 @@ export default function InventorySheet() {
             console.log('🔗 API URL:', `${API_BASE}/api/inventory?${params}`);
             console.log('🏢 Selected warehouses for API:', selectedWarehouses);
 
+            const token = localStorage.getItem('token');
             const response = await fetch(`${API_BASE}/api/inventory?${params}`, {
                 method: 'GET',
-                headers: { 'Content-Type': 'application/json' }
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                }
             });
 
             if (!response.ok) {
@@ -417,10 +421,12 @@ export default function InventorySheet() {
             console.log('🔍 Loading inventory for warehouse:', warehouseCode);
             console.log('API URL:', `${API_BASE}/api/inventory?${params}`);
 
+            const token = localStorage.getItem('token');
             const response = await fetch(`${API_BASE}/api/inventory?${params}`, {
                 method: 'GET',
                 headers: {
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
                 }
             });
 
@@ -589,8 +595,12 @@ export default function InventorySheet() {
             console.log('🔽 Exporting with params:', params.toString());
             console.log('🏢 Export warehouses:', exportWarehouses.length === 0 ? 'All Warehouses' : exportWarehouses.join(', '));
 
+            const token = localStorage.getItem('token');
             const response = await fetch(`${API_BASE}/api/inventory/export?${params}`, {
-                method: 'GET'
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
             });
 
             if (response.ok) {

@@ -6,14 +6,23 @@
 const API_BASE = 'https://16.171.161.150.nip.io';
 
 /**
+ * Get JWT token from localStorage
+ */
+const getAuthHeaders = () => {
+    const token = localStorage.getItem('token');
+    return {
+        'Content-Type': 'application/json',
+        ...(token && { 'Authorization': `Bearer ${token}` })
+    };
+};
+
+/**
  * Create new return
  */
 export const createReturn = async (returnData) => {
     const response = await fetch(`${API_BASE}/returns`, {
         method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
+        headers: getAuthHeaders(),
         body: JSON.stringify(returnData)
     });
 
@@ -39,9 +48,7 @@ export const getReturns = async (filters = {}) => {
 
     const response = await fetch(`${API_BASE}/returns?${params}`, {
         method: 'GET',
-        headers: {
-            'Content-Type': 'application/json'
-        }
+        headers: getAuthHeaders()
     });
 
     if (!response.ok) {
@@ -58,9 +65,7 @@ export const getReturns = async (filters = {}) => {
 export const getReturnById = async (returnId) => {
     const response = await fetch(`${API_BASE}/returns/${returnId}`, {
         method: 'GET',
-        headers: {
-            'Content-Type': 'application/json'
-        }
+        headers: getAuthHeaders()
     });
 
     if (!response.ok) {
@@ -77,9 +82,7 @@ export const getReturnById = async (returnId) => {
 export const processBulkReturns = async (returnsData) => {
     const response = await fetch(`${API_BASE}/returns/bulk`, {
         method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
+        headers: getAuthHeaders(),
         body: JSON.stringify({ returns: returnsData })
     });
 
@@ -99,9 +102,7 @@ export const getProductSuggestions = async (search) => {
 
     const response = await fetch(`${API_BASE}/returns/suggestions/products?${params}`, {
         method: 'GET',
-        headers: {
-            'Content-Type': 'application/json'
-        }
+        headers: getAuthHeaders()
     });
 
     if (!response.ok) {

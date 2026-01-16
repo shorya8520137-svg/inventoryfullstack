@@ -24,6 +24,26 @@ app.use(morgan("dev"));
 require("./db/connection");
 
 // ===============================
+// AUTH ROUTES (PUBLIC - NO JWT REQUIRED)
+// ===============================
+app.use("/api/auth", require("./routes/authRoutes"));
+
+// ===============================
+// PROTECTED ROUTES (JWT REQUIRED)
+// ===============================
+const { authenticateToken } = require('./middleware/auth');
+
+// Apply JWT authentication to all API routes except auth
+app.use('/api', (req, res, next) => {
+    // Skip authentication for auth routes
+    if (req.path.startsWith('/auth')) {
+        return next();
+    }
+    // Apply authentication to all other routes
+    authenticateToken(req, res, next);
+});
+
+// ===============================
 // ROUTES (FRONTEND COMPATIBLE)
 // ===============================
 app.use("/api/dispatch", require("./routes/dispatchRoutes"));
@@ -56,8 +76,8 @@ app.use('/api/self-transfer', require('./routes/selfTransferRoutes'));
 // auth routes (no /api prefix for backward compatibility)
 app.use('/auth', require('./routes/authRoutes'));
 
-// permissions routes
-app.use('/api', require('./routes/permissionsRoutes'));
+// permissions routes - TEMPORARILY DISABLED TO FIX SERVER CRASH
+// app.use('/api', require('./routes/permissionsRoutes'));
 
 // ===============================
 // HEALTH CHECK

@@ -21,12 +21,14 @@ export const bulkUploadAPI = {
      */
     async uploadWithProgress(rows, onProgress) {
         const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE || "https://16.171.161.150.nip.io";
+        const token = localStorage.getItem('token');
         
         return new Promise((resolve, reject) => {
             const eventSource = new EventSource(`${API_BASE_URL}/bulk-upload/progress`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
                 },
                 body: JSON.stringify({ rows })
             });
@@ -36,6 +38,7 @@ export const bulkUploadAPI = {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
                 },
                 body: JSON.stringify({ rows })
             }).then(response => {

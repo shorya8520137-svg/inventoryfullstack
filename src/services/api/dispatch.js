@@ -6,14 +6,23 @@
 const API_BASE = 'https://16.171.161.150.nip.io';
 
 /**
+ * Get JWT token from localStorage
+ */
+const getAuthHeaders = () => {
+    const token = localStorage.getItem('token');
+    return {
+        'Content-Type': 'application/json',
+        ...(token && { 'Authorization': `Bearer ${token}` })
+    };
+};
+
+/**
  * Create new dispatch
  */
 export const createDispatch = async (dispatchData) => {
     const response = await fetch(`${API_BASE}/dispatch`, {
         method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
+        headers: getAuthHeaders(),
         body: JSON.stringify(dispatchData)
     });
 
@@ -39,9 +48,7 @@ export const getDispatches = async (filters = {}) => {
 
     const response = await fetch(`${API_BASE}/dispatch?${params}`, {
         method: 'GET',
-        headers: {
-            'Content-Type': 'application/json'
-        }
+        headers: getAuthHeaders()
     });
 
     if (!response.ok) {
@@ -58,9 +65,7 @@ export const getDispatches = async (filters = {}) => {
 export const updateDispatchStatus = async (dispatchId, statusData) => {
     const response = await fetch(`${API_BASE}/dispatch/${dispatchId}/status`, {
         method: 'PUT',
-        headers: {
-            'Content-Type': 'application/json'
-        },
+        headers: getAuthHeaders(),
         body: JSON.stringify(statusData)
     });
 
@@ -81,9 +86,7 @@ export const getProductSuggestions = async (search, warehouse = null) => {
 
     const response = await fetch(`${API_BASE}/dispatch/suggestions/products?${params}`, {
         method: 'GET',
-        headers: {
-            'Content-Type': 'application/json'
-        }
+        headers: getAuthHeaders()
     });
 
     if (!response.ok) {
@@ -100,9 +103,7 @@ export const getProductSuggestions = async (search, warehouse = null) => {
 export const getWarehouseSuggestions = async () => {
     const response = await fetch(`${API_BASE}/dispatch/suggestions/warehouses`, {
         method: 'GET',
-        headers: {
-            'Content-Type': 'application/json'
-        }
+        headers: getAuthHeaders()
     });
 
     if (!response.ok) {
