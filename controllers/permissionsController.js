@@ -441,7 +441,7 @@ class PermissionsController {
     
     // ================= ROLE MANAGEMENT ================= //
     
-    static async getRoles(req, res) {
+    static getRoles(req, res) {
         const sql = `
             SELECT r.*, 
                    COUNT(DISTINCT u.id) as user_count,
@@ -765,7 +765,10 @@ class PermissionsController {
     
     // ================= HELPER METHODS ================= //
     
-    static createAuditLog(userId, action, resource, resourceId, details) {
+    static createAuditLog(userId, action, resource, resourceId, details, callback) {
+        // If no callback provided, use a no-op function to prevent crashes
+        const cb = callback || (() => {});
+        
         const sql = `
             INSERT INTO audit_logs (user_id, action, resource, resource_id, details)
             VALUES (?, ?, ?, ?, ?)
@@ -775,6 +778,8 @@ class PermissionsController {
             if (err) {
                 console.error('Create audit log error:', err);
             }
+            // Always call the callback to prevent hanging
+            cb(err);
         });
     }
 }
