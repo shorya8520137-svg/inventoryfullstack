@@ -249,10 +249,12 @@ export default function InventorySheet() {
 
         if (query.length >= 2) {
             try {
+                const token = localStorage.getItem('token');
                 const response = await fetch(`${API_BASE}/api/products?search=${encodeURIComponent(query)}&limit=5`, {
                     method: 'GET',
                     headers: {
-                        'Content-Type': 'application/json'
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
                     }
                 });
 

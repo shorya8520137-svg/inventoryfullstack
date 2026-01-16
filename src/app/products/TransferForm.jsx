@@ -78,7 +78,10 @@ export default function TransferForm({ onClose }) {
         if (!barcode || stockData[barcode]) return;
 
         try {
-            const res = await fetch(`https://16.171.161.150.nip.io/api/product-tracking/${barcode}`);
+            const token = localStorage.getItem('token');
+            const res = await fetch(`https://16.171.161.150.nip.io/api/product-tracking/${barcode}`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
             const data = await res.json();
             setStockData(prev => ({ ...prev, [barcode]: data.finalStock || 0 }));
         } catch {
