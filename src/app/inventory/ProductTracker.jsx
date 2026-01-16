@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import styles from "./productTracker.module.css";
 import { apiRequest } from "../../utils/api";
+import * as XLSX from 'xlsx';
 
 /* ================= LABEL MAP ================= */
 const LABELS = {
@@ -38,6 +39,10 @@ export default function ProductTracker({
     /* 📅 DATE FILTER */
     const [fromDate, setFromDate] = useState("");
     const [toDate, setToDate] = useState("");
+    
+    /* 🏢 WAREHOUSE FILTER */
+    const [selectedWarehouse, setSelectedWarehouse] = useState("ALL");
+    const [warehouses, setWarehouses] = useState(["ALL"]);
 
     const [summary, setSummary] = useState({
         opening: 0,
@@ -140,9 +145,25 @@ export default function ProductTracker({
 
                 // ✅ Updated to use new timeline API
                 let url = `/api/timeline/${encodeURIComponent(barcode)}`;
-
-                if (warehouseFilter && warehouseFilter !== "ALL") {
-                    url += `?warehouse=${encodeURIComponent(warehouseFilter)}`;
+                
+                const params = new URLSearchParams();
+                
+                // Apply warehouse filter
+                const activeWarehouse = warehouseFilter || selectedWarehouse;
+                if (activeWarehouse && activeWarehouse !== "ALL") {
+                    params.append('warehouse', activeWarehouse);
+                }
+                
+                // Apply date filters
+                if (fromDate) {
+                    params.append('fromDate', fromDate);
+                }
+                if (toDate) {
+                    params.append('toDate', toDate);
+                }
+                
+                if (params.toString()) {
+                    url += `?${params.toString()}`;
                 }
 
                 const data = await apiRequest(url);
@@ -173,6 +194,10 @@ export default function ProductTracker({
 
                 console.log('📊 Timeline entries:', formattedTimeline.length);
                 console.log('📊 Summary from API:', summaryData);
+                
+                // Extract unique warehouses from timeline
+                const uniqueWarehouses = ["ALL", ...new Set(timelineData.map(item => item.warehouse).filter(Boolean))];
+                setWarehouses(uniqueWarehouses);
 
                 // Use summary directly from controller (already calculated correctly)
                 const calculatedSummary = {
@@ -209,7 +234,7 @@ export default function ProductTracker({
             mounted = false;
             document.body.style.overflow = "auto";
         };
-    }, [barcode, warehouseFilter]);
+    }, [barcode, warehouseFilter, selectedWarehouse, fromDate, toDate]);
 
     /* ================= DEBOUNCE SEARCH INPUT ================= */
     useEffect(() => {
@@ -316,6 +341,104 @@ export default function ProductTracker({
             tableWrapperRef.removeEventListener('scroll', throttledScroll);
         };
     }, [tableWrapperRef, loading, filteredTimeline]);
+    
+    /* ================= EXPORT TO EXCEL ================= */
+    const exportToExcel = async () => {
+        try {
+            // Sheet 1: Timeline Data
+            const timelineSheet = filteredTimeline.map(row => {
+                const [date, time] = row.timestamp.split("T");
+                return {
+                    'Type': LABELS[row.type] || row.type,
+                    'Qty': row.quantity,
+                    'Direction': row.direction,
+                    'Date': date,
+                    'Time': time.slice(0, 8),
+                    'Warehouse': row.warehouse,
+                    'Reference': row.reference || '—',
+                    'Balance': row.balance_after,
+                    'Description': row.description || ''
+                };
+            });
+            
+            // Sheet 2: Dispatch Details (AWB-wise)
+            const dispatchDetails = [];
+            const token = localStorage.getItem('token');
+            
+            // Filter only DISPATCH/SALE events
+            const dispatchEvents = filteredTimeline.filter(row => 
+                row.type === 'DISPATCH' || row.type === 'SALE'
+            );
+            
+            // Fetch details for each dispatch
+            for (const event of dispatchEvents) {
+                if (event.reference) {
+                    const parts = event.reference.split('_');
+                    const dispatchId = parts[1];
+                    
+                    if (dispatchId) {
+                        try {
+                            const response = await fetch(
+                                `https://16.171.161.150.nip.io/api/order-tracking/${dispatchId}/timeline`,
+                                { headers: { 'Authorization': `Bearer ${token}` } }
+                            );
+                            
+                            if (response.ok) {
+                                const data = await response.json();
+                                if (data.success && data.data && data.data.dispatch) {
+                                    const d = data.data.dispatch;
+                                    const [date, time] = (d.timestamp || event.timestamp).split("T");
+                                    
+                                    dispatchDetails.push({
+                                        'Dispatch ID': dispatchId,
+                                        'AWB': d.awb || 'N/A',
+                                        'Customer': d.customer || 'N/A',
+                                        'Order Ref': d.order_ref || 'N/A',
+                                        'Product': d.product_name || 'N/A',
+                                        'Barcode': d.barcode || barcode,
+                                        'Qty': d.qty || d.quantity || event.quantity,
+                                        'Warehouse': d.warehouse || event.warehouse,
+                                        'Status': d.status || 'N/A',
+                                        'Logistics': d.logistics || 'N/A',
+                                        'Payment': d.payment_mode || 'N/A',
+                                        'Invoice': d.invoice_amount || 0,
+                                        'Dimensions': `L:${d.length || 0} × W:${d.width || 0} × H:${d.height || 0}`,
+                                        'Weight': `${d.actual_weight || 0} kg`,
+                                        'Date': `${date} ${time?.slice(0, 8) || ''}`
+                                    });
+                                }
+                            }
+                        } catch (err) {
+                            console.error(`Failed to fetch dispatch ${dispatchId}:`, err);
+                        }
+                    }
+                }
+            }
+            
+            // Create workbook
+            const wb = XLSX.utils.book_new();
+            
+            // Add Sheet 1: Timeline
+            const ws1 = XLSX.utils.json_to_sheet(timelineSheet);
+            XLSX.utils.book_append_sheet(wb, ws1, "Timeline Data");
+            
+            // Add Sheet 2: Dispatch Details (only if there are dispatches)
+            if (dispatchDetails.length > 0) {
+                const ws2 = XLSX.utils.json_to_sheet(dispatchDetails);
+                XLSX.utils.book_append_sheet(wb, ws2, "Dispatch Details");
+            }
+            
+            // Generate filename with barcode and date
+            const filename = `Timeline_${barcode}_${new Date().toISOString().split('T')[0]}.xlsx`;
+            
+            // Download
+            XLSX.writeFile(wb, filename);
+            
+        } catch (error) {
+            console.error('Export failed:', error);
+            alert('Failed to export data. Please try again.');
+        }
+    };
 
     return (
         <div className={styles.overlay} onClick={(e) => e.target === e.currentTarget && onClose()}>
@@ -474,6 +597,17 @@ export default function ProductTracker({
                                 disabled={loading}
                             />
                         </div>
+                        
+                        <select
+                            className={styles.warehouseSelect}
+                            value={selectedWarehouse}
+                            onChange={(e) => setSelectedWarehouse(e.target.value)}
+                            disabled={loading}
+                        >
+                            {warehouses.map(wh => (
+                                <option key={wh} value={wh}>{wh}</option>
+                            ))}
+                        </select>
 
                         <input
                             type="date"
@@ -481,6 +615,7 @@ export default function ProductTracker({
                             value={fromDate}
                             onChange={(e) => setFromDate(e.target.value)}
                             disabled={loading}
+                            placeholder="From Date"
                         />
                         <input
                             type="date"
@@ -488,7 +623,17 @@ export default function ProductTracker({
                             value={toDate}
                             onChange={(e) => setToDate(e.target.value)}
                             disabled={loading}
+                            placeholder="To Date"
                         />
+                        
+                        <button
+                            className={styles.exportBtn}
+                            onClick={exportToExcel}
+                            disabled={loading || filteredTimeline.length === 0}
+                            title="Export to Excel"
+                        >
+                            📊 Export
+                        </button>
                     </div>
 
                     {/* ================= TABLE ================= */}
