@@ -713,25 +713,6 @@ export default function ProductTracker({
                                             )}
                                         </div>
                                     </div>
-                                    
-                                    {/* Timeline if available */}
-                                    {selectedDispatch.timeline && selectedDispatch.timeline.length > 0 && (
-                                        <div className={styles.dispatchTimeline}>
-                                            <h4>Timeline History</h4>
-                                            <div className={styles.timelineList}>
-                                                {selectedDispatch.timeline.map((entry, index) => (
-                                                    <div key={index} className={styles.timelineEntry}>
-                                                        <div className={styles.timelineDate}>
-                                                            {entry.timestamp ? new Date(entry.timestamp).toLocaleString() : 'N/A'}
-                                                        </div>
-                                                        <div className={styles.timelineAction}>
-                                                            {entry.description || entry.type || 'Update'}
-                                                        </div>
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        </div>
-                                    )}
                                 </>
                             ) : (
                                 <div className={styles.noData}>
