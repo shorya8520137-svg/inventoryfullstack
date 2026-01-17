@@ -184,7 +184,7 @@ class PermissionsController {
     static getUsers(req, res) {
         try {
             const query = `
-                SELECT u.id, u.name, u.email, u.is_active, u.last_login, u.created_at,
+                SELECT u.id, u.name, u.email, u.role_id, u.is_active, u.last_login, u.created_at,
                        r.name as role_name, r.display_name as role_display_name, r.color as role_color
                 FROM users u
                 JOIN roles r ON u.role_id = r.id
@@ -220,7 +220,7 @@ class PermissionsController {
             const { userId } = req.params;
             
             const query = `
-                SELECT u.id, u.name, u.email, u.is_active, u.last_login, u.created_at,
+                SELECT u.id, u.name, u.email, u.role_id, u.is_active, u.last_login, u.created_at,
                        r.name as role_name, r.display_name as role_display_name, r.color as role_color
                 FROM users u
                 JOIN roles r ON u.role_id = r.id
