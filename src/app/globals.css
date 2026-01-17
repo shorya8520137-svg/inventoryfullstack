@@ -216,3 +216,5 @@ body::-webkit-scrollbar {
     color: hsl(var(--foreground));
   }
 }
+/* Import Professional Sidebar Styles */
+@import '../styles/professional-sidebar.css';

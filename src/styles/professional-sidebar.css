@@ -1,0 +1,213 @@
+/* Professional Sidebar Styles */
+
+/* Custom scrollbar for sidebar */
+.professional-sidebar-scroll::-webkit-scrollbar {
+    width: 4px;
+}
+
+.professional-sidebar-scroll::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.professional-sidebar-scroll::-webkit-scrollbar-thumb {
+    background: rgba(148, 163, 184, 0.3);
+    border-radius: 2px;
+}
+
+.professional-sidebar-scroll::-webkit-scrollbar-thumb:hover {
+    background: rgba(148, 163, 184, 0.5);
+}
+
+/* Smooth transitions for all sidebar elements */
+.professional-sidebar * {
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Enhanced focus states */
+.professional-sidebar button:focus-visible,
+.professional-sidebar a:focus-visible {
+    outline: 2px solid #3b82f6;
+    outline-offset: 2px;
+}
+
+/* Glassmorphism effect for profile section */
+.profile-glass {
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* Subtle animations */
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateX(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+.slide-in {
+    animation: slideIn 0.3s ease-out;
+}
+
+/* Badge pulse animation */
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.7;
+    }
+}
+
+.notification-badge {
+    animation: pulse 2s infinite;
+}
+
+/* Hover effects for menu items */
+.menu-item-hover {
+    position: relative;
+    overflow: hidden;
+}
+
+.menu-item-hover::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(59, 130, 246, 0.1), transparent);
+    transition: left 0.5s;
+}
+
+.menu-item-hover:hover::before {
+    left: 100%;
+}
+
+/* Professional shadows */
+.professional-shadow {
+    box-shadow: 
+        0 1px 3px 0 rgba(0, 0, 0, 0.1),
+        0 1px 2px 0 rgba(0, 0, 0, 0.06);
+}
+
+.professional-shadow-lg {
+    box-shadow: 
+        0 10px 15px -3px rgba(0, 0, 0, 0.1),
+        0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+/* Status indicators */
+.status-online {
+    background: linear-gradient(135deg, #10b981, #059669);
+    box-shadow: 0 0 0 2px white, 0 0 0 4px rgba(16, 185, 129, 0.2);
+}
+
+.status-busy {
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    box-shadow: 0 0 0 2px white, 0 0 0 4px rgba(245, 158, 11, 0.2);
+}
+
+.status-away {
+    background: linear-gradient(135deg, #6b7280, #4b5563);
+    box-shadow: 0 0 0 2px white, 0 0 0 4px rgba(107, 114, 128, 0.2);
+}
+
+/* Enhanced button styles */
+.professional-button {
+    background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+    border: 1px solid #e2e8f0;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.professional-button:hover {
+    background: linear-gradient(135deg, #f1f5f9, #e2e8f0);
+    border-color: #cbd5e1;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.professional-button:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Role badge styles */
+.role-badge {
+    background: linear-gradient(135deg, #ddd6fe, #c4b5fd);
+    border: 1px solid #a78bfa;
+    color: #5b21b6;
+}
+
+.role-badge.admin {
+    background: linear-gradient(135deg, #fef3c7, #fde68a);
+    border: 1px solid #f59e0b;
+    color: #92400e;
+}
+
+.role-badge.super-admin {
+    background: linear-gradient(135deg, #fee2e2, #fecaca);
+    border: 1px solid #ef4444;
+    color: #991b1b;
+}
+
+/* Search input enhancement */
+.professional-search {
+    background: rgba(248, 250, 252, 0.8);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(226, 232, 240, 0.8);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.professional-search:focus {
+    background: rgba(255, 255, 255, 0.95);
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* Notification styles */
+.notification-dot {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    box-shadow: 0 0 0 2px white, 0 0 8px rgba(239, 68, 68, 0.3);
+    animation: pulse 2s infinite;
+}
+
+/* Menu section headers */
+.menu-section-header {
+    color: #64748b;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin: 1rem 0 0.5rem 0;
+    padding: 0 1rem;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .professional-sidebar {
+        width: 100% !important;
+    }
+}
+
+/* Dark mode support (if needed) */
+@media (prefers-color-scheme: dark) {
+    .professional-sidebar {
+        background: rgba(15, 23, 42, 0.95);
+        border-color: rgba(51, 65, 85, 0.6);
+    }
+    
+    .professional-search {
+        background: rgba(30, 41, 59, 0.8);
+        border-color: rgba(51, 65, 85, 0.8);
+        color: #f1f5f9;
+    }
+    
+    .professional-search::placeholder {
+        color: #64748b;
+    }
+}

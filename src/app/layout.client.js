@@ -5,11 +5,11 @@ import { usePathname, useRouter } from "next/navigation";
 import "react-chat-elements/dist/main.css";
 
 import {
-    SidebarProvider,
-    Sidebar,
-    SidebarContent,
-    InventoryMenu,
-} from "@/components/ui/sidebar";
+    ProfessionalSidebarProvider,
+    ProfessionalSidebar,
+    ProfessionalSidebarContent,
+    ProfessionalInventoryMenu,
+} from "@/components/ui/professional-sidebar";
 
 import TopNavBar from "@/components/TopNavBar";
 import { useAuth } from "@/contexts/AuthContext";
@@ -65,21 +65,21 @@ export default function ClientLayout({ children }) {
     }
 
     return (
-        <SidebarProvider>
+        <ProfessionalSidebarProvider>
             {/* 🔑 ROOT LAYOUT */}
             <div className="flex h-screen w-screen bg-gradient-to-br from-slate-50 to-slate-100">
 
-                {/* SIDEBAR */}
-                <Sidebar className="shrink-0 border-r border-slate-200 bg-white/80 backdrop-blur-sm">
-                    <SidebarContent>
-                        <InventoryMenu 
+                {/* PROFESSIONAL SIDEBAR */}
+                <ProfessionalSidebar className="shrink-0 border-r border-slate-200/60 bg-white/95 backdrop-blur-sm shadow-xl">
+                    <ProfessionalSidebarContent>
+                        <ProfessionalInventoryMenu 
                             onOpenOperation={(tab) => {
                                 setOperationTab(tab);
                                 setOperationsOpen(true);
                             }}
                         />
-                    </SidebarContent>
-                </Sidebar>
+                    </ProfessionalSidebarContent>
+                </ProfessionalSidebar>
 
                 {/* 🔑 MAIN CONTENT — PROFESSIONAL SCROLLING */}
                 <div className="flex-1 min-w-0 h-full flex flex-col">
@@ -253,6 +253,6 @@ export default function ClientLayout({ children }) {
                 )}
 
             </div>
-        </SidebarProvider>
+        </ProfessionalSidebarProvider>
     );
 }
