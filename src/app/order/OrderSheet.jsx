@@ -4,10 +4,13 @@ import React, { useEffect, useMemo, useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import styles from "./order.module.css";
 import ChatUI from "./chatui";
+import { usePermissions, PERMISSIONS } from '@/contexts/PermissionsContext';
 
 const PAGE_SIZE = 12;
 
 export default function OrderSheet() {
+    const { hasPermission } = usePermissions();
+    
     const [orders, setOrders] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
@@ -565,20 +568,21 @@ export default function OrderSheet() {
                         </button>
                         
                         {/* Download Button */}
-                        <div className={styles.exportSection}>
-                            <div className={styles.exportDropdown}>
-                                <button
-                                    className={styles.downloadBtn}
-                                    onClick={() => setShowExportDropdown(!showExportDropdown)}
-                                    disabled={exporting}
-                                >
-                                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                                        <path d="M8 10L12 6H9V0H7V6H4L8 10ZM16 12V14C16 15.1 15.1 16 14 16H2C0.9 16 0 15.1 0 14V12C0 10.9 0.9 10 2 10H5.5L6.5 11H9.5L10.5 10H14C15.1 10 16 10.9 16 12Z" fill="currentColor"/>
-                                    </svg>
-                                    {exporting ? "Preparing..." : "Download"}
-                                </button>
-                                
-                                {showExportDropdown && (
+                        {hasPermission(PERMISSIONS.ORDERS_EXPORT) && (
+                            <div className={styles.exportSection}>
+                                <div className={styles.exportDropdown}>
+                                    <button
+                                        className={styles.downloadBtn}
+                                        onClick={() => setShowExportDropdown(!showExportDropdown)}
+                                        disabled={exporting}
+                                    >
+                                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                            <path d="M8 10L12 6H9V0H7V6H4L8 10ZM16 12V14C16 15.1 15.1 16 14 16H2C0.9 16 0 15.1 0 14V12C0 10.9 0.9 10 2 10H5.5L6.5 11H9.5L10.5 10H14C15.1 10 16 10.9 16 12Z" fill="currentColor"/>
+                                        </svg>
+                                        {exporting ? "Preparing..." : "Download"}
+                                    </button>
+                                    
+                                    {showExportDropdown && (
                                     <div className={styles.exportPanel}>
                                         <div className={styles.exportHeader}>
                                             <h4>Download Order Data</h4>
@@ -750,9 +754,11 @@ export default function OrderSheet() {
                                 <table className={styles.table}>
                                     <thead>
                                     <tr>
-                                        <th className={`${styles.th} ${styles.delCol}`}>
-                                            Delete
-                                        </th>
+                                        {hasPermission(PERMISSIONS.ORDERS_DELETE) && (
+                                            <th className={`${styles.th} ${styles.delCol}`}>
+                                                Delete
+                                            </th>
+                                        )}
                                         <th className={`${styles.th} ${styles.customerCol}`}>
                                             Customer
                                         </th>
@@ -849,20 +855,28 @@ export default function OrderSheet() {
                                                 delay: i * 0.05
                                             }}
                                         >
-                                            <td className={`${styles.td} ${styles.delCol}`}>
-                                                <button 
-                                                    className={`${styles.deleteBtn} ${deletingId === o.id ? styles.deleting : ''}`}
-                                                    onClick={() => confirmDelete(o)}
-                                                    disabled={deletingId === o.id}
-                                                    title={`Delete dispatch for ${o.customer}`}
-                                                >
-                                                    {deletingId === o.id ? (
-                                                        <span className={styles.loadingSpinner}>✓</span>
+                                            {hasPermission(PERMISSIONS.ORDERS_DELETE) && (
+                                                <td className={`${styles.td} ${styles.delCol}`}>
+                                                    {hasPermission(PERMISSIONS.ORDERS_DELETE) ? (
+                                                        <button 
+                                                            className={`${styles.deleteBtn} ${deletingId === o.id ? styles.deleting : ''}`}
+                                                            onClick={() => confirmDelete(o)}
+                                                            disabled={deletingId === o.id}
+                                                            title={`Delete dispatch for ${o.customer}`}
+                                                        >
+                                                            {deletingId === o.id ? (
+                                                                <span className={styles.loadingSpinner}>✓</span>
+                                                            ) : (
+                                                                <span className={styles.deleteIcon}></span>
+                                                            )}
+                                                        </button>
                                                     ) : (
-                                                        <span className={styles.deleteIcon}></span>
+                                                        <div className={styles.noPermissionCell} title="No delete permission">
+                                                            <span className={styles.lockedIcon}>🔒</span>
+                                                        </div>
                                                     )}
-                                                </button>
-                                            </td>
+                                                </td>
+                                            )}
                                             <td className={`${styles.td} ${styles.customerCol}`}>
                                                 <div 
                                                     className={`${styles.cellContent} ${styles.clickableCell}`}
@@ -903,43 +917,61 @@ export default function OrderSheet() {
                                             </td>
                                             <td className={styles.td}>
                                                 <div className={styles.statusDropdownContainer}>
-                                                    <button
-                                                        className={styles.statusButton}
-                                                        style={{
-                                                            color: getStatusConfig(o.status).color,
-                                                            backgroundColor: getStatusConfig(o.status).bg,
-                                                            borderColor: getStatusConfig(o.status).color
-                                                        }}
-                                                        onClick={() => setOpenStatusDropdown(openStatusDropdown === o.id ? null : o.id)}
-                                                        disabled={updatingStatus === o.id}
-                                                        aria-expanded={openStatusDropdown === o.id}
-                                                    >
-                                                        <div className={styles.statusDot} style={{ backgroundColor: getStatusConfig(o.status).color }}></div>
-                                                        {updatingStatus === o.id ? (
-                                                            <span className={styles.statusLoader}>⏳</span>
-                                                        ) : (
-                                                            o.status
-                                                        )}
-                                                        <span className={styles.dropdownArrow}>▼</span>
-                                                    </button>
-                                                    
-                                                    {openStatusDropdown === o.id && (
-                                                        <div className={styles.statusDropdown}>
-                                                            {statusOptions.map(option => (
-                                                                <button
-                                                                    key={option.value}
-                                                                    className={`${styles.statusOption} ${o.status === option.value ? styles.statusOptionActive : ''}`}
-                                                                    onClick={() => updateOrderStatus(o.id, option.value)}
-                                                                >
-                                                                    <div>
-                                                                        <div className={styles.statusDot} style={{ backgroundColor: option.color }}></div>
-                                                                        {option.label}
-                                                                    </div>
-                                                                    {o.status === option.value && (
-                                                                        <span className={styles.checkIcon}>✓</span>
-                                                                    )}
-                                                                </button>
-                                                            ))}
+                                                    {hasPermission(PERMISSIONS.ORDERS_STATUS_UPDATE) ? (
+                                                        <>
+                                                            <button
+                                                                className={styles.statusButton}
+                                                                style={{
+                                                                    color: getStatusConfig(o.status).color,
+                                                                    backgroundColor: getStatusConfig(o.status).bg,
+                                                                    borderColor: getStatusConfig(o.status).color
+                                                                }}
+                                                                onClick={() => setOpenStatusDropdown(openStatusDropdown === o.id ? null : o.id)}
+                                                                disabled={updatingStatus === o.id}
+                                                                aria-expanded={openStatusDropdown === o.id}
+                                                            >
+                                                                <div className={styles.statusDot} style={{ backgroundColor: getStatusConfig(o.status).color }}></div>
+                                                                {updatingStatus === o.id ? (
+                                                                    <span className={styles.statusLoader}>⏳</span>
+                                                                ) : (
+                                                                    o.status
+                                                                )}
+                                                                <span className={styles.dropdownArrow}>▼</span>
+                                                            </button>
+                                                            
+                                                            {openStatusDropdown === o.id && (
+                                                                <div className={styles.statusDropdown}>
+                                                                    {statusOptions.map(option => (
+                                                                        <button
+                                                                            key={option.value}
+                                                                            className={`${styles.statusOption} ${o.status === option.value ? styles.statusOptionActive : ''}`}
+                                                                            onClick={() => updateOrderStatus(o.id, option.value)}
+                                                                        >
+                                                                            <div>
+                                                                                <div className={styles.statusDot} style={{ backgroundColor: option.color }}></div>
+                                                                                {option.label}
+                                                                            </div>
+                                                                            {o.status === option.value && (
+                                                                                <span className={styles.checkIcon}>✓</span>
+                                                                            )}
+                                                                        </button>
+                                                                    ))}
+                                                                </div>
+                                                            )}
+                                                        </>
+                                                    ) : (
+                                                        <div 
+                                                            className={styles.statusReadOnly}
+                                                            style={{
+                                                                color: getStatusConfig(o.status).color,
+                                                                backgroundColor: getStatusConfig(o.status).bg,
+                                                                borderColor: getStatusConfig(o.status).color
+                                                            }}
+                                                            title="No status update permission"
+                                                        >
+                                                            <div className={styles.statusDot} style={{ backgroundColor: getStatusConfig(o.status).color }}></div>
+                                                            {o.status}
+                                                            <span className={styles.lockedIcon}>🔒</span>
                                                         </div>
                                                     )}
                                                 </div>
@@ -998,13 +1030,19 @@ export default function OrderSheet() {
                                             </td>
                                             <td className={styles.td}>
                                                 <div className={styles.actionButtons}>
-                                                    <button
-                                                        className={styles.timelineBtn}
-                                                        onClick={() => openTimeline(o)}
-                                                        title="View Timeline"
-                                                    >
-                                                        📊 Timeline
-                                                    </button>
+                                                    {hasPermission(PERMISSIONS.INVENTORY_TIMELINE) ? (
+                                                        <button
+                                                            className={styles.timelineBtn}
+                                                            onClick={() => openTimeline(o)}
+                                                            title="View Timeline"
+                                                        >
+                                                            📊 Timeline
+                                                        </button>
+                                                    ) : (
+                                                        <div className={styles.noPermissionBtn} title="No timeline permission">
+                                                            📊 Timeline 🔒
+                                                        </div>
+                                                    )}
                                                     {(o.damage_count > 0 || o.return_count > 0 || o.recovery_count > 0) && (
                                                         <div className={styles.trackingBadges}>
                                                             {o.damage_count > 0 && <span className={styles.damageBadge}>{o.damage_count}D</span>}

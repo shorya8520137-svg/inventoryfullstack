@@ -6,44 +6,9 @@ import { PermissionsAPI } from "../services/permissionsApi";
 
 const PermissionsContext = createContext(null);
 
-// Define all available permissions
+// Define all available permissions (Clean 28 permissions)
 export const PERMISSIONS = {
-    // Dashboard permissions
-    DASHBOARD_VIEW: 'dashboard.view',
-    DASHBOARD_ANALYTICS: 'dashboard.analytics',
-    DASHBOARD_EXPORT: 'dashboard.export',
-    
-    // Inventory permissions
-    INVENTORY_VIEW: 'inventory.view',
-    INVENTORY_CREATE: 'inventory.create',
-    INVENTORY_EDIT: 'inventory.edit',
-    INVENTORY_DELETE: 'inventory.delete',
-    INVENTORY_TRANSFER: 'inventory.transfer',
-    INVENTORY_EXPORT: 'inventory.export',
-    INVENTORY_BULK_UPLOAD: 'inventory.bulk_upload',
-    
-    // Orders permissions
-    ORDERS_VIEW: 'orders.view',
-    ORDERS_CREATE: 'orders.create',
-    ORDERS_EDIT: 'orders.edit',
-    ORDERS_DELETE: 'orders.delete',
-    ORDERS_DISPATCH: 'orders.dispatch',
-    ORDERS_EXPORT: 'orders.export',
-    ORDERS_REMARKS: 'orders.remarks',
-    
-    // Tracking permissions
-    TRACKING_VIEW: 'tracking.view',
-    TRACKING_REAL_TIME: 'tracking.real_time',
-    
-    // Messages permissions
-    MESSAGES_VIEW: 'messages.view',
-    MESSAGES_SEND: 'messages.send',
-    MESSAGES_CREATE_CHANNEL: 'messages.create_channel',
-    MESSAGES_DELETE: 'messages.delete',
-    MESSAGES_VOICE: 'messages.voice',
-    MESSAGES_FILE_UPLOAD: 'messages.file_upload',
-    
-    // Products permissions
+    // Products permissions (8)
     PRODUCTS_VIEW: 'products.view',
     PRODUCTS_CREATE: 'products.create',
     PRODUCTS_EDIT: 'products.edit',
@@ -51,32 +16,43 @@ export const PERMISSIONS = {
     PRODUCTS_CATEGORIES: 'products.categories',
     PRODUCTS_BULK_IMPORT: 'products.bulk_import',
     PRODUCTS_EXPORT: 'products.export',
+    PRODUCTS_SELF_TRANSFER: 'products.self_transfer',
     
-    // Operations permissions
+    // Inventory permissions (6)
+    INVENTORY_VIEW: 'inventory.view',
+    INVENTORY_TIMELINE: 'inventory.timeline',
+    INVENTORY_BULK_UPLOAD: 'inventory.bulk_upload',
+    INVENTORY_TRANSFER: 'inventory.transfer',
+    INVENTORY_ADJUST: 'inventory.adjust',
+    INVENTORY_EXPORT: 'inventory.export',
+    
+    // Orders permissions (6)
+    ORDERS_VIEW: 'orders.view',
+    ORDERS_CREATE: 'orders.create',
+    ORDERS_EDIT: 'orders.edit',
+    ORDERS_DELETE: 'orders.delete',
+    ORDERS_STATUS_UPDATE: 'orders.status_update',
+    ORDERS_EXPORT: 'orders.export',
+    
+    // Operations permissions (5)
     OPERATIONS_DISPATCH: 'operations.dispatch',
     OPERATIONS_DAMAGE: 'operations.damage',
     OPERATIONS_RETURN: 'operations.return',
-    OPERATIONS_RECOVER: 'operations.recover',
     OPERATIONS_BULK: 'operations.bulk',
+    OPERATIONS_SELF_TRANSFER: 'operations.self_transfer',
     
-    // System permissions
-    SYSTEM_SETTINGS: 'system.settings',
+    // System permissions (3)
     SYSTEM_USER_MANAGEMENT: 'system.user_management',
-    SYSTEM_PERMISSIONS: 'system.permissions',
+    SYSTEM_ROLE_MANAGEMENT: 'system.role_management',
     SYSTEM_AUDIT_LOG: 'system.audit_log',
-    
-    // Export permissions
-    EXPORT_CSV: 'export.csv',
-    EXPORT_PDF: 'export.pdf',
-    EXPORT_EXCEL: 'export.excel',
 };
 
-// Define roles and their permissions
+// Define roles and their permissions (Updated for clean permissions)
 export const ROLES = {
     SUPER_ADMIN: {
         name: 'Super Admin',
-        description: 'Full system access with user management',
-        permissions: Object.values(PERMISSIONS), // All permissions
+        description: 'Full system access with all permissions',
+        permissions: Object.values(PERMISSIONS), // All 28 permissions
         color: '#dc2626', // Red
         priority: 1
     },
@@ -84,46 +60,33 @@ export const ROLES = {
         name: 'Admin',
         description: 'Full operational access without user management',
         permissions: [
-            PERMISSIONS.DASHBOARD_VIEW,
-            PERMISSIONS.DASHBOARD_ANALYTICS,
-            PERMISSIONS.DASHBOARD_EXPORT,
-            PERMISSIONS.INVENTORY_VIEW,
-            PERMISSIONS.INVENTORY_CREATE,
-            PERMISSIONS.INVENTORY_EDIT,
-            PERMISSIONS.INVENTORY_DELETE,
-            PERMISSIONS.INVENTORY_TRANSFER,
-            PERMISSIONS.INVENTORY_EXPORT,
-            PERMISSIONS.INVENTORY_BULK_UPLOAD,
-            PERMISSIONS.ORDERS_VIEW,
-            PERMISSIONS.ORDERS_CREATE,
-            PERMISSIONS.ORDERS_EDIT,
-            PERMISSIONS.ORDERS_DELETE,
-            PERMISSIONS.ORDERS_DISPATCH,
-            PERMISSIONS.ORDERS_EXPORT,
-            PERMISSIONS.ORDERS_REMARKS,
-            PERMISSIONS.TRACKING_VIEW,
-            PERMISSIONS.TRACKING_REAL_TIME,
-            PERMISSIONS.MESSAGES_VIEW,
-            PERMISSIONS.MESSAGES_SEND,
-            PERMISSIONS.MESSAGES_CREATE_CHANNEL,
-            PERMISSIONS.MESSAGES_DELETE,
-            PERMISSIONS.MESSAGES_VOICE,
-            PERMISSIONS.MESSAGES_FILE_UPLOAD,
+            // Products (all except delete)
             PERMISSIONS.PRODUCTS_VIEW,
             PERMISSIONS.PRODUCTS_CREATE,
             PERMISSIONS.PRODUCTS_EDIT,
-            PERMISSIONS.PRODUCTS_DELETE,
             PERMISSIONS.PRODUCTS_CATEGORIES,
             PERMISSIONS.PRODUCTS_BULK_IMPORT,
             PERMISSIONS.PRODUCTS_EXPORT,
+            PERMISSIONS.PRODUCTS_SELF_TRANSFER,
+            // Inventory (all)
+            PERMISSIONS.INVENTORY_VIEW,
+            PERMISSIONS.INVENTORY_TIMELINE,
+            PERMISSIONS.INVENTORY_BULK_UPLOAD,
+            PERMISSIONS.INVENTORY_TRANSFER,
+            PERMISSIONS.INVENTORY_ADJUST,
+            PERMISSIONS.INVENTORY_EXPORT,
+            // Orders (all except delete)
+            PERMISSIONS.ORDERS_VIEW,
+            PERMISSIONS.ORDERS_CREATE,
+            PERMISSIONS.ORDERS_EDIT,
+            PERMISSIONS.ORDERS_STATUS_UPDATE,
+            PERMISSIONS.ORDERS_EXPORT,
+            // Operations (all)
             PERMISSIONS.OPERATIONS_DISPATCH,
             PERMISSIONS.OPERATIONS_DAMAGE,
             PERMISSIONS.OPERATIONS_RETURN,
-            PERMISSIONS.OPERATIONS_RECOVER,
             PERMISSIONS.OPERATIONS_BULK,
-            PERMISSIONS.EXPORT_CSV,
-            PERMISSIONS.EXPORT_PDF,
-            PERMISSIONS.EXPORT_EXCEL,
+            PERMISSIONS.OPERATIONS_SELF_TRANSFER,
         ],
         color: '#ea580c', // Orange
         priority: 2
@@ -132,90 +95,70 @@ export const ROLES = {
         name: 'Manager',
         description: 'Management access with reporting capabilities',
         permissions: [
-            PERMISSIONS.DASHBOARD_VIEW,
-            PERMISSIONS.DASHBOARD_ANALYTICS,
-            PERMISSIONS.DASHBOARD_EXPORT,
-            PERMISSIONS.INVENTORY_VIEW,
-            PERMISSIONS.INVENTORY_EDIT,
-            PERMISSIONS.INVENTORY_TRANSFER,
-            PERMISSIONS.INVENTORY_EXPORT,
-            PERMISSIONS.ORDERS_VIEW,
-            PERMISSIONS.ORDERS_CREATE,
-            PERMISSIONS.ORDERS_EDIT,
-            PERMISSIONS.ORDERS_DISPATCH,
-            PERMISSIONS.ORDERS_EXPORT,
-            PERMISSIONS.ORDERS_REMARKS,
-            PERMISSIONS.TRACKING_VIEW,
-            PERMISSIONS.TRACKING_REAL_TIME,
-            PERMISSIONS.MESSAGES_VIEW,
-            PERMISSIONS.MESSAGES_SEND,
-            PERMISSIONS.MESSAGES_CREATE_CHANNEL,
-            PERMISSIONS.MESSAGES_VOICE,
-            PERMISSIONS.MESSAGES_FILE_UPLOAD,
+            // Products (view, create, edit, categories, export)
             PERMISSIONS.PRODUCTS_VIEW,
             PERMISSIONS.PRODUCTS_CREATE,
             PERMISSIONS.PRODUCTS_EDIT,
             PERMISSIONS.PRODUCTS_CATEGORIES,
             PERMISSIONS.PRODUCTS_EXPORT,
-            PERMISSIONS.OPERATIONS_DISPATCH,
-            PERMISSIONS.OPERATIONS_DAMAGE,
-            PERMISSIONS.OPERATIONS_RETURN,
-            PERMISSIONS.EXPORT_CSV,
-            PERMISSIONS.EXPORT_EXCEL,
-        ],
-        color: '#2563eb', // Blue
-        priority: 3
-    },
-    OPERATOR: {
-        name: 'Operator',
-        description: 'Operational access for daily tasks',
-        permissions: [
-            PERMISSIONS.DASHBOARD_VIEW,
+            // Inventory (view, timeline, export)
             PERMISSIONS.INVENTORY_VIEW,
-            PERMISSIONS.INVENTORY_EDIT,
-            PERMISSIONS.INVENTORY_TRANSFER,
+            PERMISSIONS.INVENTORY_TIMELINE,
+            PERMISSIONS.INVENTORY_EXPORT,
+            // Orders (view, create, edit, status_update, export)
             PERMISSIONS.ORDERS_VIEW,
             PERMISSIONS.ORDERS_CREATE,
             PERMISSIONS.ORDERS_EDIT,
-            PERMISSIONS.ORDERS_DISPATCH,
-            PERMISSIONS.ORDERS_REMARKS,
-            PERMISSIONS.TRACKING_VIEW,
-            PERMISSIONS.MESSAGES_VIEW,
-            PERMISSIONS.MESSAGES_SEND,
-            PERMISSIONS.MESSAGES_VOICE,
+            PERMISSIONS.ORDERS_STATUS_UPDATE,
+            PERMISSIONS.ORDERS_EXPORT,
+            // Operations (dispatch, damage, return)
             PERMISSIONS.OPERATIONS_DISPATCH,
             PERMISSIONS.OPERATIONS_DAMAGE,
             PERMISSIONS.OPERATIONS_RETURN,
         ],
-        color: '#16a34a', // Green
-        priority: 4
+        color: '#2563eb', // Blue
+        priority: 3
     },
     WAREHOUSE_STAFF: {
         name: 'Warehouse Staff',
         description: 'Inventory and warehouse operations only',
         permissions: [
+            // Inventory (view, adjust, transfer)
             PERMISSIONS.INVENTORY_VIEW,
-            PERMISSIONS.INVENTORY_EDIT,
+            PERMISSIONS.INVENTORY_ADJUST,
             PERMISSIONS.INVENTORY_TRANSFER,
+            // Orders (view, status_update)
             PERMISSIONS.ORDERS_VIEW,
-            PERMISSIONS.ORDERS_DISPATCH,
-            PERMISSIONS.TRACKING_VIEW,
-            PERMISSIONS.MESSAGES_VIEW,
-            PERMISSIONS.MESSAGES_SEND,
+            PERMISSIONS.ORDERS_STATUS_UPDATE,
+            // Operations (dispatch, self_transfer)
             PERMISSIONS.OPERATIONS_DISPATCH,
+            PERMISSIONS.OPERATIONS_SELF_TRANSFER,
         ],
         color: '#7c3aed', // Purple
+        priority: 4
+    },
+    CUSTOMER_SUPPORT: {
+        name: 'Customer Support',
+        description: 'Customer service and order support',
+        permissions: [
+            // Products (view only)
+            PERMISSIONS.PRODUCTS_VIEW,
+            // Inventory (view only)
+            PERMISSIONS.INVENTORY_VIEW,
+            // Orders (view, status_update)
+            PERMISSIONS.ORDERS_VIEW,
+            PERMISSIONS.ORDERS_STATUS_UPDATE,
+        ],
+        color: '#16a34a', // Green
         priority: 5
     },
     VIEWER: {
         name: 'Viewer',
         description: 'Read-only access to reports and data',
         permissions: [
-            PERMISSIONS.DASHBOARD_VIEW,
+            PERMISSIONS.PRODUCTS_VIEW,
             PERMISSIONS.INVENTORY_VIEW,
             PERMISSIONS.ORDERS_VIEW,
-            PERMISSIONS.TRACKING_VIEW,
-            PERMISSIONS.MESSAGES_VIEW,
         ],
         color: '#64748b', // Gray
         priority: 6

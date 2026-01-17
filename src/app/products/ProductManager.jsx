@@ -5,10 +5,13 @@ import { Download, Upload, Plus, Search, Filter, Edit, Trash2, Package, FileSpre
 import styles from './products.module.css';
 import TransferForm from './TransferForm';
 import { productsAPI } from '@/services/api/products';
+import { usePermissions, PERMISSIONS } from '@/contexts/PermissionsContext';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE;
 
 const ProductManager = () => {
+    const { hasPermission } = usePermissions();
+    
     const [products, setProducts] = useState([]);
     const [categories, setCategories] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -681,40 +684,51 @@ const ProductManager = () => {
                         </div>
                     </div>
                     <div className={styles.headerActions}>
-                        <button
-                            className={`${styles.btn} ${styles.primaryBtn}`}
-                            onClick={() => setShowAddForm(true)}
-                        >
-                            <Plus size={16} />
-                            Add Product
-                        </button>
-                        <button
-                            className={`${styles.btn} ${styles.secondaryBtn}`}
-                            onClick={() => setShowBulkImport(true)}
-                        >
-                            <Upload size={16} />
-                            Bulk Import
-                        </button>
-                        <button
-                            className={`${styles.btn} ${styles.exportBtn}`}
-                            onClick={handleExportProducts}
-                        >
-                            <Download size={16} />
-                            Export All
-                        </button>
-                        <button
-                            className={`${styles.btn} ${styles.transferBtn}`}
-                            onClick={handleSelfTransfer}
-                        >
-                            <ArrowRightLeft size={16} />
-                            Self Transfer
-                        </button>
-                        <button
-                            className={`${styles.btn} ${styles.outlineBtn}`}
-                            onClick={() => setShowCategoryForm(true)}
-                        >
-                            <Plus size={16} />
-                            Add Category
+                        {hasPermission(PERMISSIONS.PRODUCTS_CREATE) && (
+                            <button
+                                className={`${styles.btn} ${styles.primaryBtn}`}
+                                onClick={() => setShowAddForm(true)}
+                            >
+                                <Plus size={16} />
+                                Add Product
+                            </button>
+                        )}
+                        {hasPermission(PERMISSIONS.PRODUCTS_BULK_IMPORT) && (
+                            <button
+                                className={`${styles.btn} ${styles.secondaryBtn}`}
+                                onClick={() => setShowBulkImport(true)}
+                            >
+                                <Upload size={16} />
+                                Bulk Import
+                            </button>
+                        )}
+                        {hasPermission(PERMISSIONS.PRODUCTS_EXPORT) && (
+                            <button
+                                className={`${styles.btn} ${styles.exportBtn}`}
+                                onClick={handleExportProducts}
+                            >
+                                <Download size={16} />
+                                Export All
+                            </button>
+                        )}
+                        {hasPermission(PERMISSIONS.PRODUCTS_SELF_TRANSFER) && (
+                            <button
+                                className={`${styles.btn} ${styles.transferBtn}`}
+                                onClick={handleSelfTransfer}
+                            >
+                                <ArrowRightLeft size={16} />
+                                Self Transfer
+                            </button>
+                        )}
+                        {hasPermission(PERMISSIONS.PRODUCTS_CATEGORIES) && (
+                            <button
+                                className={`${styles.btn} ${styles.outlineBtn}`}
+                                onClick={() => setShowCategoryForm(true)}
+                            >
+                                <Plus size={16} />
+                                Add Category
+                            </button>
+                        )}
                         </button>
                     </div>
                 </div>
@@ -871,20 +885,24 @@ const ProductManager = () => {
                                         </td>
                                         <td>
                                             <div className={styles.actions}>
-                                                <button
-                                                    className={`${styles.actionBtn} ${styles.editBtn}`}
-                                                    onClick={() => handleEdit(product)}
-                                                    title="Edit Product"
-                                                >
-                                                    <Edit size={14} />
-                                                </button>
-                                                <button
-                                                    className={`${styles.actionBtn} ${styles.deleteBtn}`}
-                                                    onClick={() => handleDelete(product.p_id)}
-                                                    title="Delete Product"
-                                                >
-                                                    <Trash2 size={14} />
-                                                </button>
+                                                {hasPermission(PERMISSIONS.PRODUCTS_EDIT) && (
+                                                    <button
+                                                        className={`${styles.actionBtn} ${styles.editBtn}`}
+                                                        onClick={() => handleEdit(product)}
+                                                        title="Edit Product"
+                                                    >
+                                                        <Edit size={14} />
+                                                    </button>
+                                                )}
+                                                {hasPermission(PERMISSIONS.PRODUCTS_DELETE) && (
+                                                    <button
+                                                        className={`${styles.actionBtn} ${styles.deleteBtn}`}
+                                                        onClick={() => handleDelete(product.p_id)}
+                                                        title="Delete Product"
+                                                    >
+                                                        <Trash2 size={14} />
+                                                    </button>
+                                                )}
                                             </div>
                                         </td>
                                     </tr>

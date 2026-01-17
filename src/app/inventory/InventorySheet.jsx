@@ -5,6 +5,7 @@ import { Search, Filter, Download, Package, MapPin, BarChart3, Eye, RefreshCw, C
 import styles from "./inventory.module.css";
 import { getMockInventoryResponse } from "../../utils/mockInventoryData";
 import ProductTracker from "./ProductTracker";
+import { usePermissions, PERMISSIONS } from '@/contexts/PermissionsContext';
 
 const PAGE_SIZE = 50; // Items to show per page in UI
 const API_LIMIT = 10000; // Fetch all data from API at once
@@ -19,6 +20,8 @@ const WAREHOUSES = [
 ];
 
 export default function InventorySheet() {
+    const { hasPermission } = usePermissions();
+    
     const [allItems, setAllItems] = useState([]); // Store ALL items from API
     const [items, setItems] = useState([]); // Items to display on current page
     const [loading, setLoading] = useState(true);
@@ -691,29 +694,31 @@ export default function InventorySheet() {
                     </button>
 
                     {/* Export Dropdown */}
-                    <div className={styles.exportDropdown}>
-                        <select
-                            onChange={(e) => {
-                                if (e.target.value) {
-                                    exportToCSV(e.target.value);
-                                    e.target.value = ''; // Reset selection
-                                }
-                            }}
-                            className={styles.exportSelect}
-                            defaultValue=""
-                        >
-                            <option value="" disabled>📥 Export Data</option>
-                            <option value="current">
-                                Current Selection ({selectedWarehouses.length === 0 ? 'All Warehouses' : `${selectedWarehouses.length} warehouses`})
-                            </option>
-                            <option value="GGM_WH">Gurgaon Warehouse</option>
-                            <option value="BLR_WH">Bangalore Warehouse</option>
-                            <option value="MUM_WH">Mumbai Warehouse</option>
-                            <option value="AMD_WH">Ahmedabad Warehouse</option>
-                            <option value="HYD_WH">Hyderabad Warehouse</option>
-                            <option value="all">All Warehouses</option>
-                        </select>
-                    </div>
+                    {hasPermission(PERMISSIONS.INVENTORY_EXPORT) && (
+                        <div className={styles.exportDropdown}>
+                            <select
+                                onChange={(e) => {
+                                    if (e.target.value) {
+                                        exportToCSV(e.target.value);
+                                        e.target.value = ''; // Reset selection
+                                    }
+                                }}
+                                className={styles.exportSelect}
+                                defaultValue=""
+                            >
+                                <option value="" disabled>📥 Export Data</option>
+                                <option value="current">
+                                    Current Selection ({selectedWarehouses.length === 0 ? 'All Warehouses' : `${selectedWarehouses.length} warehouses`})
+                                </option>
+                                <option value="GGM_WH">Gurgaon Warehouse</option>
+                                <option value="BLR_WH">Bangalore Warehouse</option>
+                                <option value="MUM_WH">Mumbai Warehouse</option>
+                                <option value="AMD_WH">Ahmedabad Warehouse</option>
+                                <option value="HYD_WH">Hyderabad Warehouse</option>
+                                <option value="all">All Warehouses</option>
+                            </select>
+                        </div>
+                    )}
                 </div>
             </div>
 
@@ -1061,8 +1066,9 @@ export default function InventorySheet() {
                                         <td>
                                             <div
                                                 className={styles.stockCell}
-                                                onClick={() => openTimeline(item)}
-                                                title="Click to view stock timeline"
+                                                onClick={hasPermission(PERMISSIONS.INVENTORY_TIMELINE) ? () => openTimeline(item) : undefined}
+                                                title={hasPermission(PERMISSIONS.INVENTORY_TIMELINE) ? "Click to view stock timeline" : "Timeline access restricted"}
+                                                style={{ cursor: hasPermission(PERMISSIONS.INVENTORY_TIMELINE) ? 'pointer' : 'default' }}
                                             >
                                                 <span className={styles.stockNumber}>
                                                     {item.stock || item.quantity || 0}
@@ -1188,7 +1194,7 @@ export default function InventorySheet() {
             </div>
 
             {/* Use ProductTracker Component */}
-            {showTimeline && selectedItem && (
+            {showTimeline && selectedItem && hasPermission(PERMISSIONS.INVENTORY_TIMELINE) && (
                 <ProductTracker
                     barcodeOverride={selectedItem.code || selectedItem.barcode}
                     warehouseFilter={selectedWarehouses.length === 1 ? selectedWarehouses[0] : null}

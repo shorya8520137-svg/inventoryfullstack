@@ -275,8 +275,7 @@ const InventoryMenu = ({ onOpenOperation }) => {
                             onToggle={() => setInventoryOpen(!inventoryOpen)}
                             basePath="/inventory"
                         >
-                            {/* STORE INVENTORY - DISABLED - Code removed for cleaner build */}
-                            {/* SELF TRANSFER - DISABLED - Code removed for cleaner build */}
+                            {/* No sub-items - inventory features controlled within the page */}
                         </MenuItemWithSub>
                     )}
 
@@ -330,8 +329,8 @@ const InventoryMenu = ({ onOpenOperation }) => {
                     {(hasPermission(PERMISSIONS.OPERATIONS_DISPATCH) || 
                       hasPermission(PERMISSIONS.OPERATIONS_DAMAGE) || 
                       hasPermission(PERMISSIONS.OPERATIONS_RETURN) || 
-                      hasPermission(PERMISSIONS.OPERATIONS_RECOVER) || 
-                      hasPermission(PERMISSIONS.OPERATIONS_BULK)) && (
+                      hasPermission(PERMISSIONS.OPERATIONS_BULK) ||
+                      hasPermission(PERMISSIONS.OPERATIONS_SELF_TRANSFER)) && (
                         <MenuItemWithSub
                             icon={Plus}
                             label="Operations"
@@ -385,21 +384,6 @@ const InventoryMenu = ({ onOpenOperation }) => {
                                     🔄 Return
                                 </button>
                             )}
-                            {hasPermission(PERMISSIONS.OPERATIONS_RECOVER) && (
-                                <button 
-                                    onClick={() => {
-                                        if (onOpenOperation) {
-                                            onOpenOperation("recover");
-                                        }
-                                    }}
-                                    className={cn(
-                                        "block rounded-md px-3 py-2 text-sm transition-colors w-full text-left",
-                                        "text-slate-500 hover:text-slate-900 hover:bg-slate-50"
-                                    )}
-                                >
-                                    🔧 Recover
-                                </button>
-                            )}
                             {hasPermission(PERMISSIONS.OPERATIONS_BULK) && (
                                 <button 
                                     onClick={() => {
@@ -413,6 +397,21 @@ const InventoryMenu = ({ onOpenOperation }) => {
                                     )}
                                 >
                                     📤 Bulk Upload
+                                </button>
+                            )}
+                            {hasPermission(PERMISSIONS.OPERATIONS_SELF_TRANSFER) && (
+                                <button 
+                                    onClick={() => {
+                                        if (onOpenOperation) {
+                                            onOpenOperation("transfer");
+                                        }
+                                    }}
+                                    className={cn(
+                                        "block rounded-md px-3 py-2 text-sm transition-colors w-full text-left",
+                                        "text-slate-500 hover:text-slate-900 hover:bg-slate-50"
+                                    )}
+                                >
+                                    🔄 Self Transfer
                                 </button>
                             )}
                         </MenuItemWithSub>
