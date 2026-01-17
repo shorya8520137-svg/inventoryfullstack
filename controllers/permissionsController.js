@@ -354,6 +354,9 @@ class PermissionsController {
         
         console.log('🔍 UPDATE USER - Input:', { userId, name, email, roleId, role_id });
         
+        // Use role_id if provided, otherwise use roleId
+        const finalRoleId = role_id || roleId;
+        
         // Simple validation
         if (!userId) {
             return res.status(400).json({
@@ -363,7 +366,7 @@ class PermissionsController {
         }
         
         // Check if user exists first
-        const checkSql = 'SELECT id, name, email FROM users WHERE id = ?';
+        const checkSql = 'SELECT id, name, email, role_id FROM users WHERE id = ?';
         console.log('🔍 Checking user existence with SQL:', checkSql, [userId]);
         
         db.query(checkSql, [userId], (err, existingUsers) => {
@@ -384,33 +387,54 @@ class PermissionsController {
                 });
             }
             
-            // Try the simplest possible update - just name
+            // Build dynamic update query
+            let updateFields = [];
+            let updateValues = [];
+            
             if (name) {
-                const updateSql = 'UPDATE users SET name = ? WHERE id = ?';
-                console.log('🔍 Executing simple update:', updateSql, [name, userId]);
-                
-                db.query(updateSql, [name, userId], (updateErr, result) => {
-                    if (updateErr) {
-                        console.error('🔍 Update error:', updateErr);
-                        return res.status(500).json({
-                            success: false,
-                            message: 'Database error during update'
-                        });
-                    }
-                    
-                    console.log('🔍 Update result:', result);
-                    
-                    res.json({
-                        success: true,
-                        message: 'User updated successfully'
-                    });
-                });
-            } else {
+                updateFields.push('name = ?');
+                updateValues.push(name);
+            }
+            
+            if (email) {
+                updateFields.push('email = ?');
+                updateValues.push(email);
+            }
+            
+            if (finalRoleId) {
+                updateFields.push('role_id = ?');
+                updateValues.push(finalRoleId);
+            }
+            
+            if (updateFields.length === 0) {
                 return res.status(400).json({
                     success: false,
-                    message: 'Name is required for update'
+                    message: 'No fields to update'
                 });
             }
+            
+            // Add user ID for WHERE clause
+            updateValues.push(userId);
+            
+            const updateSql = `UPDATE users SET ${updateFields.join(', ')} WHERE id = ?`;
+            console.log('🔍 Executing update SQL:', updateSql, updateValues);
+            
+            db.query(updateSql, updateValues, (updateErr, result) => {
+                if (updateErr) {
+                    console.error('🔍 Update error:', updateErr);
+                    return res.status(500).json({
+                        success: false,
+                        message: 'Database error during update'
+                    });
+                }
+                
+                console.log('🔍 Update result:', result);
+                
+                res.json({
+                    success: true,
+                    message: 'User updated successfully'
+                });
+            });
         });
     }
     
