@@ -729,7 +729,6 @@ const ProductManager = () => {
                                 Add Category
                             </button>
                         )}
-                        </button>
                     </div>
                 </div>
 

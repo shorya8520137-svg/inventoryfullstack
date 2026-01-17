@@ -649,7 +649,8 @@ export default function OrderSheet() {
                                 )}
                             </div>
                         </div>
-                    </div>
+                    )}
+                </div>
                 </header>
 
                 {/* AI-Powered Smart Search Bar */}
