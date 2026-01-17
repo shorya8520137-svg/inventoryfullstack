@@ -1,0 +1,51 @@
+🚀 USER CRUD OPERATIONS TEST - SERVER COMMANDS
+===============================================
+
+STEP 1: SSH to server
+ssh -i "C:\Users\Admin\awsconection.pem" ubuntu@13.51.56.188
+
+STEP 2: Navigate to project directory
+cd inventoryfullstack
+
+STEP 3: Run the deployment and test script
+chmod +x deploy-and-test-user-crud.sh
+./deploy-and-test-user-crud.sh
+
+OR run individual commands:
+
+# Pull latest code
+git pull origin main
+
+# Install dependencies
+npm install
+
+# Restart server
+pkill -f "node server.js" || true
+nohup node server.js > server.log 2>&1 &
+
+# Test CRUD operations
+node test-user-crud-complete.js
+
+===============================================
+📝 WHAT THE TEST COVERS:
+
+✅ CREATE USER - Creates a new test user
+✅ READ USERS - Gets all users and single user
+✅ UPDATE USER - Modifies user details
+✅ DELETE USER - Removes the test user
+✅ ADDITIONAL - Tests roles, permissions, stats
+
+===============================================
+🔧 TROUBLESHOOTING:
+
+If server fails to start:
+- Check server.log for errors
+- Ensure port 5000 is available
+- Verify database connection
+
+If tests fail:
+- Check authentication token
+- Verify API endpoints are working
+- Check database permissions
+
+===============================================
