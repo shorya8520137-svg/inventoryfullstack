@@ -352,6 +352,8 @@ class PermissionsController {
         const { userId } = req.params;
         const { name, email, roleId } = req.body;
         
+        console.log('🔍 UPDATE USER DEBUG:', { userId, name, email, roleId });
+        
         // Check if user exists
         db.query('SELECT id FROM users WHERE id = ?', [userId], (err, existingUsers) => {
             if (err) {
@@ -361,6 +363,8 @@ class PermissionsController {
                     message: 'Database error'
                 });
             }
+            
+            console.log('🔍 User existence check:', { userId, found: existingUsers.length });
             
             if (existingUsers.length === 0) {
                 return res.status(404).json({
@@ -372,11 +376,13 @@ class PermissionsController {
             // Update user
             const updateSql = `
                 UPDATE users 
-                SET name = ?, email = ?, role_id = ?, updated_at = NOW()
+                SET name = ?, email = ?
                 WHERE id = ?
             `;
             
-            db.query(updateSql, [name, email, roleId, userId], (updateErr) => {
+            console.log('🔍 Executing update SQL:', updateSql, [name, email, userId]);
+            
+            db.query(updateSql, [name, email, userId], (updateErr) => {
                 if (updateErr) {
                     console.error('Update user error:', updateErr);
                     return res.status(500).json({
@@ -384,6 +390,8 @@ class PermissionsController {
                         message: 'Failed to update user'
                     });
                 }
+                
+                console.log('🔍 Update successful');
                 
                 // Log audit
                 PermissionsController.createAuditLog(req.user?.userId, 'UPDATE', 'USER', userId, {
