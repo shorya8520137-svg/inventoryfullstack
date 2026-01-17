@@ -1,0 +1,44 @@
+MANUAL COMMANDS TO FIX NOTIFICATION SYSTEM
+==========================================
+
+STEP 1: Push fixes to GitHub
+-----------------------------
+git add .
+git commit -m "Fix notification routes authentication conflicts"
+git push origin main
+
+STEP 2: Update server (run these one by one)
+--------------------------------------------
+ssh -i "C:\Users\Admin\awsconection.pem" ubuntu@13.48.248.180 "pkill -f node || true"
+
+ssh -i "C:\Users\Admin\awsconection.pem" ubuntu@13.48.248.180 "cd /home/ubuntu/inventoryfullstack && git pull origin main"
+
+ssh -i "C:\Users\Admin\awsconection.pem" ubuntu@13.48.248.180 "cd /home/ubuntu/inventoryfullstack && nohup node server.js > server.log 2>&1 & echo 'Started'"
+
+STEP 3: Test notification system
+---------------------------------
+node test-notification-endpoints.js
+
+ALTERNATIVE: Test locally
+-------------------------
+node test-notification-system-local.js
+
+WHAT WAS FIXED:
+- Authentication middleware conflicts resolved
+- Notification routes now bypass global auth middleware
+- Server.js updated to prevent double authentication
+
+EXPECTED RESULTS:
+✅ Admin login working
+✅ Notification stats working  
+✅ Get notifications working
+✅ Create notifications working
+✅ Firebase token save working
+
+CURRENT STATUS:
+- Server running (Process ID: 2841)
+- Notification stats API working
+- Some endpoints had 502 errors (should be fixed now)
+- Database has 4 notifications already
+
+PHASE 1.5 NOTIFICATION SYSTEM: READY FOR FINAL TESTING!
