@@ -34,9 +34,15 @@ app.use("/api/auth", require("./routes/authRoutes"));
 const { authenticateToken } = require('./middleware/auth');
 
 // Apply JWT authentication to all API routes except auth
+
+// Apply JWT authentication to all API routes except auth and notifications
 app.use('/api', (req, res, next) => {
     // Skip authentication for auth routes
     if (req.path.startsWith('/auth')) {
+        return next();
+    }
+    // Skip global auth for notifications (they have their own auth)
+    if (req.path.startsWith('/notifications')) {
         return next();
     }
     // Apply authentication to all other routes

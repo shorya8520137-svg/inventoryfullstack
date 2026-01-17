@@ -1,6 +1,7 @@
 const db = require('../db/connection');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+const NotificationController = require('./notificationController');
 
 class PermissionsController {
     // ================= AUTHENTICATION ================= //
@@ -85,9 +86,13 @@ class PermissionsController {
                     // Generate JWT token
                     const token = jwt.sign(
                         { 
+                            id: user.id,
                             userId: user.id, 
                             email: user.email, 
+                            name: user.name,
                             role: user.role_name,
+                            role_name: user.role_name,
+                            role_id: user.role_id,
                             roleId: user.role_id
                         },
                         process.env.JWT_SECRET || 'your-secret-key',
@@ -96,6 +101,14 @@ class PermissionsController {
                     
                     // Log audit
                     PermissionsController.createAuditLog(user.id, 'LOGIN', 'USER', user.id, { ip: req.ip }, () => {});
+                    
+                    // Trigger login notification
+                    NotificationController.triggerUserLoginNotification({
+                        id: user.id,
+                        name: user.name,
+                        email: user.email,
+                        role: user.role_name
+                    });
                     
                     res.json({
                         success: true,
@@ -127,6 +140,16 @@ class PermissionsController {
             // Log audit
             PermissionsController.createAuditLog(req.user?.userId, 'LOGOUT', 'USER', req.user?.userId, { ip: req.ip }, () => {});
             
+            // Trigger logout notification
+            if (req.user) {
+                NotificationController.triggerUserLogoutNotification({
+                    id: req.user.userId || req.user.id,
+                    name: req.user.name,
+                    email: req.user.email,
+                    role: req.user.role || req.user.role_name
+                });
+            }
+            
             res.json({
                 success: true,
                 message: 'Logout successful'
@@ -156,10 +179,14 @@ class PermissionsController {
             // Generate new token
             const newToken = jwt.sign(
                 { 
-                    userId: decoded.userId, 
+                    id: decoded.id || decoded.userId,
+                    userId: decoded.userId || decoded.id, 
                     email: decoded.email, 
-                    role: decoded.role,
-                    roleId: decoded.roleId
+                    name: decoded.name,
+                    role: decoded.role || decoded.role_name,
+                    role_name: decoded.role_name || decoded.role,
+                    role_id: decoded.role_id || decoded.roleId,
+                    roleId: decoded.roleId || decoded.role_id
                 },
                 process.env.JWT_SECRET || 'your-secret-key',
                 { expiresIn: '24h' }

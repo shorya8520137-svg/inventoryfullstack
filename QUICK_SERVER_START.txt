@@ -1,0 +1,27 @@
+QUICK SERVER START COMMANDS
+===========================
+
+1. Kill existing processes:
+ssh -i "C:\Users\Admin\awsconection.pem" ubuntu@13.48.248.180 "pkill -f node || true"
+
+2. Start server (run this command):
+ssh -i "C:\Users\Admin\awsconection.pem" ubuntu@13.48.248.180 "cd /home/ubuntu/inventoryfullstack && nohup node server.js > server.log 2>&1 & echo 'Server started'"
+
+3. Check if running:
+ssh -i "C:\Users\Admin\awsconection.pem" ubuntu@13.48.248.180 "ps aux | grep node"
+
+4. Test API:
+ssh -i "C:\Users\Admin\awsconection.pem" ubuntu@13.48.248.180 "curl -k -s https://13.48.248.180.nip.io/api/health"
+
+5. Test admin login:
+ssh -i "C:\Users\Admin\awsconection.pem" ubuntu@13.48.248.180 "curl -k -s -X POST https://13.48.248.180.nip.io/api/auth/login -H 'Content-Type: application/json' -d '{\"email\":\"admin@company.com\",\"password\":\"admin@123\"}'"
+
+6. Test notifications (after login):
+ssh -i "C:\Users\Admin\awsconection.pem" ubuntu@13.48.248.180 "curl -k -s -H 'Authorization: Bearer YOUR_TOKEN' https://13.48.248.180.nip.io/api/notifications/stats?user_id=1"
+
+PHASE 1.5 STATUS:
+✅ Database schema deployed
+✅ Notification controller created
+✅ Routes configured
+✅ Code pushed to GitHub
+⚠️ Server needs restart with bcrypt installed
