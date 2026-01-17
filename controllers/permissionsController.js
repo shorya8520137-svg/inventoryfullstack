@@ -350,7 +350,7 @@ class PermissionsController {
     
     static updateUser(req, res) {
         const { userId } = req.params;
-        const { name, email, roleId, status } = req.body;
+        const { name, email, roleId } = req.body;
         
         // Check if user exists
         db.query('SELECT id FROM users WHERE id = ?', [userId], (err, existingUsers) => {
@@ -372,11 +372,11 @@ class PermissionsController {
             // Update user
             const updateSql = `
                 UPDATE users 
-                SET name = ?, email = ?, role_id = ?, status = ?, updated_at = NOW()
+                SET name = ?, email = ?, role_id = ?, updated_at = NOW()
                 WHERE id = ?
             `;
             
-            db.query(updateSql, [name, email, roleId, status, userId], (updateErr) => {
+            db.query(updateSql, [name, email, roleId, userId], (updateErr) => {
                 if (updateErr) {
                     console.error('Update user error:', updateErr);
                     return res.status(500).json({
@@ -387,7 +387,7 @@ class PermissionsController {
                 
                 // Log audit
                 PermissionsController.createAuditLog(req.user?.userId, 'UPDATE', 'USER', userId, {
-                    name, email, roleId, status
+                    name, email, roleId
                 }, () => {});
                 
                 res.json({
@@ -657,8 +657,8 @@ class PermissionsController {
         const userStatsSql = `
             SELECT 
                 COUNT(*) as total_users,
-                SUM(CASE WHEN status = 'active' THEN 1 ELSE 0 END) as active_users,
-                SUM(CASE WHEN status = 'inactive' THEN 1 ELSE 0 END) as inactive_users
+                COUNT(*) as active_users,
+                0 as inactive_users
             FROM users
         `;
         
