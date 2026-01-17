@@ -79,6 +79,9 @@ app.use('/auth', require('./routes/authRoutes'));
 // permissions routes
 app.use('/api', require('./routes/permissionsRoutes'));
 
+// notification routes
+app.use('/api/notifications', require('./routes/notificationRoutes'));
+
 // ===============================
 // HEALTH CHECK
 // ===============================
