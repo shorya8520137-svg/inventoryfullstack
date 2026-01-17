@@ -1,0 +1,324 @@
+const https = require('https');
+const mysql = require('mysql2');
+
+// Configuration
+const API_BASE = 'https://16.171.161.150.nip.io';
+const DB_CONFIG = {
+    host: 'localhost',
+    user: 'root',
+    password: 'StrongPass@123',
+    database: 'inventory_system'
+};
+
+// Admin credentials
+const ADMIN_CREDENTIALS = {
+    email: 'admin@company.com',
+    password: 'admin@123'
+};
+
+console.log('🚀 Starting Admin Login Test and Role Fix Script...\n');
+
+// Function to make HTTPS requests
+function makeRequest(options, data = null) {
+    return new Promise((resolve, reject) => {
+        const req = https.request(options, (res) => {
+            let body = '';
+            res.on('data', (chunk) => body += chunk);
+            res.on('end', () => {
+                try {
+                    const response = JSON.parse(body);
+                    resolve({ status: res.statusCode, data: response });
+                } catch (e) {
+                    resolve({ status: res.statusCode, data: body });
+                }
+            });
+        });
+
+        req.on('error', reject);
+        
+        if (data) {
+            req.write(JSON.stringify(data));
+        }
+        
+        req.end();
+    });
+}
+
+// Function to execute SQL queries
+function executeSQL(query, params = []) {
+    return new Promise((resolve, reject) => {
+        const connection = mysql.createConnection(DB_CONFIG);
+        
+        connection.connect((err) => {
+            if (err) {
+                console.error('❌ Database connection failed:', err.message);
+                reject(err);
+                return;
+            }
+            
+            connection.query(query, params, (error, results) => {
+                connection.end();
+                
+                if (error) {
+                    reject(error);
+                } else {
+                    resolve(results);
+                }
+            });
+        });
+    });
+}
+
+// Step 1: Fix duplicate roles in database
+async function fixDuplicateRoles() {
+    console.log('🔧 Step 1: Fixing duplicate roles in database...');
+    
+    try {
+        // Check current roles
+        console.log('📋 Current roles in database:');
+        const currentRoles = await executeSQL('SELECT id, name, display_name, description FROM roles ORDER BY id');
+        currentRoles.forEach(role => {
+            console.log(`   - ID: ${role.id}, Name: "${role.name}", Display: "${role.display_name}"`);
+        });
+        
+        // Delete role_permissions for duplicate roles first
+        console.log('\n🗑️ Removing permissions for duplicate roles...');
+        await executeSQL(`
+            DELETE FROM role_permissions WHERE role_id IN (
+                SELECT id FROM roles WHERE name LIKE '%customer support%' OR name LIKE '%test%' OR name LIKE '%Hunyhuny%'
+            )
+        `);
+        
+        // Delete duplicate roles
+        console.log('🗑️ Removing duplicate roles...');
+        const deleteResult = await executeSQL(`
+            DELETE FROM roles WHERE name LIKE '%customer support%' OR name LIKE '%test%' OR name LIKE '%Hunyhuny%'
+        `);
+        console.log(`   ✅ Deleted ${deleteResult.affectedRows} duplicate roles`);
+        
+        // Clean up roles with trailing spaces
+        console.log('🧹 Cleaning up role names with trailing spaces...');
+        await executeSQL(`
+            UPDATE roles SET name = TRIM(name), display_name = TRIM(display_name) 
+            WHERE name != TRIM(name) OR display_name != TRIM(display_name)
+        `);
+        
+        // Verify cleaned roles
+        console.log('\n📋 Cleaned roles table:');
+        const cleanedRoles = await executeSQL('SELECT id, name, display_name, description FROM roles ORDER BY id');
+        cleanedRoles.forEach(role => {
+            console.log(`   - ID: ${role.id}, Name: "${role.name}", Display: "${role.display_name}"`);
+        });
+        
+        // Ensure admin role has all permissions
+        console.log('\n🔐 Ensuring admin role has all permissions...');
+        await executeSQL(`
+            INSERT IGNORE INTO role_permissions (role_id, permission_id)
+            SELECT 1, id FROM permissions WHERE is_active = true
+        `);
+        
+        const adminPermCount = await executeSQL('SELECT COUNT(*) as count FROM role_permissions WHERE role_id = 1');
+        console.log(`   ✅ Admin role has ${adminPermCount[0].count} permissions`);
+        
+        console.log('✅ Database cleanup completed successfully!\n');
+        return true;
+        
+    } catch (error) {
+        console.error('❌ Database cleanup failed:', error.message);
+        return false;
+    }
+}
+
+// Step 2: Test admin login
+async function testAdminLogin() {
+    console.log('🔐 Step 2: Testing admin login...');
+    
+    try {
+        const loginOptions = {
+            hostname: '16.171.161.150.nip.io',
+            port: 443,
+            path: '/api/auth/login',
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            }
+        };
+        
+        console.log(`📡 Making login request to: ${API_BASE}/api/auth/login`);
+        console.log(`📧 Email: ${ADMIN_CREDENTIALS.email}`);
+        console.log(`🔑 Password: ${ADMIN_CREDENTIALS.password}`);
+        
+        const response = await makeRequest(loginOptions, ADMIN_CREDENTIALS);
+        
+        console.log(`📊 Response Status: ${response.status}`);
+        
+        if (response.status === 200 && response.data.success) {
+            console.log('✅ Login successful!');
+            console.log(`👤 User: ${response.data.user.name}`);
+            console.log(`📧 Email: ${response.data.user.email}`);
+            console.log(`🎭 Role: ${response.data.user.roleDisplayName}`);
+            console.log(`🔑 Permissions: ${response.data.user.permissions.length} permissions`);
+            console.log(`🎫 Token: ${response.data.token.substring(0, 50)}...`);
+            
+            return {
+                success: true,
+                token: response.data.token,
+                user: response.data.user
+            };
+        } else {
+            console.error('❌ Login failed!');
+            console.error('Response:', JSON.stringify(response.data, null, 2));
+            return { success: false };
+        }
+        
+    } catch (error) {
+        console.error('❌ Login request failed:', error.message);
+        return { success: false };
+    }
+}
+
+// Step 3: Test role creation with the token
+async function testRoleCreation(token) {
+    console.log('\n🎭 Step 3: Testing role creation...');
+    
+    try {
+        const roleData = {
+            name: 'test_role_' + Date.now(),
+            displayName: 'Test Role',
+            description: 'Test role created by script',
+            color: '#10B981',
+            permissionIds: [1, 2, 3] // Some basic permissions
+        };
+        
+        const roleOptions = {
+            hostname: '16.171.161.150.nip.io',
+            port: 443,
+            path: '/api/roles',
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'Authorization': `Bearer ${token}`
+            }
+        };
+        
+        console.log(`📡 Creating role: ${roleData.displayName}`);
+        const response = await makeRequest(roleOptions, roleData);
+        
+        console.log(`📊 Response Status: ${response.status}`);
+        
+        if (response.status === 201 && response.data.success) {
+            console.log('✅ Role creation successful!');
+            console.log(`🆔 Role ID: ${response.data.data.id}`);
+            console.log(`📝 Message: ${response.data.message}`);
+            return { success: true, roleId: response.data.data.id };
+        } else {
+            console.error('❌ Role creation failed!');
+            console.error('Response:', JSON.stringify(response.data, null, 2));
+            return { success: false };
+        }
+        
+    } catch (error) {
+        console.error('❌ Role creation request failed:', error.message);
+        return { success: false };
+    }
+}
+
+// Step 4: Test getting roles list
+async function testGetRoles(token) {
+    console.log('\n📋 Step 4: Testing roles list retrieval...');
+    
+    try {
+        const rolesOptions = {
+            hostname: '16.171.161.150.nip.io',
+            port: 443,
+            path: '/api/roles',
+            method: 'GET',
+            headers: {
+                'Accept': 'application/json',
+                'Authorization': `Bearer ${token}`
+            }
+        };
+        
+        console.log('📡 Fetching roles list...');
+        const response = await makeRequest(rolesOptions);
+        
+        console.log(`📊 Response Status: ${response.status}`);
+        
+        if (response.status === 200 && response.data.success) {
+            console.log('✅ Roles retrieval successful!');
+            console.log(`📊 Total roles: ${response.data.data.length}`);
+            
+            response.data.data.forEach(role => {
+                console.log(`   - ${role.display_name} (${role.name}) - ${role.user_count} users, ${role.permission_count} permissions`);
+            });
+            
+            return { success: true, roles: response.data.data };
+        } else {
+            console.error('❌ Roles retrieval failed!');
+            console.error('Response:', JSON.stringify(response.data, null, 2));
+            return { success: false };
+        }
+        
+    } catch (error) {
+        console.error('❌ Roles retrieval request failed:', error.message);
+        return { success: false };
+    }
+}
+
+// Main execution
+async function main() {
+    console.log('=' .repeat(60));
+    console.log('🎯 ADMIN LOGIN TEST & ROLE FIX SCRIPT');
+    console.log('=' .repeat(60));
+    
+    // Step 1: Fix database issues
+    const dbFixed = await fixDuplicateRoles();
+    if (!dbFixed) {
+        console.log('❌ Database fix failed. Continuing with login test...\n');
+    }
+    
+    // Step 2: Test login
+    const loginResult = await testAdminLogin();
+    if (!loginResult.success) {
+        console.log('\n❌ Script failed at login step');
+        process.exit(1);
+    }
+    
+    // Step 3: Test role creation
+    const roleResult = await testRoleCreation(loginResult.token);
+    if (!roleResult.success) {
+        console.log('\n⚠️ Role creation failed, but login works');
+    }
+    
+    // Step 4: Test roles list
+    const rolesListResult = await testGetRoles(loginResult.token);
+    if (!rolesListResult.success) {
+        console.log('\n⚠️ Roles list retrieval failed');
+    }
+    
+    // Summary
+    console.log('\n' + '=' .repeat(60));
+    console.log('📊 SCRIPT EXECUTION SUMMARY');
+    console.log('=' .repeat(60));
+    console.log(`🔧 Database Fix: ${dbFixed ? '✅ Success' : '❌ Failed'}`);
+    console.log(`🔐 Admin Login: ${loginResult.success ? '✅ Success' : '❌ Failed'}`);
+    console.log(`🎭 Role Creation: ${roleResult.success ? '✅ Success' : '❌ Failed'}`);
+    console.log(`📋 Roles List: ${rolesListResult.success ? '✅ Success' : '❌ Failed'}`);
+    
+    if (loginResult.success) {
+        console.log('\n🎉 Admin login is working! You can now use these credentials:');
+        console.log(`   📧 Email: ${ADMIN_CREDENTIALS.email}`);
+        console.log(`   🔑 Password: ${ADMIN_CREDENTIALS.password}`);
+        console.log(`   🌐 Frontend URL: http://13.51.56.188:3000 (or your frontend URL)`);
+    }
+    
+    console.log('\n✅ Script completed!');
+}
+
+// Run the script
+main().catch(error => {
+    console.error('💥 Script failed with error:', error);
+    process.exit(1);
+});

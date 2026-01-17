@@ -1,0 +1,18 @@
+# QUICK ADMIN PASSWORD FIX - Run these commands on server
+
+# Step 1: SSH to server
+ssh -i "C:\Users\Admin\awsconection.pem" ubuntu@13.51.56.188
+
+# Step 2: Fix admin password directly
+mysql -u root -pStrongPass@123 inventory_system -e "UPDATE users SET password = 'admin@123', password_hash = NULL WHERE email = 'admin@company.com';"
+
+# Step 3: Verify admin user
+mysql -u root -pStrongPass@123 inventory_system -e "SELECT id, name, email, password, role_id FROM users WHERE email = 'admin@company.com';"
+
+# Step 4: Test login with curl
+curl -X POST https://16.171.161.150.nip.io/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"admin@company.com","password":"admin@123"}'
+
+# If login works, you'll see success response with token
+# If not, check server logs: tail -f /home/ubuntu/inventoryfullstack/server.log
