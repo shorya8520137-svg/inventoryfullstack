@@ -1,0 +1,85 @@
+🚀 FINAL SERVER TEST COMMANDS - USER CRUD WITH DEBUG
+====================================================
+
+STEP 1: SSH to server
+ssh -i "C:\Users\Admin\awsconection.pem" ubuntu@13.51.56.188
+
+STEP 2: Navigate to project directory
+cd inventoryfullstack
+
+STEP 3: Pull latest code with debug logging
+git pull origin main
+
+STEP 4: Restart server to apply debug changes
+pkill -f "node server.js" || true
+sleep 3
+nohup node server.js > server.log 2>&1 &
+sleep 5
+
+STEP 5: Check server is running
+ps aux | grep "node server.js"
+curl -s https://13.51.56.188.nip.io/api/health
+
+STEP 6: Run the comprehensive test
+node simulate-server-test.js
+
+STEP 7: Check debug logs in real-time
+tail -f server.log
+
+====================================================
+🔍 WHAT TO LOOK FOR IN SERVER LOGS:
+
+When the update fails, you should see:
+🔍 UPDATE USER DEBUG: { userId: '148', name: 'Updated...', email: '...', roleId: 3 }
+🔍 User existence check: { userId: '148', found: 1 }
+🔍 Executing update SQL: UPDATE users SET name = ?, email = ? WHERE id = ?
+[Then either success or specific error]
+
+====================================================
+📋 EXPECTED TEST RESULTS:
+
+✅ Authentication: Working
+✅ Create User: Working (User ID will be assigned)
+✅ Read User: Working (Full user data returned)
+❌ Update User: FAILING (This is what we're debugging)
+✅ Delete User: Working
+✅ Additional APIs: Mostly working
+
+====================================================
+🔧 DEBUGGING SCENARIOS:
+
+If you see "User not found" in debug:
+- User ID extraction issue
+- Database connection problem
+
+If you see SQL error in debug:
+- Column name issue (name, email columns)
+- Table structure problem
+
+If you see no debug output:
+- Server not restarted properly
+- Debug logging not applied
+
+====================================================
+⚡ QUICK ALTERNATIVE TESTS:
+
+# Just test the update issue
+node test-update-debug.js
+
+# Simple CRUD test
+node test-user-crud-simple.js
+
+# Full comprehensive test
+node test-user-crud-complete.js
+
+====================================================
+📝 AFTER GETTING DEBUG OUTPUT:
+
+1. Copy the exact error from server.log
+2. Share the debug output showing:
+   - User existence check result
+   - SQL query being executed
+   - Specific database error
+3. We can then fix the exact issue
+
+====================================================
