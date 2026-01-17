@@ -67,8 +67,18 @@ const authenticateToken = (req, res, next) => {
             });
         }
 
-        // Add user info to request
-        req.user = decoded;
+        // Add user info to request - normalize field names for consistency
+        req.user = {
+            id: decoded.id || decoded.userId,
+            userId: decoded.userId || decoded.id,
+            email: decoded.email,
+            name: decoded.name,
+            role_id: decoded.role_id || decoded.roleId,
+            roleId: decoded.roleId || decoded.role_id,
+            role_name: decoded.role_name || decoded.role,
+            role: decoded.role || decoded.role_name,
+            iat: decoded.iat
+        };
         next();
     });
 };
@@ -79,8 +89,22 @@ const authenticateToken = (req, res, next) => {
 const checkPermission = (permissionName) => {
     return async (req, res, next) => {
         try {
-            const userId = req.user.id;
-            const roleId = req.user.role_id;
+            const userId = req.user.id || req.user.userId;
+            const roleId = req.user.role_id || req.user.roleId;
+            
+            console.log(`🔍 Permission check for ${permissionName}:`, {
+                userId,
+                roleId,
+                userRole: req.user.role_name || req.user.role
+            });
+
+            if (!userId || !roleId) {
+                console.error('❌ Missing user ID or role ID in token:', req.user);
+                return res.status(401).json({
+                    success: false,
+                    message: 'Invalid token - missing user or role information'
+                });
+            }
 
             // Check if user has the permission through their role
             const permissionQuery = `
@@ -100,15 +124,22 @@ const checkPermission = (permissionName) => {
                     });
                 }
 
+                console.log(`🔍 Permission query result for ${permissionName}:`, {
+                    roleId,
+                    found: results.length > 0,
+                    results
+                });
+
                 if (results.length === 0) {
                     return res.status(403).json({
                         success: false,
                         message: 'Insufficient permissions',
                         required_permission: permissionName,
-                        user_role: req.user.role_name
+                        user_role: req.user.role_name || req.user.role
                     });
                 }
 
+                console.log(`✅ Permission granted for ${permissionName}`);
                 next();
             });
         } catch (error) {
