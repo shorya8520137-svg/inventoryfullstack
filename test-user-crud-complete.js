@@ -77,7 +77,7 @@ async function testUserCRUD() {
         const createResult = await apiRequest('POST', '/api/users', newUser, authToken);
         
         if (createResult.success) {
-            testUserId = createResult.data.userId;
+            testUserId = createResult.data.data.id;
             console.log('✅ User created successfully');
             console.log(`📝 New User ID: ${testUserId}`);
         } else {
