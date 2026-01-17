@@ -581,6 +581,107 @@ class PermissionsController {
         });
     }
     
+    static updateRole(req, res) {
+        const { roleId } = req.params;
+        const { name, displayName, display_name, description, color, permissionIds = [] } = req.body;
+        
+        // Accept both camelCase and snake_case
+        const finalDisplayName = displayName || display_name;
+        
+        if (!name || !finalDisplayName) {
+            return res.status(400).json({
+                success: false,
+                message: 'Name and display name are required'
+            });
+        }
+        
+        // Update role basic info
+        const updateSql = `
+            UPDATE roles 
+            SET name = ?, display_name = ?, description = ?, color = ?
+            WHERE id = ?
+        `;
+        
+        db.query(updateSql, [name, finalDisplayName, description, color, roleId], (err, result) => {
+            if (err) {
+                console.error('Update role error:', err);
+                return res.status(500).json({
+                    success: false,
+                    message: 'Failed to update role'
+                });
+            }
+            
+            if (result.affectedRows === 0) {
+                return res.status(404).json({
+                    success: false,
+                    message: 'Role not found'
+                });
+            }
+            
+            // Update permissions if provided
+            if (permissionIds.length >= 0) {
+                // First, delete existing permissions
+                const deleteSql = `DELETE FROM role_permissions WHERE role_id = ?`;
+                
+                db.query(deleteSql, [roleId], (deleteErr) => {
+                    if (deleteErr) {
+                        console.error('Delete role permissions error:', deleteErr);
+                        return res.status(500).json({
+                            success: false,
+                            message: 'Failed to update role permissions'
+                        });
+                    }
+                    
+                    // Insert new permissions if any
+                    if (permissionIds.length > 0) {
+                        const values = permissionIds.map(permId => `(${roleId}, ${permId})`).join(',');
+                        const insertSql = `INSERT INTO role_permissions (role_id, permission_id) VALUES ${values}`;
+                        
+                        db.query(insertSql, (insertErr) => {
+                            if (insertErr) {
+                                console.error('Insert role permissions error:', insertErr);
+                                return res.status(500).json({
+                                    success: false,
+                                    message: 'Failed to update role permissions'
+                                });
+                            }
+                            
+                            // Log audit
+                            PermissionsController.createAuditLog(req.user?.userId, 'UPDATE', 'ROLE', roleId, {
+                                name, displayName: finalDisplayName, description, color, permissionIds
+                            }, () => {});
+                            
+                            res.json({
+                                success: true,
+                                message: 'Role updated successfully'
+                            });
+                        });
+                    } else {
+                        // No permissions to assign
+                        PermissionsController.createAuditLog(req.user?.userId, 'UPDATE', 'ROLE', roleId, {
+                            name, displayName: finalDisplayName, description, color, permissionIds
+                        }, () => {});
+                        
+                        res.json({
+                            success: true,
+                            message: 'Role updated successfully'
+                        });
+                    }
+                });
+            } else {
+                // No permission update requested
+                PermissionsController.createAuditLog(req.user?.userId, 'UPDATE', 'ROLE', roleId, {
+                    name, displayName: finalDisplayName, description, color
+                }, () => {});
+                
+                res.json({
+                    success: true,
+                    message: 'Role updated successfully'
+                });
+            }
+        });
+    }
+    
     // ================= PERMISSION MANAGEMENT ================= //
     
     static getPermissions(req, res) {
@@ -773,20 +874,31 @@ class PermissionsController {
     // ================= HELPER METHODS ================= //
     
     static createAuditLog(userId, action, resource, resourceId, details, callback) {
-        // If no callback provided, use a no-op function to prevent crashes
-        const cb = callback || (() => {});
-        
         const sql = `
             INSERT INTO audit_logs (user_id, action, resource, resource_id, details)
             VALUES (?, ?, ?, ?, ?)
         `;
         
-        db.query(sql, [userId, action, resource, resourceId, JSON.stringify(details)], (err) => {
+        // If no callback provided, return a promise (for async/await usage)
+        if (!callback) {
+            return new Promise((resolve, reject) => {
+                db.query(sql, [userId, action, resource, resourceId, JSON.stringify(details)], (err, result) => {
+                    if (err) {
+                        console.error('Create audit log error:', err);
+                        reject(err);
+                    } else {
+                        resolve(result);
+                    }
+                });
+            });
+        }
+        
+        // Traditional callback usage
+        db.query(sql, [userId, action, resource, resourceId, JSON.stringify(details)], (err, result) => {
             if (err) {
                 console.error('Create audit log error:', err);
             }
-            // Always call the callback to prevent hanging
-            cb(err);
+            callback(err, result);
         });
     }
 }

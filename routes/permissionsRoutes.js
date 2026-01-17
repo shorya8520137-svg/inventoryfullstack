@@ -222,19 +222,41 @@ router.put('/roles/:roleId',
     async (req, res) => {
         try {
             const { roleId } = req.params;
-            const { name, displayName, description, color } = req.body;
+            const { name, displayName, display_name, description, color, permissionIds } = req.body;
+            
+            // Accept both camelCase and snake_case
+            const finalDisplayName = displayName || display_name;
             
             const db = require('../db/connection');
             
+            // Update role basic info
             await db.execute(`
                 UPDATE roles 
-                SET name = ?, display_name = ?, description = ?, color = ?, updated_at = NOW()
+                SET name = ?, display_name = ?, description = ?, color = ?
                 WHERE id = ?
-            `, [name, displayName, description, color, roleId]);
+            `, [name, finalDisplayName, description, color, roleId]);
+            
+            // Update permissions if provided
+            if (permissionIds !== undefined && Array.isArray(permissionIds)) {
+                // First, delete existing permissions
+                await db.execute('DELETE FROM role_permissions WHERE role_id = ?', [roleId]);
+                
+                // Insert new permissions if any
+                if (permissionIds.length > 0) {
+                    const values = permissionIds.map(permId => [roleId, permId]);
+                    const placeholders = permissionIds.map(() => '(?, ?)').join(', ');
+                    const flatValues = values.flat();
+                    
+                    await db.execute(
+                        `INSERT INTO role_permissions (role_id, permission_id) VALUES ${placeholders}`,
+                        flatValues
+                    );
+                }
+            }
             
             // Log audit
             await PermissionsController.createAuditLog(req.user?.userId, 'UPDATE', 'ROLE', roleId, {
-                name, displayName, description, color
+                name, displayName: finalDisplayName, description, color, permissionIds
             });
             
             res.json({
