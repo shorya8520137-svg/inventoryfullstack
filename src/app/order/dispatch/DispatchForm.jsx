@@ -3,8 +3,8 @@ import React, { useEffect, useState } from "react";
 import styles from "./dispatchForm.module.css";
 
 /* ✅ UPDATED API ENDPOINTS */
-const API = "https://16.171.161.150.nip.io/api/dispatch";
-const CREATE_API = "https://16.171.161.150.nip.io/api/dispatch";
+const API = `${process.env.NEXT_PUBLIC_API_BASE}/api/dispatch`;
+const CREATE_API = `${process.env.NEXT_PUBLIC_API_BASE}/api/dispatch`;
 
 export default function DispatchForm() {
     const [warehouses, setWarehouses] = useState([]);

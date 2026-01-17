@@ -20,7 +20,7 @@ export const bulkUploadAPI = {
      * @returns {Promise} Upload result with success/failed counts
      */
     async uploadWithProgress(rows, onProgress) {
-        const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE || "https://16.171.161.150.nip.io";
+        const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE;
         const token = localStorage.getItem('token');
         
         return new Promise((resolve, reject) => {

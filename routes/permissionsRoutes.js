@@ -43,7 +43,7 @@ const checkPermission = (requiredPermission) => {
                 WHERE u.id = ? AND p.is_active = true
             `;
             
-            db.query(query, [req.user.userId], (err, permissions) => {
+            db.query(query, [req.user.id], (err, permissions) => {
                 if (err) {
                     console.error('Permission check error:', err);
                     return res.status(500).json({
@@ -55,7 +55,7 @@ const checkPermission = (requiredPermission) => {
                 const userPermissions = permissions.map(p => p.name);
                 
                 // Super admin has all permissions
-                if (req.user.role === 'SUPER_ADMIN' || userPermissions.includes(requiredPermission)) {
+                if (req.user.role_name === 'super_admin' || userPermissions.includes(requiredPermission)) {
                     next();
                 } else {
                     res.status(403).json({

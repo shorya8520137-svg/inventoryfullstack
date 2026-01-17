@@ -3,8 +3,8 @@ import React, { useEffect, useState } from "react";
 import styles from "../order/dispatch/dispatchForm.module.css";
 
 /* API ENDPOINTS */
-const API = "https://16.171.161.150.nip.io/api/dispatch";
-const PRODUCTS_API = "https://16.171.161.150.nip.io/api/products";
+const API = `${process.env.NEXT_PUBLIC_API_BASE}/api/dispatch`;
+const PRODUCTS_API = `${process.env.NEXT_PUBLIC_API_BASE}/api/products`;
 
 export default function TransferForm({ onClose }) {
     const [warehouses, setWarehouses] = useState([]);
@@ -79,7 +79,7 @@ export default function TransferForm({ onClose }) {
 
         try {
             const token = localStorage.getItem('token');
-            const res = await fetch(`https://16.171.161.150.nip.io/api/product-tracking/${barcode}`, {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE}/api/product-tracking/${barcode}`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             const data = await res.json();
@@ -163,7 +163,7 @@ export default function TransferForm({ onClose }) {
             setError("");
 
             const token = localStorage.getItem('token');
-            const res = await fetch(`https://16.171.161.150.nip.io/api/self-transfer/create`, {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE}/api/self-transfer/create`, {
                 method: "POST",
                 headers: { 
                     "Content-Type": "application/json",

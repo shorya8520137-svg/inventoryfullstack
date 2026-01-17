@@ -1,6 +1,6 @@
 // Central API configuration
 export const API_CONFIG = {
-    BASE_URL: process.env.NEXT_PUBLIC_API_BASE || 'https://16.171.161.150.nip.io',
+    BASE_URL: process.env.NEXT_PUBLIC_API_BASE,
     TIMEOUT: 30000,
     HEADERS: {
         'Content-Type': 'application/json',

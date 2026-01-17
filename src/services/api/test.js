@@ -56,7 +56,7 @@ export const apiTests = {
      * Test the specific bulk upload endpoint
      */
     async testBulkUploadEndpoint() {
-        console.log('🔍 Testing POST https://16.171.161.150.nip.io/api/bulk-upload');
+        console.log(`🔍 Testing POST ${process.env.NEXT_PUBLIC_API_BASE}/api/bulk-upload`);
         try {
             // Create sample data
             const sampleRows = [
@@ -101,7 +101,7 @@ export const apiTests = {
         const total = Object.keys(results).length;
 
         console.log(`📊 Test Results: ${passed}/${total} passed`);
-        console.log('🎯 Main endpoint: POST https://16.171.161.150.nip.io/api/bulk-upload');
+        console.log(`🎯 Main endpoint: POST ${process.env.NEXT_PUBLIC_API_BASE}/api/bulk-upload`);
         return results;
     }
 };

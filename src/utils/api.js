@@ -1,6 +1,10 @@
 // API Utility Functions for JWT Authentication
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'https://16.171.161.150.nip.io';
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE;
+
+if (!API_BASE) {
+    throw new Error('NEXT_PUBLIC_API_BASE environment variable is required');
+}
 
 /**
  * Get JWT token from localStorage

@@ -21,7 +21,7 @@ export default function LoginPage() {
         setLoading(true);
 
         try {
-            const apiBase = process.env.NEXT_PUBLIC_API_BASE || 'https://16.171.161.150.nip.io';
+            const apiBase = process.env.NEXT_PUBLIC_API_BASE;
             const response = await fetch(`${apiBase}/api/auth/login`, {
                 method: 'POST',
                 headers: {

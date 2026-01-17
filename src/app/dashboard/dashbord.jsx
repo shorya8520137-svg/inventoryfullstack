@@ -16,7 +16,7 @@ import {
 
 import styles from "./dashboard.module.css";
 
-const API_BASE = "https://16.171.161.150.nip.io/api/dashboard";
+const API_BASE = `${process.env.NEXT_PUBLIC_API_BASE}/api/dashboard`;
 
 export default function Dashboard() {
     const { user, logout, hasPermission } = useAuth();

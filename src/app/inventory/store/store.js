@@ -4,10 +4,8 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import styles from './store.module.css';
 
-const STORES_API =
-    'https://16.171.161.150.nip.io/api/store-inventory/stores';
-const INVENTORY_API =
-    'https://16.171.161.150.nip.io/api/store-inventory/store/inventory';
+const STORES_API = `${process.env.NEXT_PUBLIC_API_BASE}/api/store-inventory/stores`;
+const INVENTORY_API = `${process.env.NEXT_PUBLIC_API_BASE}/api/store-inventory/store/inventory`;
 
 export default function StoreInventory() {
     const [stores, setStores] = useState([]);

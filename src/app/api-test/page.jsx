@@ -29,7 +29,7 @@ export default function ApiTest() {
             
             <div style={{ background: '#f5f5f5', padding: '1rem', margin: '1rem 0', borderRadius: '8px' }}>
                 <p><strong>Expected URL:</strong></p>
-                <code>https://16.171.161.150.nip.io</code>
+                <code>{process.env.NEXT_PUBLIC_API_BASE}</code>
             </div>
 
             <button 
@@ -52,7 +52,7 @@ export default function ApiTest() {
                 <h3>If API Base is "NOT SET":</h3>
                 <ol>
                     <li>Go to Vercel Dashboard → Your Project → Settings → Environment Variables</li>
-                    <li>Add: <code>NEXT_PUBLIC_API_BASE</code> = <code>https://16.171.161.150.nip.io</code></li>
+                    <li>Add: <code>NEXT_PUBLIC_API_BASE</code> = <code>{process.env.NEXT_PUBLIC_API_BASE}</code></li>
                     <li>Apply to: Production, Preview, Development</li>
                     <li>Go to Deployments → Redeploy latest deployment</li>
                 </ol>

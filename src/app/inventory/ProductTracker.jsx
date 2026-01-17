@@ -84,7 +84,7 @@ export default function ProductTracker({
         
         try {
             const token = localStorage.getItem('token');
-            const response = await fetch(`https://16.171.161.150.nip.io/api/order-tracking/${dispatchId}/timeline`, {
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE}/api/order-tracking/${dispatchId}/timeline`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             
@@ -379,7 +379,7 @@ export default function ProductTracker({
                     if (dispatchId) {
                         try {
                             const response = await fetch(
-                                `https://16.171.161.150.nip.io/api/order-tracking/${dispatchId}/timeline`,
+                                `${process.env.NEXT_PUBLIC_API_BASE}/api/order-tracking/${dispatchId}/timeline`,
                                 { headers: { 'Authorization': `Bearer ${token}` } }
                             );
                             

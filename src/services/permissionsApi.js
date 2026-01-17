@@ -1,4 +1,4 @@
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'https://16.171.161.150.nip.io';
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE;
 
 export class PermissionsAPI {
     // ================= AUTHENTICATION ================= //

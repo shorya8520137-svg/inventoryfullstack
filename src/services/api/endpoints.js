@@ -3,13 +3,13 @@
 
 export const ENDPOINTS = {
     // Base API URL
-    BASE_URL: 'https://16.171.161.150.nip.io',
+    BASE_URL: process.env.NEXT_PUBLIC_API_BASE,
     
     // Bulk Upload Endpoints
     BULK_UPLOAD: {
         // Main bulk upload endpoint (as requested)
         UPLOAD: 'POST /api/bulk-upload',
-        FULL_URL: 'https://16.171.161.150.nip.io/api/bulk-upload',
+        FULL_URL: `${process.env.NEXT_PUBLIC_API_BASE}/api/bulk-upload`,
         
         // Supporting endpoints
         WAREHOUSES: 'GET /api/bulk-upload/warehouses',

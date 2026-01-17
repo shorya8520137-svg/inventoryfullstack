@@ -1,0 +1,36 @@
+🚀 RUN THESE COMMANDS ON SERVER TO FIX CONTROLLER AND TEST
+================================================================
+
+# 1. Stop the server
+pkill -f "node server.js"
+sleep 2
+
+# 2. Install missing dependencies
+cd /home/ubuntu/inventoryfullstack
+npm install bcryptjs axios
+
+# 3. Fix the permissions controller (copy the fixed version)
+# You need to update controllers/permissionsController.js with the callback fixes
+
+# 4. Fix the test file (copy the fixed version)  
+# You need to update comprehensive-nested-user-journey-test.js with the return API fixes
+
+# 5. Start the server
+nohup node server.js > server.log 2>&1 &
+sleep 5
+
+# 6. Check server is running
+ps aux | grep "node server.js" | grep -v grep
+
+# 7. Test the fixed APIs
+node comprehensive-nested-user-journey-test.js
+
+# 8. Check server logs if needed
+tail -20 server.log
+
+================================================================
+KEY FIXES APPLIED:
+1. Fixed MySQL callback errors in permissionsController.js
+2. Fixed return API field mapping (product_name -> product_type, added warehouse)
+3. Added missing bcryptjs dependency
+================================================================

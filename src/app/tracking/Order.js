@@ -7,7 +7,7 @@ export default function Orders() {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        fetch("https://16.171.161.150.nip.io/api/tracking/orders")
+        fetch(`${process.env.NEXT_PUBLIC_API_BASE}/api/tracking/orders`)
             .then(res => {
                 if (!res.ok) throw new Error("API error");
                 return res.json();

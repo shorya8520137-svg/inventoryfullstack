@@ -83,7 +83,7 @@ export default function OrderSheet() {
             
             // Use the updated dispatch tracking API
             const token = localStorage.getItem('token');
-            const response = await fetch('https://16.171.161.150.nip.io/api/order-tracking', {
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE}/api/order-tracking`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             const data = await response.json();
@@ -150,7 +150,7 @@ export default function OrderSheet() {
         
         try {
             const token = localStorage.getItem('token');
-            const response = await fetch(`https://16.171.161.150.nip.io/api/order-tracking/${order.id}/timeline`, {
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE}/api/order-tracking/${order.id}/timeline`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             const data = await response.json();
@@ -325,7 +325,7 @@ export default function OrderSheet() {
             const token = localStorage.getItem('token');
             
             // Send status update to backend with barcode for specific product update
-            const response = await fetch(`https://16.171.161.150.nip.io/api/order-tracking/${order.dispatch_id || orderId}/status`, {
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE}/api/order-tracking/${order.dispatch_id || orderId}/status`, {
                 method: 'PATCH',
                 headers: {
                     'Content-Type': 'application/json',
@@ -467,7 +467,7 @@ export default function OrderSheet() {
         
         try {
             const token = localStorage.getItem('token');
-            const response = await fetch(`https://16.171.161.150.nip.io/api/order-tracking/${dispatchId}`, {
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE}/api/order-tracking/${dispatchId}`, {
                 method: 'DELETE',
                 headers: {
                     'Content-Type': 'application/json',
