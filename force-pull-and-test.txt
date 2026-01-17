@@ -1,0 +1,47 @@
+🚀 FORCE PULL LATEST CODE AND TEST
+==================================
+
+Run these commands on the server to force pull the latest code:
+
+# Stash local changes
+git stash
+
+# Force pull latest code
+git pull origin main
+
+# If still conflicts, reset hard
+git reset --hard origin/main
+
+# Restart server
+pkill -f "node server.js" || true
+sleep 3
+nohup node server.js > server.log 2>&1 &
+sleep 5
+
+# Test the API
+node test-table-structure.js
+
+# Check server logs
+tail -20 server.log
+
+==================================
+ALTERNATIVE - NUCLEAR OPTION:
+
+If above doesn't work, completely reset:
+
+# Backup any important local files first
+cp controllers/permissionsController.js controllers/permissionsController.backup
+
+# Hard reset to GitHub
+git fetch origin
+git reset --hard origin/main
+git clean -fd
+
+# Restart server
+pkill -f "node server.js" || true
+nohup node server.js > server.log 2>&1 &
+
+# Test
+node test-table-structure.js
+
+==================================

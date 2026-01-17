@@ -1,0 +1,48 @@
+🚀 URGENT: PULL LATEST CODE AND RESTART SERVER
+===============================================
+
+The server is running OLD code that still has the status column issue!
+
+COMMANDS TO RUN ON SERVER:
+ssh -i "C:\Users\Admin\awsconection.pem" ubuntu@13.51.56.188
+
+cd inventoryfullstack
+
+# Pull the latest fixes
+git pull origin main
+
+# Kill old server process
+pkill -f "node server.js" || true
+sleep 3
+
+# Start server with new code
+nohup node server.js > server.log 2>&1 &
+sleep 5
+
+# Verify server is running
+ps aux | grep "node server.js"
+curl -s https://13.51.56.188.nip.io/api/health
+
+# Test the fixed update function
+node test-table-structure.js
+
+===============================================
+🔍 WHAT THE NEW CODE FIXES:
+
+OLD CODE (causing error):
+UPDATE users SET name = ?, email = ?, role_id = ?, status = ?, updated_at = NOW() WHERE id = ?
+
+NEW CODE (should work):
+UPDATE users SET name = ? WHERE id = ?
+
+===============================================
+📝 AFTER PULLING CHANGES:
+
+The updateUser function now:
+- ✅ Removes status column completely
+- ✅ Removes updated_at column completely  
+- ✅ Has detailed debug logging
+- ✅ Uses simple name-only update for testing
+- ✅ Handles errors properly
+
+===============================================

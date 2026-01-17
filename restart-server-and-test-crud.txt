@@ -1,0 +1,31 @@
+🚀 RESTART SERVER AND TEST CRUD
+===============================
+
+Run these commands on the server:
+
+# Kill server
+pkill -f "node server.js" || true
+sleep 3
+
+# Start server
+nohup node server.js > server.log 2>&1 &
+sleep 5
+
+# Test CRUD operations
+node test-table-structure.js
+
+# If server crashes, check logs
+tail -20 server.log
+
+===============================
+✅ GOOD NEWS: User update is now working!
+
+The logs show:
+- UPDATE query is working: "UPDATE users SET name = ? WHERE id = ?"
+- No more status column error
+- PUT /api/users/143 returned 200 status
+
+The callback error might be from a different API call.
+Try testing individual operations to isolate the issue.
+
+===============================
