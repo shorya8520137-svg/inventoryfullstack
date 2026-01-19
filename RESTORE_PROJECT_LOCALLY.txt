@@ -1,0 +1,62 @@
+RESTORE PROJECT LOCALLY FROM GIT
+=================================
+
+RESTORE TO SATURDAY WORKING VERSION (0bc079c)
+Date: January 17, 2026 at 6:39 PM IST
+
+LOCAL RESTORATION COMMANDS:
+===========================
+
+1. Clone/Pull from GitHub:
+   git clone https://github.com/shorya8520137-svg/inventoryfullstack.git
+   # OR if already cloned:
+   cd inventoryfullstack
+   git fetch origin
+
+2. Backup current work (if any):
+   git stash push -m 'backup-before-saturday-restore'
+
+3. Restore to Saturday working version:
+   git reset --hard 0bc079c
+
+4. Install dependencies:
+   npm install
+
+5. Create simple notification controller (to fix missing dependency):
+   echo "class NotificationController {
+     static triggerUserLoginNotification() { return true; }
+     static triggerUserLogoutNotification() { return true; }
+   }
+   module.exports = NotificationController;" > controllers/notificationController.js
+
+6. Update .env.local for local development:
+   NEXT_PUBLIC_API_BASE=https://56.228.29.188.nip.io
+
+7. Start local development:
+   npm run dev
+
+LOCAL DEVELOPMENT SETUP:
+========================
+- Frontend: http://localhost:3000
+- Backend API: https://56.228.29.188.nip.io (remote server)
+- Database: Remote MySQL on server
+
+LOGIN CREDENTIALS:
+=================
+Email: admin@company.com
+Password: password
+
+WHAT THIS VERSION CONTAINS:
+==========================
+- Working admin authentication system
+- Fixed admin password handling
+- Debug logging for troubleshooting
+- Build errors fixed
+- JSX syntax errors resolved
+- Frontend permission system implemented
+
+NEXT STEPS:
+===========
+1. Test login locally at http://localhost:3000
+2. Verify admin permissions are showing correctly
+3. Continue development from this stable base
