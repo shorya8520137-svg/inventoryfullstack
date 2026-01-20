@@ -47,7 +47,7 @@ router.post('/damage-recovery', authenticateToken, checkPermission('operations.d
 router.get('/suggestions/products', authenticateToken, checkPermission('operations.dispatch'), dispatchController.getProductSuggestions);
 
 // POST /api/dispatch/damage - Handle damage operations using damage controller
-router.post('/damage' 
+router.post('/damage', 
     authenticateToken, 
     (req, res) => {
         const damageRecoveryController = require('../controllers/damageRecoveryController');
@@ -56,7 +56,7 @@ router.post('/damage'
 );
 
 // POST /api/dispatch/recover - Handle recovery operations using damage controller
-router.post('/recover' 
+router.post('/recover', 
     authenticateToken, 
     (req, res) => {
         const damageRecoveryController = require('../controllers/damageRecoveryController');
