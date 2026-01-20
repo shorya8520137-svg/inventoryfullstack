@@ -410,20 +410,28 @@ router.get('/permissions/:permissionId',
             const { permissionId } = req.params;
             const db = require('../db/connection');
             
-            const [permissions] = await db.execute(`
+            db.query(`
                 SELECT * FROM permissions WHERE id = ? AND is_active = true
-            `, [permissionId]);
-            
-            if (permissions.length === 0) {
-                return res.status(404).json({
-                    success: false,
-                    message: 'Permission not found'
+            `, [permissionId], (err, permissions) => {
+                if (err) {
+                    console.error('Get permission error:', err);
+                    return res.status(500).json({
+                        success: false,
+                        message: 'Failed to fetch permission'
+                    });
+                }
+                
+                if (permissions.length === 0) {
+                    return res.status(404).json({
+                        success: false,
+                        message: 'Permission not found'
+                    });
+                }
+                
+                res.json({
+                    success: true,
+                    data: permissions[0]
                 });
-            }
-            
-            res.json({
-                success: true,
-                data: permissions[0]
             });
             
         } catch (error) {
