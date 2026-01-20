@@ -1,78 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const PermissionsController = require('../controllers/permissionsController');
-
-// Middleware for authentication
-const authenticateToken = (req, res, next) => {
-    const authHeader = req.headers['authorization'];
-    const token = authHeader && authHeader.split(' ')[1];
-    
-    if (!token) {
-        return res.status(401).json({
-            success: false,
-            message: 'Access token required'
-        });
-    }
-    
-    const jwt = require('jsonwebtoken');
-    
-    jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key', (err, user) => {
-        if (err) {
-            return res.status(403).json({
-                success: false,
-                message: 'Invalid or expired token'
-            });
-        }
-        req.user = user;
-        next();
-    });
-};
-
-// Middleware for checking permissions
-const checkPermission = (requiredPermission) => {
-    return (req, res, next) => {
-        try {
-            const db = require('../db/connection');
-            
-            // Get user permissions
-            const query = `
-                SELECT p.name
-                FROM permissions p
-                JOIN role_permissions rp ON p.id = rp.permission_id
-                JOIN users u ON rp.role_id = u.role_id
-                WHERE u.id = ? AND p.is_active = true
-            `;
-            
-            db.query(query, [req.user.id], (err, permissions) => {
-                if (err) {
-                    console.error('Permission check error:', err);
-                    return res.status(500).json({
-                        success: false,
-                        message: 'Permission check failed'
-                    });
-                }
-                
-                const userPermissions = permissions.map(p => p.name);
-                
-                // Super admin has all permissions
-                if (req.user.role_name === 'super_admin' || userPermissions.includes(requiredPermission)) {
-                    next();
-                } else {
-                    res.status(403).json({
-                        success: false,
-                        message: 'Insufficient permissions'
-                    });
-                }
-            });
-        } catch (error) {
-            console.error('Permission check error:', error);
-            res.status(500).json({
-                success: false,
-                message: 'Permission check failed'
-            });
-        }
-    };
-};
+const { authenticateToken, checkPermission } = require('../middleware/auth');
 
 // ================= AUTHENTICATION ROUTES ================= //
 

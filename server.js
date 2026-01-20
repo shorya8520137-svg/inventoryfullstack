@@ -29,23 +29,29 @@ require("./db/connection");
 app.use("/api/auth", require("./routes/authRoutes"));
 
 // ===============================
+// ROUTES (FRONTEND COMPATIBLE)
+// ===============================
+
+// permissions routes (FIRST - before global auth middleware)
+app.use('/api', require('./routes/permissionsRoutes'));
+
+// ===============================
 // PROTECTED ROUTES (JWT REQUIRED)
 // ===============================
 const { authenticateToken } = require('./middleware/auth');
 
-// Apply JWT authentication to all API routes except auth
+// Apply JWT authentication to all API routes except auth and permissions
 app.use('/api', (req, res, next) => {
-    // Skip authentication for auth routes
-    if (req.path.startsWith('/auth')) {
+    // Skip authentication for auth routes and user management (handled in permissionsRoutes)
+    if (req.path.startsWith('/auth') || 
+        req.path.startsWith('/users') || 
+        req.path.startsWith('/roles') || 
+        req.path.startsWith('/permissions')) {
         return next();
     }
     // Apply authentication to all other routes
     authenticateToken(req, res, next);
 });
-
-// ===============================
-// ROUTES (FRONTEND COMPATIBLE)
-// ===============================
 app.use("/api/dispatch", require("./routes/dispatchRoutes"));
 app.use("/api/dispatch-beta", require("./routes/dispatchRoutes")); // existing
 
@@ -75,9 +81,6 @@ app.use('/api/self-transfer', require('./routes/selfTransferRoutes'));
 
 // auth routes (no /api prefix for backward compatibility)
 app.use('/auth', require('./routes/authRoutes'));
-
-// permissions routes
-app.use('/api', require('./routes/permissionsRoutes'));
 
 // ===============================
 // HEALTH CHECK
