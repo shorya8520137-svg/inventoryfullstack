@@ -1,0 +1,33 @@
+🔍 DIAGNOSE SERVER ISSUE - RUN ON SERVER
+========================================
+
+The server is hanging at step 4. Let's find out why:
+
+1. First, check if there are any processes running:
+ps aux | grep node
+
+2. Kill ALL node processes:
+pkill -9 node
+
+3. Check if MySQL is running:
+sudo systemctl status mysql
+
+4. If MySQL is not running, start it:
+sudo systemctl start mysql
+
+5. Test database connection:
+mysql -u inventory_user -p'StrongPass@123' -h 127.0.0.1 inventory_db -e "SELECT 1;"
+
+6. Check if port 3001 is free:
+netstat -tulpn | grep 3001
+
+7. Try starting server with debug output:
+cd /home/ubuntu/inventoryfullstack
+DEBUG=* node server.js
+
+8. If it hangs, press Ctrl+C and check the error
+
+9. Alternative: Start with timeout:
+timeout 10s node server.js
+
+This will help us see exactly where it's hanging!
