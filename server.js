@@ -76,6 +76,9 @@ app.use('/api/timeline', require('./routes/timelineRoutes'));
 // order tracking routes
 app.use('/api/order-tracking', require('./routes/orderTrackingRoutes'));
 
+// orders alias (for frontend compatibility)
+app.use('/api/orders', require('./routes/orderTrackingRoutes'));
+
 // self transfer routes
 app.use('/api/self-transfer', require('./routes/selfTransferRoutes'));
 

@@ -12,14 +12,14 @@ const { authenticateToken, checkPermission } = require('../middleware/auth');
 // Create new self transfer
 router.post('/create', 
     authenticateToken, 
-    checkPermission('operations.self_transfer'), 
+    checkPermission('OPERATIONS_SELF_TRANSFER'), 
     selfTransferController.createSelfTransfer
 );
 
 // Get all self transfers with filters
 router.get('/', 
     authenticateToken, 
-    checkPermission('operations.self_transfer'), 
+    checkPermission('OPERATIONS_SELF_TRANSFER'), 
     selfTransferController.getSelfTransfers
 );
 

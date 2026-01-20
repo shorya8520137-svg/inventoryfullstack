@@ -12,7 +12,7 @@ const { authenticateToken, checkPermission } = require('../middleware/auth');
 // Example: /api/order-tracking?warehouse=BLR_WH&status=Pending&page=1&limit=20
 router.get('/', 
     authenticateToken, 
-    checkPermission('orders.view'), 
+    checkPermission('ORDERS_VIEW'), 
     orderTrackingController.getAllDispatches
 );
 
@@ -20,7 +20,7 @@ router.get('/',
 // Example: /api/order-tracking/stats?warehouse=BLR_WH&dateFrom=2025-01-01
 router.get('/stats', 
     authenticateToken, 
-    checkPermission('orders.view'), 
+    checkPermission('ORDERS_VIEW'), 
     orderTrackingController.getDispatchStats
 );
 
@@ -28,7 +28,7 @@ router.get('/stats',
 // Example: /api/order-tracking/17/timeline
 router.get('/:dispatchId/timeline', 
     authenticateToken, 
-    checkPermission('inventory.timeline'), 
+    checkPermission('INVENTORY_TIMELINE'), 
     orderTrackingController.getDispatchTimeline
 );
 
@@ -36,7 +36,7 @@ router.get('/:dispatchId/timeline',
 // Body: { product_name, barcode, warehouse, quantity, reason, notes }
 router.post('/:dispatchId/damage', 
     authenticateToken, 
-    checkPermission('operations.damage'), 
+    checkPermission('OPERATIONS_DAMAGE'), 
     orderTrackingController.reportDispatchDamage
 );
 
@@ -44,7 +44,7 @@ router.post('/:dispatchId/damage',
 // Example: DELETE /api/order-tracking/17
 router.delete('/:dispatchId', 
     authenticateToken, 
-    checkPermission('orders.delete'), 
+    checkPermission('ORDERS_EDIT'), 
     orderTrackingController.deleteDispatch
 );
 
@@ -52,7 +52,7 @@ router.delete('/:dispatchId',
 // Body: { status: 'Delivered' }
 router.patch('/:dispatchId/status', 
     authenticateToken, 
-    checkPermission('orders.status_update'), 
+    checkPermission('ORDERS_EDIT'), 
     orderTrackingController.updateDispatchStatus
 );
 
