@@ -221,8 +221,33 @@ export function PermissionsProvider({ children }) {
         
         setLoading(true);
         try {
+            // FIRST: Try to use permissions from login response
+            if (user.permissions && Array.isArray(user.permissions)) {
+                setUserPermissions(user.permissions);
+                
+                // Set role info
+                const roleKey = user.role?.toUpperCase();
+                const role = ROLES[roleKey];
+                if (role) {
+                    setUserRole({
+                        ...role,
+                        permissions: user.permissions // Use actual permissions, not hardcoded
+                    });
+                } else {
+                    setUserRole({
+                        name: user.role || 'User',
+                        description: 'User role',
+                        permissions: user.permissions,
+                        color: '#64748b',
+                        priority: 999
+                    });
+                }
+                setLoading(false);
+                return;
+            }
+            
+            // SECOND: Try API if login response doesn't have permissions
             if (apiAvailable) {
-                // Load from API
                 try {
                     const [rolesData, permissionsData] = await Promise.all([
                         PermissionsAPI.getRoles(),
@@ -237,41 +262,78 @@ export function PermissionsProvider({ children }) {
                     const userRoleData = rolesData?.find(r => r.name === user.role);
                     if (userRoleData) {
                         const rolePermissions = await PermissionsAPI.getRolePermissions(userRoleData.id);
+                        const permissionNames = rolePermissions?.map(p => p.name) || [];
                         setUserRole(userRoleData);
-                        setUserPermissions(rolePermissions?.map(p => p.name) || []);
+                        setUserPermissions(permissionNames);
+                    } else {
+                        // No role found in API, use empty permissions
+                        setUserPermissions([]);
+                        setUserRole(null);
                     }
                 } catch (apiError) {
-                    console.warn('Failed to load permissions from API, using local data:', apiError);
-                    loadLocalPermissions();
+                    console.warn('Failed to load permissions from API:', apiError);
+                    // Don't fall back to hardcoded roles - use empty permissions
+                    setUserPermissions([]);
+                    setUserRole(null);
                 }
             } else {
-                loadLocalPermissions();
+                // API not available, use empty permissions (don't assume permissions)
+                setUserPermissions([]);
+                setUserRole(null);
             }
         } catch (error) {
             console.error('Error loading permissions:', error);
-            loadLocalPermissions();
+            // Don't fall back to hardcoded roles - use empty permissions
+            setUserPermissions([]);
+            setUserRole(null);
         } finally {
             setLoading(false);
         }
     };
 
     const loadLocalPermissions = () => {
-        // Fallback to local permissions
-        const roleKey = user.role.toUpperCase();
-        const role = ROLES[roleKey];
-        
-        if (role) {
-            setUserRole(role);
-            setUserPermissions(role.permissions);
+        // Use permissions from login response instead of hardcoded fallback
+        if (user && user.permissions) {
+            // Use actual permissions from login response
+            setUserPermissions(user.permissions);
+            
+            // Set role info if available
+            const roleKey = user.role?.toUpperCase();
+            const role = ROLES[roleKey];
+            if (role) {
+                setUserRole({
+                    ...role,
+                    permissions: user.permissions // Use actual permissions, not hardcoded ones
+                });
+            } else {
+                // Create role object with actual permissions
+                setUserRole({
+                    name: user.role || 'User',
+                    description: 'User role',
+                    permissions: user.permissions,
+                    color: '#64748b',
+                    priority: 999
+                });
+            }
         } else {
-            // Default to VIEWER if role not found
-            setUserRole(ROLES.VIEWER);
-            setUserPermissions(ROLES.VIEWER.permissions);
+            // No permissions available - set empty
+            setUserRole(null);
+            setUserPermissions([]);
         }
     };
 
     const hasPermission = (permission) => {
-        if (!user || !userPermissions.length) return false;
+        // If no user is logged in, deny all permissions
+        if (!user) {
+            return false;
+        }
+        
+        // If userPermissions is not an array or is empty, deny all permissions
+        if (!Array.isArray(userPermissions) || userPermissions.length === 0) {
+            return false;
+        }
+        
+        // Check if user has the specific permission
         return userPermissions.includes(permission);
     };
 

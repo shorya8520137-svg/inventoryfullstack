@@ -34,10 +34,10 @@ exports.login = async (req, res) => {
                 u.password,
                 u.role_id,
                 u.is_active,
-                r.name as role_name,
-                r.display_name as role_display_name
+                COALESCE(r.name, 'viewer') as role_name,
+                COALESCE(r.display_name, 'Viewer') as role_display_name
             FROM users u
-            JOIN roles r ON u.role_id = r.id
+            LEFT JOIN roles r ON u.role_id = r.id
             WHERE (u.email = ? OR u.name = ?) AND u.is_active = 1
             LIMIT 1
         `;
@@ -154,10 +154,10 @@ exports.getCurrentUser = async (req, res) => {
                 u.is_active,
                 u.last_login,
                 u.login_count,
-                r.name as role_name,
-                r.display_name as role_display_name
+                COALESCE(r.name, 'viewer') as role_name,
+                COALESCE(r.display_name, 'Viewer') as role_display_name
             FROM users u
-            JOIN roles r ON u.role_id = r.id
+            LEFT JOIN roles r ON u.role_id = r.id
             WHERE u.id = ? AND u.is_active = 1
         `;
 
