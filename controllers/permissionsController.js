@@ -684,6 +684,33 @@ class PermissionsController {
     
     // ================= PERMISSION MANAGEMENT ================= //
     
+    static getRolePermissions(req, res) {
+        const { roleId } = req.params;
+        
+        const sql = `
+            SELECT p.id, p.name, p.display_name, p.category, p.description
+            FROM permissions p
+            JOIN role_permissions rp ON p.id = rp.permission_id
+            WHERE rp.role_id = ? AND p.is_active = true
+            ORDER BY p.category, p.name
+        `;
+        
+        db.query(sql, [roleId], (err, permissions) => {
+            if (err) {
+                console.error('Get role permissions error:', err);
+                return res.status(500).json({
+                    success: false,
+                    message: 'Failed to fetch role permissions'
+                });
+            }
+            
+            res.json({
+                success: true,
+                data: permissions || []
+            });
+        });
+    }
+    
     static getPermissions(req, res) {
         const sql = `
             SELECT * FROM permissions 
