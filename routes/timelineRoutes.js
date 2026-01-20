@@ -10,10 +10,18 @@ const { authenticateToken, checkPermission } = require('../middleware/auth');
 
 // GET /api/timeline/:productCode - Get timeline for specific product
 // Example: /api/timeline/XYZ789?warehouse=BLR_WH&dateFrom=2025-01-01&dateTo=2025-01-31&limit=50
-router.get('/:productCode', authenticateToken, checkPermission('timeline.view'), timelineController.getProductTimeline);
+router.get('/:productCode', 
+    authenticateToken, 
+    checkPermission('timeline.view'), 
+    timelineController.getProductTimeline
+);
 
 // GET /api/timeline - Get timeline summary (grouped by product or warehouse)
 // Example: /api/timeline?warehouse=BLR_WH&groupBy=product&dateFrom=2025-01-01
-router.get('/', authenticateToken, checkPermission('timeline.view'), timelineController.getTimelineSummary);
+router.get('/', 
+    authenticateToken, 
+    checkPermission('timeline.view'), 
+    timelineController.getTimelineSummary
+);
 
 module.exports = router;
