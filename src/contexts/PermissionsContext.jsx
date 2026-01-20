@@ -6,53 +6,44 @@ import { PermissionsAPI } from "../services/permissionsApi";
 
 const PermissionsContext = createContext(null);
 
-// Define all available permissions (Clean 28 permissions)
+// Define all available permissions (Backend format - UPPERCASE)
 export const PERMISSIONS = {
-    // Products permissions (8)
-    PRODUCTS_VIEW: 'products.view',
-    PRODUCTS_CREATE: 'products.create',
-    PRODUCTS_EDIT: 'products.edit',
-    PRODUCTS_DELETE: 'products.delete',
-    PRODUCTS_CATEGORIES: 'products.categories',
-    PRODUCTS_BULK_IMPORT: 'products.bulk_import',
-    PRODUCTS_EXPORT: 'products.export',
-    PRODUCTS_SELF_TRANSFER: 'products.self_transfer',
+    // Products permissions
+    PRODUCTS_VIEW: 'PRODUCTS_VIEW',
+    PRODUCTS_CREATE: 'PRODUCTS_CREATE',
+    PRODUCTS_EDIT: 'PRODUCTS_EDIT',
+    PRODUCTS_DELETE: 'PRODUCTS_DELETE',
     
-    // Inventory permissions (6)
-    INVENTORY_VIEW: 'inventory.view',
-    INVENTORY_TIMELINE: 'inventory.timeline',
-    INVENTORY_BULK_UPLOAD: 'inventory.bulk_upload',
-    INVENTORY_TRANSFER: 'inventory.transfer',
-    INVENTORY_ADJUST: 'inventory.adjust',
-    INVENTORY_EXPORT: 'inventory.export',
+    // Inventory permissions
+    INVENTORY_VIEW: 'INVENTORY_VIEW',
+    INVENTORY_EDIT: 'INVENTORY_EDIT',
+    INVENTORY_TIMELINE: 'INVENTORY_TIMELINE',
     
-    // Orders permissions (6)
-    ORDERS_VIEW: 'orders.view',
-    ORDERS_CREATE: 'orders.create',
-    ORDERS_EDIT: 'orders.edit',
-    ORDERS_DELETE: 'orders.delete',
-    ORDERS_STATUS_UPDATE: 'orders.status_update',
-    ORDERS_EXPORT: 'orders.export',
+    // Orders permissions
+    ORDERS_VIEW: 'ORDERS_VIEW',
+    ORDERS_CREATE: 'ORDERS_CREATE',
+    ORDERS_EDIT: 'ORDERS_EDIT',
     
-    // Operations permissions (5)
-    OPERATIONS_DISPATCH: 'operations.dispatch',
-    OPERATIONS_DAMAGE: 'operations.damage',
-    OPERATIONS_RETURN: 'operations.return',
-    OPERATIONS_BULK: 'operations.bulk',
-    OPERATIONS_SELF_TRANSFER: 'operations.self_transfer',
+    // Operations permissions
+    OPERATIONS_DISPATCH: 'OPERATIONS_DISPATCH',
+    OPERATIONS_DAMAGE: 'OPERATIONS_DAMAGE',
+    OPERATIONS_RETURN: 'OPERATIONS_RETURN',
+    OPERATIONS_BULK: 'OPERATIONS_BULK',
+    OPERATIONS_SELF_TRANSFER: 'OPERATIONS_SELF_TRANSFER',
     
-    // System permissions (3)
-    SYSTEM_USER_MANAGEMENT: 'system.user_management',
-    SYSTEM_ROLE_MANAGEMENT: 'system.role_management',
-    SYSTEM_AUDIT_LOG: 'system.audit_log',
+    // System permissions
+    SYSTEM_USER_MANAGEMENT: 'SYSTEM_USER_MANAGEMENT',
+    SYSTEM_ROLE_MANAGEMENT: 'SYSTEM_ROLE_MANAGEMENT',
+    SYSTEM_AUDIT_LOG: 'SYSTEM_AUDIT_LOG',
+    SYSTEM_PERMISSION_MANAGEMENT: 'SYSTEM_PERMISSION_MANAGEMENT',
 };
 
-// Define roles and their permissions (Updated for clean permissions)
+// Define roles and their permissions (Updated for backend format)
 export const ROLES = {
     SUPER_ADMIN: {
         name: 'Super Admin',
         description: 'Full system access with all permissions',
-        permissions: Object.values(PERMISSIONS), // All 28 permissions
+        permissions: Object.values(PERMISSIONS), // All permissions
         color: '#dc2626', // Red
         priority: 1
     },
@@ -60,28 +51,15 @@ export const ROLES = {
         name: 'Admin',
         description: 'Full operational access without user management',
         permissions: [
-            // Products (all except delete)
             PERMISSIONS.PRODUCTS_VIEW,
             PERMISSIONS.PRODUCTS_CREATE,
             PERMISSIONS.PRODUCTS_EDIT,
-            PERMISSIONS.PRODUCTS_CATEGORIES,
-            PERMISSIONS.PRODUCTS_BULK_IMPORT,
-            PERMISSIONS.PRODUCTS_EXPORT,
-            PERMISSIONS.PRODUCTS_SELF_TRANSFER,
-            // Inventory (all)
             PERMISSIONS.INVENTORY_VIEW,
+            PERMISSIONS.INVENTORY_EDIT,
             PERMISSIONS.INVENTORY_TIMELINE,
-            PERMISSIONS.INVENTORY_BULK_UPLOAD,
-            PERMISSIONS.INVENTORY_TRANSFER,
-            PERMISSIONS.INVENTORY_ADJUST,
-            PERMISSIONS.INVENTORY_EXPORT,
-            // Orders (all except delete)
             PERMISSIONS.ORDERS_VIEW,
             PERMISSIONS.ORDERS_CREATE,
             PERMISSIONS.ORDERS_EDIT,
-            PERMISSIONS.ORDERS_STATUS_UPDATE,
-            PERMISSIONS.ORDERS_EXPORT,
-            // Operations (all)
             PERMISSIONS.OPERATIONS_DISPATCH,
             PERMISSIONS.OPERATIONS_DAMAGE,
             PERMISSIONS.OPERATIONS_RETURN,
@@ -95,7 +73,6 @@ export const ROLES = {
         name: 'Manager',
         description: 'Management access with reporting capabilities',
         permissions: [
-            // Products (view, create, edit, categories, export)
             PERMISSIONS.PRODUCTS_VIEW,
             PERMISSIONS.PRODUCTS_CREATE,
             PERMISSIONS.PRODUCTS_EDIT,
