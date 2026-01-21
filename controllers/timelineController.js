@@ -191,10 +191,10 @@ exports.getProductTimeline = (req, res) => {
                         logistics: item.logistics,
                         payment_mode: item.payment_mode,
                         invoice_amount: item.invoice_amount,
-                        length: item.length || 0,
-                        width: item.width || 0,
-                        height: item.height || 0,
-                        actual_weight: item.actual_weight || 0,
+                        length: parseFloat(item.length) || 0,
+                        width: parseFloat(item.width) || 0,
+                        height: parseFloat(item.height) || 0,
+                        actual_weight: parseFloat(item.actual_weight) || 0,
                         status: item.dispatch_status
                     } : null
                 };
