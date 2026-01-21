@@ -70,6 +70,61 @@ The system operates on a **double-entry ledger principle** where every inventory
 - **API Design**: RESTful with consistent response patterns
 - **Middleware**: Custom auth, permissions, and error handling
 
+## 📦 Dependencies & Node Modules
+
+### Frontend Dependencies
+```json
+{
+  "@radix-ui/react-alert-dialog": "^1.0.5",    // Alert dialogs and modals
+  "@radix-ui/react-dialog": "^1.0.5",          // Dialog components
+  "@radix-ui/react-separator": "^1.0.3",       // UI separators
+  "@radix-ui/react-slot": "^1.0.2",            // Slot component for composition
+  "@radix-ui/react-tooltip": "^1.0.7",         // Tooltip components
+  "axios": "^1.13.2",                          // HTTP client for API calls
+  "class-variance-authority": "^0.7.0",        // CSS class variance utility
+  "clsx": "^2.0.0",                            // Conditional CSS classes
+  "framer-motion": "^10.16.4",                 // Animation library
+  "lucide-react": "^0.292.0",                  // Icon library
+  "next": "14.0.0",                            // React framework
+  "react": "^18",                              // React library
+  "react-chat-elements": "^12.0.18",           // Chat UI components
+  "react-dom": "^18",                          // React DOM renderer
+  "react-leaflet": "^4.2.1",                   // Map components
+  "recharts": "^2.8.0",                        // Chart library
+  "tailwind-merge": "^2.0.0"                   // Tailwind CSS utility merger
+}
+```
+
+### Backend Dependencies
+```json
+{
+  "bcrypt": "^6.0.0",                          // Password hashing
+  "bcryptjs": "^3.0.3",                        // Alternative bcrypt implementation
+  "cors": "^2.8.5",                            // Cross-origin resource sharing
+  "csv-parser": "^3.0.0",                      // CSV file parsing
+  "dotenv": "^17.2.3",                         // Environment variable loader
+  "express": "^4.18.2",                        // Web framework
+  "jsonwebtoken": "^9.0.3",                    // JWT token handling
+  "leaflet": "^1.9.4",                         // Interactive maps
+  "morgan": "^1.10.1",                         // HTTP request logger
+  "multer": "^1.4.5-lts.1",                    // File upload middleware
+  "mysql2": "^3.6.5",                          // MySQL database driver
+  "xlsx": "^0.18.5"                            // Excel file processing
+}
+```
+
+### Development Dependencies
+```json
+{
+  "autoprefixer": "^10.0.1",                   // CSS autoprefixer
+  "eslint": "^8",                              // JavaScript linter
+  "eslint-config-next": "14.0.0",              // Next.js ESLint config
+  "postcss": "^8",                             // CSS processor
+  "tailwindcss": "^3.3.0",                     // Utility-first CSS framework
+  "tailwindcss-animate": "^1.0.7"              // Tailwind CSS animations
+}
+```
+
 ### Database Architecture
 
 #### Core Tables Structure
@@ -117,10 +172,30 @@ audit_logs (id, user_id, action, details, timestamp)
 4. **Audit Trail**: Every operation logged with user context
 5. **Permission Validation**: All operations checked against user permissions
 
-## 🔌 API Documentation
+## 🔌 Complete API Documentation
 
-### Authentication Endpoints
+### API Flow Architecture
+```
+Client Request → JWT Authentication → Permission Check → Controller → Database → Response
+```
 
+### Base URL
+- **Development**: `http://localhost:5000/api`
+- **Production**: `https://your-backend-domain.com/api`
+
+### Authentication Flow
+1. **Login**: `POST /api/auth/login` → Returns JWT token
+2. **Token Validation**: All protected routes require `Authorization: Bearer <token>`
+3. **Permission Check**: Each endpoint validates user permissions
+4. **Auto Refresh**: Frontend automatically refreshes expired tokens
+
+---
+
+## 📋 Complete API Endpoints (35+ APIs)
+
+### 🔐 Authentication APIs (4 endpoints)
+
+#### POST /api/auth/login
 ```http
 POST /api/auth/login
 Content-Type: application/json
@@ -132,69 +207,1024 @@ Content-Type: application/json
 
 Response: {
   "success": true,
-  "token": "jwt_token_here",
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "user": {
+    "id": 1,
+    "name": "System Administrator",
+    "email": "admin@company.com",
+    "role": "super_admin",
+    "permissions": ["INVENTORY_VIEW", "ORDERS_CREATE", ...]
+  }
+}
+```
+
+#### GET /api/auth/me
+```http
+GET /api/auth/me
+Authorization: Bearer <token>
+
+Response: {
+  "success": true,
   "user": { "id": 1, "name": "Admin", "role": "super_admin" }
 }
 ```
 
-### Inventory Management APIs
-
+#### POST /api/auth/logout
 ```http
-# Get Inventory with Filtering
+POST /api/auth/logout
+Authorization: Bearer <token>
+
+Response: { "success": true, "message": "Logged out successfully" }
+```
+
+#### POST /api/auth/change-password
+```http
+POST /api/auth/change-password
+Authorization: Bearer <token>
+Content-Type: application/json
+
+{
+  "currentPassword": "old_password",
+  "newPassword": "new_password"
+}
+```
+
+---
+
+### 📦 Inventory Management APIs (5 endpoints)
+
+#### GET /api/inventory
+```http
 GET /api/inventory?warehouse=GGM_WH&dateFrom=2025-01-01&dateTo=2025-12-31&search=product&stockFilter=in-stock&sortBy=product_name&sortOrder=asc&page=1&limit=50
+Authorization: Bearer <token>
+Permission: INVENTORY_VIEW
 
-# Get Product Timeline
-GET /api/timeline/{barcode}?warehouse=GGM_WH&limit=50
+Response: {
+  "success": true,
+  "data": [
+    {
+      "barcode": "ABC123",
+      "product_name": "Samsung Galaxy S21",
+      "warehouse": "GGM_WH",
+      "current_stock": 45,
+      "last_updated": "2025-01-20T10:30:00Z"
+    }
+  ],
+  "pagination": { "page": 1, "limit": 50, "total": 150 }
+}
+```
 
-# Bulk Upload
-POST /api/inventory/bulk-upload
+#### GET /api/inventory/by-warehouse
+```http
+GET /api/inventory/by-warehouse?warehouse=BLR_WH
+Authorization: Bearer <token>
+Permission: INVENTORY_VIEW
+```
+
+#### GET /api/inventory/export
+```http
+GET /api/inventory/export?warehouse=GGM_WH&format=csv
+Authorization: Bearer <token>
+Permission: INVENTORY_VIEW
+
+Response: CSV file download
+```
+
+#### POST /api/inventory/add-stock
+```http
+POST /api/inventory/add-stock
+Authorization: Bearer <token>
+Permission: INVENTORY_EDIT
+Content-Type: application/json
+
+{
+  "barcode": "ABC123",
+  "warehouse": "GGM_WH",
+  "quantity": 10,
+  "reason": "Stock replenishment"
+}
+```
+
+#### GET /api/inventory/timeline/:productCode
+```http
+GET /api/inventory/timeline/ABC123?warehouse=GGM_WH&limit=50
+Authorization: Bearer <token>
+Permission: INVENTORY_TIMELINE
+```
+
+---
+
+### 🛍️ Product Management APIs (15 endpoints)
+
+#### GET /api/products
+```http
+GET /api/products?page=1&limit=50&search=samsung&category=electronics
+Authorization: Bearer <token>
+Permission: PRODUCTS_VIEW
+
+Response: {
+  "success": true,
+  "data": [
+    {
+      "id": 1,
+      "name": "Samsung Galaxy S21",
+      "barcode": "ABC123",
+      "category": "Electronics",
+      "price": 699.99,
+      "created_at": "2025-01-15T08:00:00Z"
+    }
+  ]
+}
+```
+
+#### POST /api/products
+```http
+POST /api/products
+Authorization: Bearer <token>
+Permission: PRODUCTS_CREATE
+Content-Type: application/json
+
+{
+  "name": "iPhone 14 Pro",
+  "barcode": "IPH14PRO001",
+  "category": "Electronics",
+  "price": 999.99,
+  "description": "Latest iPhone model"
+}
+```
+
+#### PUT /api/products/:id
+```http
+PUT /api/products/1
+Authorization: Bearer <token>
+Permission: PRODUCTS_EDIT
+Content-Type: application/json
+
+{
+  "name": "iPhone 14 Pro Max",
+  "price": 1099.99
+}
+```
+
+#### DELETE /api/products/:id
+```http
+DELETE /api/products/1
+Authorization: Bearer <token>
+Permission: PRODUCTS_DELETE
+```
+
+#### GET /api/products/search/:barcode
+```http
+GET /api/products/search/ABC123
+Authorization: Bearer <token>
+Permission: PRODUCTS_VIEW
+```
+
+#### GET /api/products/inventory
+```http
+GET /api/products/inventory?warehouse=GGM_WH
+Authorization: Bearer <token>
+Permission: PRODUCTS_VIEW
+```
+
+#### GET /api/products/inventory/by-warehouse/:warehouse
+```http
+GET /api/products/inventory/by-warehouse/BLR_WH
+Authorization: Bearer <token>
+Permission: PRODUCTS_VIEW
+```
+
+#### GET /api/products/inventory/export
+```http
+GET /api/products/inventory/export?format=csv&warehouse=GGM_WH
+Authorization: Bearer <token>
+Permission: PRODUCTS_EXPORT
+```
+
+#### POST /api/products/transfer
+```http
+POST /api/products/transfer
+Authorization: Bearer <token>
+Permission: PRODUCTS_SELF_TRANSFER
+Content-Type: application/json
+
+{
+  "barcode": "ABC123",
+  "fromWarehouse": "GGM_WH",
+  "toWarehouse": "BLR_WH",
+  "quantity": 5
+}
+```
+
+#### POST /api/products/bulk/transfer
+```http
+POST /api/products/bulk/transfer
+Authorization: Bearer <token>
+Permission: PRODUCTS_SELF_TRANSFER
+Content-Type: application/json
+
+{
+  "transfers": [
+    {
+      "barcode": "ABC123",
+      "fromWarehouse": "GGM_WH",
+      "toWarehouse": "BLR_WH",
+      "quantity": 5
+    }
+  ]
+}
+```
+
+#### GET /api/products/inventory/:barcode
+```http
+GET /api/products/inventory/ABC123
+Authorization: Bearer <token>
+Permission: PRODUCTS_VIEW
+```
+
+#### POST /api/products/bulk/import
+```http
+POST /api/products/bulk/import
+Authorization: Bearer <token>
+Permission: PRODUCTS_BULK_IMPORT
 Content-Type: multipart/form-data
-File: inventory.csv
+
+file: products.csv
 ```
 
-### Product Management APIs
-
+#### POST /api/products/bulk/import/progress
 ```http
-# Product CRUD Operations
-GET /api/products                    # List products
-POST /api/products                   # Create product
-PUT /api/products/:id               # Update product
-DELETE /api/products/:id            # Delete product
+POST /api/products/bulk/import/progress
+Authorization: Bearer <token>
+Permission: PRODUCTS_BULK_IMPORT
+Content-Type: multipart/form-data
 
-# Bulk Operations
-POST /api/products/bulk/import      # Bulk import via CSV/Excel
-GET /api/products/categories/all    # List categories
+file: products.xlsx
 ```
 
-### Order Processing APIs
-
+#### GET /api/products/categories/all
 ```http
-# Order Management
-GET /api/orders                     # List orders
-POST /api/orders                    # Create order
-PUT /api/orders/:id/status         # Update order status
-DELETE /api/orders/:id             # Delete order
+GET /api/products/categories/all
+Authorization: Bearer <token>
+Permission: PRODUCTS_CATEGORIES
 
-# Dispatch Operations
-POST /api/dispatch                  # Create dispatch
-GET /api/dispatch/:id              # Get dispatch details
-PUT /api/dispatch/:id              # Update dispatch
+Response: {
+  "success": true,
+  "data": [
+    { "id": 1, "name": "Electronics", "description": "Electronic devices" },
+    { "id": 2, "name": "Clothing", "description": "Apparel and accessories" }
+  ]
+}
 ```
 
-### Operations APIs
-
+#### POST /api/products/categories
 ```http
-# Damage Recovery
-POST /api/damage-recovery          # Report damage
-PUT /api/damage-recovery/:id       # Update recovery
+POST /api/products/categories
+Authorization: Bearer <token>
+Permission: PRODUCTS_CATEGORIES
+Content-Type: application/json
 
-# Returns Processing
-POST /api/returns                  # Process return
-GET /api/returns                   # List returns
+{
+  "name": "Home & Garden",
+  "description": "Home improvement and garden supplies"
+}
+```
 
-# Self Transfer
-POST /api/self-transfer           # Create transfer
-GET /api/self-transfer            # List transfers
+#### GET /api/products/warehouses
+```http
+GET /api/products/warehouses
+Authorization: Bearer <token>
+Permission: PRODUCTS_VIEW
+
+Response: {
+  "success": true,
+  "data": [
+    { "code": "GGM_WH", "name": "Gurgaon Warehouse" },
+    { "code": "BLR_WH", "name": "Bangalore Warehouse" }
+  ]
+}
+```
+
+---
+
+### 🚚 Dispatch & Order Management APIs (8 endpoints)
+
+#### POST /api/dispatch
+```http
+POST /api/dispatch
+Authorization: Bearer <token>
+Permission: OPERATIONS_DISPATCH
+Content-Type: application/json
+
+{
+  "customer": "John Doe",
+  "awb": "AWB123456789",
+  "barcode": "ABC123",
+  "warehouse": "GGM_WH",
+  "quantity": 2,
+  "logistics": "BlueDart",
+  "payment_mode": "COD",
+  "invoice_amount": 1299.98,
+  "length": 25.5,
+  "width": 15.0,
+  "height": 10.0,
+  "actual_weight": 2.5
+}
+```
+
+#### GET /api/dispatch
+```http
+GET /api/dispatch?warehouse=GGM_WH&status=Pending&dateFrom=2025-01-01&dateTo=2025-12-31&search=customer&page=1&limit=50
+Authorization: Bearer <token>
+Permission: OPERATIONS_DISPATCH
+```
+
+#### PUT /api/dispatch/:id/status
+```http
+PUT /api/dispatch/123/status
+Authorization: Bearer <token>
+Permission: OPERATIONS_DISPATCH
+Content-Type: application/json
+
+{
+  "status": "Delivered",
+  "notes": "Package delivered successfully"
+}
+```
+
+#### GET /api/dispatch/warehouses
+```http
+GET /api/dispatch/warehouses
+Authorization: Bearer <token>
+Permission: OPERATIONS_DISPATCH
+```
+
+#### GET /api/dispatch/search-products
+```http
+GET /api/dispatch/search-products?query=samsung&warehouse=GGM_WH
+Authorization: Bearer <token>
+Permission: OPERATIONS_DISPATCH
+```
+
+#### GET /api/dispatch/check-inventory
+```http
+GET /api/dispatch/check-inventory?warehouse=GGM_WH&barcode=ABC123&qty=2
+Authorization: Bearer <token>
+Permission: OPERATIONS_DISPATCH
+
+Response: {
+  "success": true,
+  "available": true,
+  "current_stock": 45,
+  "requested_qty": 2,
+  "remaining_after": 43
+}
+```
+
+#### GET /api/dispatch/logistics
+```http
+GET /api/dispatch/logistics
+Authorization: Bearer <token>
+Permission: OPERATIONS_DISPATCH
+
+Response: {
+  "success": true,
+  "data": ["BlueDart", "DTDC", "Delhivery", "Ecom Express"]
+}
+```
+
+#### GET /api/dispatch/payment-modes
+```http
+GET /api/dispatch/payment-modes
+Authorization: Bearer <token>
+Permission: OPERATIONS_DISPATCH
+
+Response: {
+  "success": true,
+  "data": ["COD", "Prepaid", "Credit", "UPI"]
+}
+```
+
+---
+
+### 📊 Order Tracking APIs (6 endpoints)
+
+#### GET /api/order-tracking
+```http
+GET /api/order-tracking?warehouse=BLR_WH&status=Pending&page=1&limit=20
+Authorization: Bearer <token>
+Permission: ORDERS_VIEW
+
+Response: {
+  "success": true,
+  "data": [
+    {
+      "id": 17,
+      "customer": "Jane Smith",
+      "awb": "AWB987654321",
+      "status": "In Transit",
+      "created_at": "2025-01-20T14:30:00Z",
+      "items": [
+        {
+          "barcode": "XYZ789",
+          "product_name": "iPhone 14",
+          "quantity": 1
+        }
+      ]
+    }
+  ]
+}
+```
+
+#### GET /api/order-tracking/stats
+```http
+GET /api/order-tracking/stats?warehouse=BLR_WH&dateFrom=2025-01-01
+Authorization: Bearer <token>
+Permission: ORDERS_VIEW
+
+Response: {
+  "success": true,
+  "data": {
+    "total_orders": 150,
+    "pending": 25,
+    "in_transit": 45,
+    "delivered": 80,
+    "total_value": 125000.50
+  }
+}
+```
+
+#### GET /api/order-tracking/:dispatchId/timeline
+```http
+GET /api/order-tracking/17/timeline
+Authorization: Bearer <token>
+Permission: INVENTORY_TIMELINE
+```
+
+#### POST /api/order-tracking/:dispatchId/damage
+```http
+POST /api/order-tracking/17/damage
+Authorization: Bearer <token>
+Permission: OPERATIONS_DAMAGE
+Content-Type: application/json
+
+{
+  "product_name": "iPhone 14",
+  "barcode": "XYZ789",
+  "warehouse": "BLR_WH",
+  "quantity": 1,
+  "reason": "Screen cracked during transit"
+}
+```
+
+#### DELETE /api/order-tracking/:dispatchId
+```http
+DELETE /api/order-tracking/17
+Authorization: Bearer <token>
+Permission: ORDERS_EDIT
+```
+
+#### PATCH /api/order-tracking/:dispatchId/status
+```http
+PATCH /api/order-tracking/17/status
+Authorization: Bearer <token>
+Permission: ORDERS_EDIT
+Content-Type: application/json
+
+{
+  "status": "Delivered"
+}
+```
+
+---
+
+### 🔄 Operations APIs (12 endpoints)
+
+#### Bulk Upload APIs (4 endpoints)
+
+##### POST /api/bulk-upload
+```http
+POST /api/bulk-upload
+Authorization: Bearer <token>
+Permission: inventory.bulk_upload
+Content-Type: multipart/form-data
+
+file: inventory.csv
+warehouse: GGM_WH
+```
+
+##### POST /api/bulk-upload/progress
+```http
+POST /api/bulk-upload/progress
+Authorization: Bearer <token>
+Permission: inventory.bulk_upload
+Content-Type: multipart/form-data
+
+file: inventory.xlsx
+```
+
+##### GET /api/bulk-upload/warehouses
+```http
+GET /api/bulk-upload/warehouses
+Authorization: Bearer <token>
+```
+
+##### GET /api/bulk-upload/history
+```http
+GET /api/bulk-upload/history?page=1&limit=20
+Authorization: Bearer <token>
+Permission: inventory.bulk_upload
+```
+
+#### Damage Recovery APIs (6 endpoints)
+
+##### POST /api/damage-recovery/damage
+```http
+POST /api/damage-recovery/damage
+Authorization: Bearer <token>
+Permission: operations.damage
+Content-Type: application/json
+
+{
+  "barcode": "ABC123",
+  "warehouse": "GGM_WH",
+  "quantity": 3,
+  "reason": "Water damage during storage"
+}
+```
+
+##### POST /api/damage-recovery/recover
+```http
+POST /api/damage-recovery/recover
+Authorization: Bearer <token>
+Permission: operations.damage
+Content-Type: application/json
+
+{
+  "barcode": "ABC123",
+  "warehouse": "GGM_WH",
+  "quantity": 2,
+  "reason": "Items restored after cleaning"
+}
+```
+
+##### GET /api/damage-recovery/log
+```http
+GET /api/damage-recovery/log?warehouse=GGM_WH&page=1&limit=50
+Authorization: Bearer <token>
+Permission: operations.damage
+```
+
+##### GET /api/damage-recovery/warehouses
+```http
+GET /api/damage-recovery/warehouses
+Authorization: Bearer <token>
+```
+
+##### GET /api/damage-recovery/search-products
+```http
+GET /api/damage-recovery/search-products?query=samsung
+Authorization: Bearer <token>
+Permission: products.view
+```
+
+##### GET /api/damage-recovery/summary
+```http
+GET /api/damage-recovery/summary?warehouse=GGM_WH
+Authorization: Bearer <token>
+Permission: operations.damage
+```
+
+#### Returns APIs (2 endpoints)
+
+##### POST /api/returns
+```http
+POST /api/returns
+Authorization: Bearer <token>
+Permission: OPERATIONS_RETURN
+Content-Type: application/json
+
+{
+  "customer": "John Doe",
+  "barcode": "ABC123",
+  "warehouse": "GGM_WH",
+  "quantity": 1,
+  "reason": "Customer return - defective item",
+  "condition": "Damaged"
+}
+```
+
+##### GET /api/returns
+```http
+GET /api/returns?warehouse=GGM_WH&dateFrom=2025-01-01&page=1&limit=50
+Authorization: Bearer <token>
+Permission: OPERATIONS_RETURN
+```
+
+---
+
+### 📈 Timeline & Analytics APIs (3 endpoints)
+
+#### GET /api/timeline/:productCode
+```http
+GET /api/timeline/ABC123?warehouse=BLR_WH&dateFrom=2025-01-01&dateTo=2025-01-31&limit=50
+Authorization: Bearer <token>
+Permission: INVENTORY_TIMELINE
+
+Response: {
+  "success": true,
+  "data": {
+    "product_code": "ABC123",
+    "warehouse_filter": "BLR_WH",
+    "timeline": [
+      {
+        "id": 1,
+        "timestamp": "2025-01-20T10:30:00Z",
+        "type": "DISPATCH",
+        "quantity": 2,
+        "direction": "OUT",
+        "balance_after": 43,
+        "dispatch_details": {
+          "customer": "John Doe",
+          "awb": "AWB123456789",
+          "length": 25.5,
+          "width": 15.0,
+          "height": 10.0,
+          "actual_weight": 2.5
+        }
+      }
+    ],
+    "summary": {
+      "current_stock": 43,
+      "total_in": 100,
+      "total_out": 57
+    }
+  }
+}
+```
+
+#### GET /api/timeline
+```http
+GET /api/timeline?warehouse=BLR_WH&groupBy=product&dateFrom=2025-01-01
+Authorization: Bearer <token>
+Permission: INVENTORY_TIMELINE
+```
+
+#### Self Transfer APIs (2 endpoints)
+
+##### POST /api/self-transfer/create
+```http
+POST /api/self-transfer/create
+Authorization: Bearer <token>
+Permission: OPERATIONS_SELF_TRANSFER
+Content-Type: application/json
+
+{
+  "barcode": "ABC123",
+  "fromWarehouse": "GGM_WH",
+  "toWarehouse": "BLR_WH",
+  "quantity": 10,
+  "reason": "Stock rebalancing"
+}
+```
+
+##### GET /api/self-transfer
+```http
+GET /api/self-transfer?fromWarehouse=GGM_WH&page=1&limit=50
+Authorization: Bearer <token>
+Permission: OPERATIONS_SELF_TRANSFER
+```
+
+---
+
+### 👥 User & Permission Management APIs (25+ endpoints)
+
+#### User Management (5 endpoints)
+
+##### GET /api/users
+```http
+GET /api/users?page=1&limit=50&role=admin&status=active
+Authorization: Bearer <token>
+Permission: SYSTEM_USER_MANAGEMENT
+
+Response: {
+  "success": true,
+  "data": [
+    {
+      "id": 1,
+      "name": "System Administrator",
+      "email": "admin@company.com",
+      "role": "super_admin",
+      "status": "active",
+      "created_at": "2025-01-01T00:00:00Z"
+    }
+  ]
+}
+```
+
+##### GET /api/users/:userId
+```http
+GET /api/users/1
+Authorization: Bearer <token>
+Permission: SYSTEM_USER_MANAGEMENT
+```
+
+##### POST /api/users
+```http
+POST /api/users
+Authorization: Bearer <token>
+Permission: SYSTEM_USER_MANAGEMENT
+Content-Type: application/json
+
+{
+  "name": "John Manager",
+  "email": "john@company.com",
+  "password": "secure_password",
+  "role_id": 2
+}
+```
+
+##### PUT /api/users/:userId
+```http
+PUT /api/users/1
+Authorization: Bearer <token>
+Permission: SYSTEM_USER_MANAGEMENT
+Content-Type: application/json
+
+{
+  "name": "John Senior Manager",
+  "email": "john.senior@company.com"
+}
+```
+
+##### DELETE /api/users/:userId
+```http
+DELETE /api/users/1
+Authorization: Bearer <token>
+Permission: SYSTEM_USER_MANAGEMENT
+```
+
+#### Role Management (8 endpoints)
+
+##### GET /api/roles
+```http
+GET /api/roles
+Authorization: Bearer <token>
+
+Response: {
+  "success": true,
+  "data": [
+    {
+      "id": 1,
+      "name": "super_admin",
+      "display_name": "Super Administrator",
+      "color": "#dc2626",
+      "permissions": ["INVENTORY_VIEW", "ORDERS_CREATE", ...]
+    }
+  ]
+}
+```
+
+##### GET /api/roles/:roleId
+```http
+GET /api/roles/1
+Authorization: Bearer <token>
+Permission: SYSTEM_ROLE_MANAGEMENT
+```
+
+##### POST /api/roles
+```http
+POST /api/roles
+Authorization: Bearer <token>
+Permission: SYSTEM_ROLE_MANAGEMENT
+Content-Type: application/json
+
+{
+  "name": "warehouse_manager",
+  "display_name": "Warehouse Manager",
+  "description": "Manages warehouse operations",
+  "color": "#059669",
+  "permissionIds": [1, 2, 3, 4, 5]
+}
+```
+
+##### PUT /api/roles/:roleId
+```http
+PUT /api/roles/1
+Authorization: Bearer <token>
+Permission: SYSTEM_ROLE_MANAGEMENT
+Content-Type: application/json
+
+{
+  "display_name": "Senior Warehouse Manager",
+  "permissionIds": [1, 2, 3, 4, 5, 6, 7]
+}
+```
+
+##### DELETE /api/roles/:roleId
+```http
+DELETE /api/roles/1
+Authorization: Bearer <token>
+Permission: SYSTEM_ROLE_MANAGEMENT
+```
+
+##### GET /api/roles/:roleId/permissions
+```http
+GET /api/roles/1/permissions
+Authorization: Bearer <token>
+Permission: SYSTEM_ROLE_MANAGEMENT
+```
+
+##### POST /api/roles/:roleId/permissions
+```http
+POST /api/roles/1/permissions
+Authorization: Bearer <token>
+Permission: SYSTEM_ROLE_MANAGEMENT
+Content-Type: application/json
+
+{
+  "permissionId": 15
+}
+```
+
+##### PUT /api/roles/:roleId/permissions
+```http
+PUT /api/roles/1/permissions
+Authorization: Bearer <token>
+Permission: SYSTEM_ROLE_MANAGEMENT
+Content-Type: application/json
+
+{
+  "permissionIds": [1, 2, 3, 4, 5, 15, 16, 17]
+}
+```
+
+#### Permission Management (2 endpoints)
+
+##### GET /api/permissions
+```http
+GET /api/permissions
+Authorization: Bearer <token>
+
+Response: {
+  "success": true,
+  "data": [
+    {
+      "id": 1,
+      "name": "INVENTORY_VIEW",
+      "display_name": "View Inventory",
+      "category": "INVENTORY",
+      "description": "Can view inventory data"
+    }
+  ]
+}
+```
+
+##### GET /api/permissions/:permissionId
+```http
+GET /api/permissions/1
+Authorization: Bearer <token>
+Permission: SYSTEM_PERMISSION_MANAGEMENT
+```
+
+#### Audit & System APIs (8 endpoints)
+
+##### GET /api/audit-logs
+```http
+GET /api/audit-logs?page=1&limit=50&action=CREATE&dateFrom=2025-01-01
+Authorization: Bearer <token>
+Permission: SYSTEM_AUDIT_LOG
+
+Response: {
+  "success": true,
+  "data": [
+    {
+      "id": 1,
+      "user_name": "System Administrator",
+      "action": "CREATE",
+      "entity_type": "USER",
+      "entity_id": "2",
+      "details": "Created new user: John Manager",
+      "created_at": "2025-01-20T10:30:00Z"
+    }
+  ]
+}
+```
+
+##### GET /api/audit-logs/user/:userId
+```http
+GET /api/audit-logs/user/1?page=1&limit=50
+Authorization: Bearer <token>
+Permission: SYSTEM_AUDIT_LOG
+```
+
+##### GET /api/audit-logs/action/:action
+```http
+GET /api/audit-logs/action/CREATE?page=1&limit=50
+Authorization: Bearer <token>
+Permission: SYSTEM_AUDIT_LOG
+```
+
+##### GET /api/system/stats
+```http
+GET /api/system/stats
+Authorization: Bearer <token>
+Permission: SYSTEM_MONITORING
+
+Response: {
+  "success": true,
+  "data": {
+    "total_users": 25,
+    "active_users": 23,
+    "total_roles": 4,
+    "total_permissions": 25,
+    "recent_logins": 15
+  }
+}
+```
+
+##### GET /api/system/permission-usage
+```http
+GET /api/system/permission-usage
+Authorization: Bearer <token>
+Permission: SYSTEM_MONITORING
+```
+
+##### GET /api/system/role-distribution
+```http
+GET /api/system/role-distribution
+Authorization: Bearer <token>
+Permission: SYSTEM_MONITORING
+```
+
+---
+
+### 🔧 Debug & Utility APIs (1 endpoint)
+
+#### GET /api/debug/dispatch-dimensions/:barcode
+```http
+GET /api/debug/dispatch-dimensions/ABC123
+No Authentication Required (Debug Only)
+
+Response: {
+  "barcode": "ABC123",
+  "tests": [
+    {
+      "test": "Dispatch Data",
+      "status": "SUCCESS",
+      "data": [
+        {
+          "length": "25.50",
+          "width": "15.00",
+          "height": "10.00",
+          "actual_weight": "2.500"
+        }
+      ]
+    }
+  ]
+}
+```
+
+---
+
+## 🔄 API Response Patterns
+
+### Success Response
+```json
+{
+  "success": true,
+  "data": { ... },
+  "message": "Operation completed successfully",
+  "pagination": {
+    "page": 1,
+    "limit": 50,
+    "total": 150,
+    "totalPages": 3
+  }
+}
+```
+
+### Error Response
+```json
+{
+  "success": false,
+  "error": "Validation failed",
+  "message": "Invalid input parameters",
+  "details": {
+    "field": "email",
+    "issue": "Email format is invalid"
+  }
+}
+```
+
+### Permission Error
+```json
+{
+  "success": false,
+  "error": "INSUFFICIENT_PERMISSIONS",
+  "message": "You don't have permission to perform this action",
+  "required_permission": "INVENTORY_EDIT"
+}
 ```
 
 ## 🚀 Deployment Guide
