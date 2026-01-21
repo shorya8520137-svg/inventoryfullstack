@@ -48,19 +48,35 @@ exports.getProductTimeline = (req, res) => {
     // Simple timeline query using only inventory_ledger_base to avoid duplicates
     const timelineSql = `
         SELECT 
-            id,
-            event_time as timestamp,
-            movement_type as type,
-            barcode,
-            product_name,
-            location_code as warehouse,
-            qty as quantity,
-            direction,
-            reference,
-            'ledger' as source
-        FROM inventory_ledger_base 
+            ilb.id,
+            ilb.event_time as timestamp,
+            ilb.movement_type as type,
+            ilb.barcode,
+            ilb.product_name,
+            ilb.location_code as warehouse,
+            ilb.qty as quantity,
+            ilb.direction,
+            ilb.reference,
+            'ledger' as source,
+            -- Include dispatch details for DISPATCH entries
+            wd.customer,
+            wd.awb,
+            wd.order_ref,
+            wd.logistics,
+            wd.payment_mode,
+            wd.invoice_amount,
+            wd.length,
+            wd.width,
+            wd.height,
+            wd.actual_weight,
+            wd.status as dispatch_status
+        FROM inventory_ledger_base ilb
+        LEFT JOIN warehouse_dispatch wd ON (
+            ilb.movement_type = 'DISPATCH' 
+            AND ilb.reference LIKE CONCAT('DISPATCH_', wd.id, '%')
+        )
         WHERE ${filters.join(' AND ')}
-        ORDER BY event_time DESC
+        ORDER BY ilb.event_time DESC
         LIMIT ?
     `;
 
@@ -166,7 +182,21 @@ exports.getProductTimeline = (req, res) => {
                     reference: item.reference,
                     source: item.source,
                     balance_after: runningBalance,
-                    description: getTimelineDescription(item)
+                    description: getTimelineDescription(item),
+                    // Include dispatch details for DISPATCH entries (only if we have the data)
+                    dispatch_details: (item.type.toUpperCase() === 'DISPATCH' && item.customer) ? {
+                        customer: item.customer,
+                        awb: item.awb,
+                        order_ref: item.order_ref,
+                        logistics: item.logistics,
+                        payment_mode: item.payment_mode,
+                        invoice_amount: item.invoice_amount,
+                        length: item.length || 0,
+                        width: item.width || 0,
+                        height: item.height || 0,
+                        actual_weight: item.actual_weight || 0,
+                        status: item.dispatch_status
+                    } : null
                 };
             });
             

@@ -70,12 +70,42 @@ export default function ProductTracker({
     
     /* 🚚 FETCH DISPATCH DETAILS */
     const fetchDispatchDetails = async (reference) => {
+        // First try to find dispatch details from timeline data
+        const dispatchEntry = timeline.find(entry => 
+            entry.reference === reference && 
+            (entry.type === 'DISPATCH' || entry.type === 'SALE') &&
+            entry.dispatch_details
+        );
+        
+        if (dispatchEntry && dispatchEntry.dispatch_details) {
+            // Use dispatch details from timeline data
+            setDispatchLoading(true);
+            setShowDispatchModal(true);
+            
+            setSelectedDispatch({
+                ...dispatchEntry.dispatch_details,
+                qty: dispatchEntry.quantity,
+                quantity: dispatchEntry.quantity,
+                barcode: dispatchEntry.barcode,
+                product_name: dispatchEntry.product_name,
+                warehouse: dispatchEntry.warehouse,
+                timestamp: dispatchEntry.timestamp
+            });
+            
+            setDispatchLoading(false);
+            return;
+        }
+        
+        // Fallback to API call if dispatch details not found in timeline
+        console.log('Dispatch details not found in timeline, falling back to API call');
+        
         // Extract dispatch ID from reference like "DISPATCH_36_89345y398"
         const parts = reference.split('_');
         const dispatchId = parts[1]; // Get the ID (36)
         
         if (!dispatchId) {
             console.error('Could not extract dispatch ID from reference:', reference);
+            alert('Could not load dispatch details. Invalid reference format.');
             return;
         }
         

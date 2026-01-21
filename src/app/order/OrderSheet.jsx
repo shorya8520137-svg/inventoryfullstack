@@ -755,7 +755,7 @@ export default function OrderSheet() {
                                 <table className={styles.table}>
                                     <thead>
                                     <tr>
-                                        {hasPermission(PERMISSIONS.ORDERS_DELETE) && (
+                                        {hasPermission(PERMISSIONS.ORDERS_EDIT) && (
                                             <th className={`${styles.th} ${styles.delCol}`}>
                                                 Delete
                                             </th>
@@ -856,9 +856,9 @@ export default function OrderSheet() {
                                                 delay: i * 0.05
                                             }}
                                         >
-                                            {hasPermission(PERMISSIONS.ORDERS_DELETE) && (
+                                            {hasPermission(PERMISSIONS.ORDERS_EDIT) && (
                                                 <td className={`${styles.td} ${styles.delCol}`}>
-                                                    {hasPermission(PERMISSIONS.ORDERS_DELETE) ? (
+                                                    {hasPermission(PERMISSIONS.ORDERS_EDIT) ? (
                                                         <button 
                                                             className={`${styles.deleteBtn} ${deletingId === o.id ? styles.deleting : ''}`}
                                                             onClick={() => confirmDelete(o)}
@@ -918,7 +918,7 @@ export default function OrderSheet() {
                                             </td>
                                             <td className={styles.td}>
                                                 <div className={styles.statusDropdownContainer}>
-                                                    {hasPermission(PERMISSIONS.ORDERS_STATUS_UPDATE) ? (
+                                                    {hasPermission(PERMISSIONS.ORDERS_EDIT) ? (
                                                         <>
                                                             <button
                                                                 className={styles.statusButton}

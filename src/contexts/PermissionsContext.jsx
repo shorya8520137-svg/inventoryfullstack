@@ -30,7 +30,6 @@ export const PERMISSIONS = {
     ORDERS_VIEW: 'ORDERS_VIEW',
     ORDERS_CREATE: 'ORDERS_CREATE',
     ORDERS_EDIT: 'ORDERS_EDIT',
-    ORDERS_STATUS_UPDATE: 'ORDERS_STATUS_UPDATE',
     ORDERS_EXPORT: 'ORDERS_EXPORT',
     
     // Operations permissions
@@ -86,7 +85,6 @@ export const ROLES = {
             PERMISSIONS.ORDERS_VIEW,
             PERMISSIONS.ORDERS_CREATE,
             PERMISSIONS.ORDERS_EDIT,
-            PERMISSIONS.ORDERS_STATUS_UPDATE,
             PERMISSIONS.ORDERS_EXPORT,
             PERMISSIONS.OPERATIONS_DISPATCH,
             PERMISSIONS.OPERATIONS_DAMAGE,
@@ -117,7 +115,6 @@ export const ROLES = {
             PERMISSIONS.ORDERS_VIEW,
             PERMISSIONS.ORDERS_CREATE,
             PERMISSIONS.ORDERS_EDIT,
-            PERMISSIONS.ORDERS_STATUS_UPDATE,
             PERMISSIONS.ORDERS_EXPORT,
             // Operations (dispatch, damage, return)
             PERMISSIONS.OPERATIONS_DISPATCH,
@@ -135,9 +132,9 @@ export const ROLES = {
             PERMISSIONS.INVENTORY_VIEW,
             PERMISSIONS.INVENTORY_ADJUST,
             PERMISSIONS.INVENTORY_TRANSFER,
-            // Orders (view, status_update)
+            // Orders (view, edit)
             PERMISSIONS.ORDERS_VIEW,
-            PERMISSIONS.ORDERS_STATUS_UPDATE,
+            PERMISSIONS.ORDERS_EDIT,
             // Operations (dispatch, self_transfer)
             PERMISSIONS.OPERATIONS_DISPATCH,
             PERMISSIONS.OPERATIONS_SELF_TRANSFER,
@@ -153,9 +150,9 @@ export const ROLES = {
             PERMISSIONS.PRODUCTS_VIEW,
             // Inventory (view only)
             PERMISSIONS.INVENTORY_VIEW,
-            // Orders (view, status_update)
+            // Orders (view, edit)
             PERMISSIONS.ORDERS_VIEW,
-            PERMISSIONS.ORDERS_STATUS_UPDATE,
+            PERMISSIONS.ORDERS_EDIT,
         ],
         color: '#16a34a', // Green
         priority: 5

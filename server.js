@@ -73,6 +73,9 @@ app.use('/api/returns', require('./routes/returnsRoutes'));
 // timeline routes
 app.use('/api/timeline', require('./routes/timelineRoutes'));
 
+// debug routes (temporary for testing)
+app.use('/api/debug', require('./routes/debugRoutes'));
+
 // order tracking routes
 app.use('/api/order-tracking', require('./routes/orderTrackingRoutes'));
 
