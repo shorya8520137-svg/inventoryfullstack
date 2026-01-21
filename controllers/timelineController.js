@@ -24,24 +24,24 @@ exports.getProductTimeline = (req, res) => {
         });
     }
 
-    const filters = ['barcode = ?'];
+    const filters = ['ilb.barcode = ?'];
     const values = [productCode];
 
     // CRITICAL: Warehouse filter - only show entries for this specific warehouse
     if (warehouse && warehouse !== 'ALL') {
-        filters.push('location_code = ?');
+        filters.push('ilb.location_code = ?');
         values.push(warehouse);
         console.log('🏢 Filtering by warehouse:', warehouse);
     }
 
     // Date filters
     if (dateFrom) {
-        filters.push('event_time >= ?');
+        filters.push('ilb.event_time >= ?');
         values.push(`${dateFrom} 00:00:00`);
     }
 
     if (dateTo) {
-        filters.push('event_time <= ?');
+        filters.push('ilb.event_time <= ?');
         values.push(`${dateTo} 23:59:59`);
     }
 
@@ -74,6 +74,7 @@ exports.getProductTimeline = (req, res) => {
         LEFT JOIN warehouse_dispatch wd ON (
             ilb.movement_type = 'DISPATCH' 
             AND ilb.reference LIKE CONCAT('DISPATCH_', wd.id, '%')
+            AND ilb.barcode = wd.barcode
         )
         WHERE ${filters.join(' AND ')}
         ORDER BY ilb.event_time DESC
