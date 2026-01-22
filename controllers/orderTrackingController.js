@@ -249,15 +249,14 @@ exports.getDispatchTimeline = (req, res) => {
 /**
  * GET ALL DISPATCHES WITH TRACKING INFO
  * Get all dispatches with damage/recovery counts + self transfers
+ * UPDATED: Removed pagination - shows ALL records without limits
  */
 exports.getAllDispatches = (req, res) => {
     const { 
         warehouse, 
         status, 
         dateFrom, 
-        dateTo, 
-        page = 1, 
-        limit = 20 
+        dateTo
     } = req.query;
 
     const filters = [];
@@ -284,9 +283,9 @@ exports.getAllDispatches = (req, res) => {
     }
 
     const whereClause = filters.length > 0 ? `WHERE ${filters.join(' AND ')}` : '';
-    const offset = (page - 1) * limit;
 
     // Combined query for both dispatches (with items) and self transfers
+    // REMOVED: LIMIT and OFFSET - now returns ALL records
     const sql = `
         SELECT 
             'dispatch' as source_type,
@@ -363,7 +362,6 @@ exports.getAllDispatches = (req, res) => {
         ${dateTo ? 'AND ilb.event_time <= ?' : ''}
         
         ORDER BY timestamp ASC
-        LIMIT ? OFFSET ?
     `;
 
     // Build values array for the combined query
@@ -374,8 +372,7 @@ exports.getAllDispatches = (req, res) => {
     if (dateFrom) combinedValues.push(`${dateFrom} 00:00:00`);
     if (dateTo) combinedValues.push(`${dateTo} 23:59:59`);
     
-    // Add pagination
-    combinedValues.push(parseInt(limit), parseInt(offset));
+    // REMOVED: pagination values - no longer needed
 
     db.query(sql, combinedValues, (err, results) => {
         if (err) {
@@ -386,44 +383,14 @@ exports.getAllDispatches = (req, res) => {
             });
         }
 
-        // Get total count for both dispatches and self transfers
-        const countSql = `
-            SELECT 
-                (SELECT COUNT(*) FROM warehouse_dispatch wd ${whereClause}) +
-                (SELECT COUNT(*) FROM inventory_ledger_base ilb 
-                 WHERE ilb.movement_type = 'SELF_TRANSFER'
-                 ${warehouse ? 'AND ilb.location_code = ?' : ''}
-                 ${dateFrom ? 'AND ilb.event_time >= ?' : ''}
-                 ${dateTo ? 'AND ilb.event_time <= ?' : ''}) as total
-        `;
+        console.log(`✅ Retrieved ${results.length} total records (no pagination)`);
 
-        const countValues = [...values]; // For warehouse_dispatch count
-        // Add values for self_transfer count
-        if (warehouse) countValues.push(warehouse);
-        if (dateFrom) countValues.push(`${dateFrom} 00:00:00`);
-        if (dateTo) countValues.push(`${dateTo} 23:59:59`);
-
-        db.query(countSql, countValues, (err, countResult) => {
-            if (err) {
-                console.error('❌ Count query error:', err);
-                return res.status(500).json({
-                    success: false,
-                    error: err.message
-                });
-            }
-
-            const total = countResult[0]?.total || 0;
-
-            res.json({
-                success: true,
-                data: results,
-                pagination: {
-                    page: parseInt(page),
-                    limit: parseInt(limit),
-                    total: total,
-                    pages: Math.ceil(total / limit)
-                }
-            });
+        // SIMPLIFIED: Return all results without pagination metadata
+        res.json({
+            success: true,
+            data: results,
+            total: results.length,
+            message: `Retrieved ${results.length} records (pagination disabled)`
         });
     });
 };
