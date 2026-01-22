@@ -1136,4 +1136,126 @@ exports.updateDispatchStatus = (req, res) => {
     });
 };
 
+/**
+ * EXPORT DISPATCHES TO CSV
+ * Export all dispatches with optional filters as CSV file
+ */
+exports.exportDispatches = (req, res) => {
+    const { 
+        warehouse, 
+        status, 
+        dateFrom, 
+        dateTo
+    } = req.query;
+
+    const filters = [];
+    const values = [];
+
+    if (warehouse) {
+        filters.push('warehouse = ?');
+        values.push(warehouse);
+    }
+
+    if (status) {
+        filters.push('status = ?');
+        values.push(status);
+    }
+
+    if (dateFrom) {
+        filters.push('timestamp >= ?');
+        values.push(`${dateFrom} 00:00:00`);
+    }
+
+    if (dateTo) {
+        filters.push('timestamp <= ?');
+        values.push(`${dateTo} 23:59:59`);
+    }
+
+    const whereClause = filters.length > 0 ? `WHERE ${filters.join(' AND ')}` : '';
+
+    // Export query - get all dispatch data for CSV
+    const sql = `
+        SELECT 
+            wd.id,
+            wd.timestamp,
+            wd.warehouse,
+            wd.order_ref,
+            wd.customer,
+            COALESCE(wdi.product_name, wd.product_name) as product_name,
+            COALESCE(wdi.barcode, wd.barcode) as barcode,
+            COALESCE(wdi.qty, wd.qty) as qty,
+            COALESCE(wdi.variant, wd.variant) as variant,
+            COALESCE(wdi.selling_price, 0) as selling_price,
+            wd.awb,
+            wd.logistics,
+            wd.parcel_type,
+            wd.length,
+            wd.width,
+            wd.height,
+            wd.actual_weight,
+            wd.payment_mode,
+            wd.invoice_amount,
+            wd.processed_by,
+            wd.remarks,
+            wd.status
+        FROM warehouse_dispatch wd
+        LEFT JOIN warehouse_dispatch_items wdi ON wd.id = wdi.dispatch_id
+        ${whereClause}
+        ORDER BY wd.timestamp DESC
+    `;
+
+    db.query(sql, values, (err, results) => {
+        if (err) {
+            console.error('❌ Export query error:', err);
+            return res.status(500).json({
+                success: false,
+                error: err.message
+            });
+        }
+
+        // Generate CSV
+        const csvHeader = [
+            'ID', 'Date', 'Warehouse', 'Order Ref', 'Customer', 'Product Name', 
+            'Barcode', 'Quantity', 'Variant', 'Selling Price', 'AWB', 'Logistics', 
+            'Parcel Type', 'Length', 'Width', 'Height', 'Weight', 'Payment Mode', 
+            'Invoice Amount', 'Processed By', 'Remarks', 'Status'
+        ].join(',') + '\n';
+
+        const csvRows = results.map(row => [
+            row.id,
+            row.timestamp ? new Date(row.timestamp).toISOString().split('T')[0] : '',
+            `"${row.warehouse || ''}"`,
+            `"${row.order_ref || ''}"`,
+            `"${row.customer || ''}"`,
+            `"${row.product_name || ''}"`,
+            `"${row.barcode || ''}"`,
+            row.qty || 0,
+            `"${row.variant || ''}"`,
+            row.selling_price || 0,
+            `"${row.awb || ''}"`,
+            `"${row.logistics || ''}"`,
+            `"${row.parcel_type || ''}"`,
+            row.length || 0,
+            row.width || 0,
+            row.height || 0,
+            row.actual_weight || 0,
+            `"${row.payment_mode || ''}"`,
+            row.invoice_amount || 0,
+            `"${row.processed_by || ''}"`,
+            `"${row.remarks || ''}"`,
+            `"${row.status || ''}"`
+        ].join(',')).join('\n');
+
+        const csv = csvHeader + csvRows;
+
+        // Set CSV headers
+        const fileName = `dispatches_${warehouse || 'all'}_${new Date().toISOString().split('T')[0]}.csv`;
+        res.setHeader('Content-Type', 'text/csv');
+        res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
+        
+        console.log(`✅ Exported ${results.length} dispatch records to CSV`);
+        res.send(csv);
+    });
+};
+
 module.exports = exports;
