@@ -362,7 +362,7 @@ exports.getAllDispatches = (req, res) => {
         ${dateFrom ? 'AND ilb.event_time >= ?' : ''}
         ${dateTo ? 'AND ilb.event_time <= ?' : ''}
         
-        ORDER BY timestamp DESC
+        ORDER BY timestamp ASC
         LIMIT ? OFFSET ?
     `;
 
