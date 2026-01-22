@@ -212,27 +212,64 @@ router.delete('/roles/:roleId',
             const { roleId } = req.params;
             const db = require('../db/connection');
             
-            // Check if role has users
-            const [users] = await db.execute('SELECT COUNT(*) as count FROM users WHERE role_id = ?', [roleId]);
-            if (users[0].count > 0) {
-                return res.status(400).json({
-                    success: false,
-                    message: 'Cannot delete role with assigned users'
+            // Check if role has users (using callback-based query)
+            db.query('SELECT COUNT(*) as count FROM users WHERE role_id = ?', [roleId], (err, users) => {
+                if (err) {
+                    console.error('Delete role error:', err);
+                    return res.status(500).json({
+                        success: false,
+                        message: 'Failed to delete role'
+                    });
+                }
+                
+                if (users[0].count > 0) {
+                    return res.status(400).json({
+                        success: false,
+                        message: 'Cannot delete role with assigned users'
+                    });
+                }
+                
+                // Delete role permissions first
+                db.query('DELETE FROM role_permissions WHERE role_id = ?', [roleId], (err) => {
+                    if (err) {
+                        console.error('Delete role permissions error:', err);
+                        return res.status(500).json({
+                            success: false,
+                            message: 'Failed to delete role permissions'
+                        });
+                    }
+                    
+                    // Delete role
+                    db.query('DELETE FROM roles WHERE id = ?', [roleId], async (err, result) => {
+                        if (err) {
+                            console.error('Delete role error:', err);
+                            return res.status(500).json({
+                                success: false,
+                                message: 'Failed to delete role'
+                            });
+                        }
+                        
+                        if (result.affectedRows === 0) {
+                            return res.status(404).json({
+                                success: false,
+                                message: 'Role not found'
+                            });
+                        }
+                        
+                        // Log audit
+                        try {
+                            await PermissionsController.createAuditLog(req.user?.userId, 'DELETE', 'ROLE', roleId, {});
+                        } catch (auditError) {
+                            console.error('Audit log error:', auditError);
+                            // Continue anyway - don't fail the deletion for audit log issues
+                        }
+                        
+                        res.json({
+                            success: true,
+                            message: 'Role deleted successfully'
+                        });
+                    });
                 });
-            }
-            
-            // Delete role permissions first
-            await db.execute('DELETE FROM role_permissions WHERE role_id = ?', [roleId]);
-            
-            // Delete role
-            await db.execute('DELETE FROM roles WHERE id = ?', [roleId]);
-            
-            // Log audit
-            await PermissionsController.createAuditLog(req.user?.userId, 'DELETE', 'ROLE', roleId, {});
-            
-            res.json({
-                success: true,
-                message: 'Role deleted successfully'
             });
             
         } catch (error) {
