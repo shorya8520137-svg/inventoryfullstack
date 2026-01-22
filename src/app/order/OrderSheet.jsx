@@ -9,7 +9,7 @@ import { usePermissions, PERMISSIONS } from '@/contexts/PermissionsContext';
 const PAGE_SIZE = 12;
 
 export default function OrderSheet() {
-    const { hasPermission } = usePermissions();
+    const { hasPermission, userRole } = usePermissions();
     
     const [orders, setOrders] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -572,7 +572,7 @@ export default function OrderSheet() {
                         </button>
                         
                         {/* Download Button */}
-                        {(hasPermission(PERMISSIONS.ORDERS_EXPORT) || true) && (
+                        {(hasPermission(PERMISSIONS.ORDERS_EXPORT) || userRole?.name === 'super_admin') && (
                             <div className={styles.exportSection}>
                                 <div className={styles.exportDropdown}>
                                     <button
