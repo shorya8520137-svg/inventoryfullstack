@@ -951,111 +951,68 @@ exports.updateDispatchStatus = (req, res) => {
         });
     }
 
-    // FIXED LOGIC: Handle both single product and multi-product dispatches
+    // CORRECTED LOGIC: warehouse_dispatch_items table doesn't have status column
+    // Status is only stored in the main warehouse_dispatch table
+    // For multi-product dispatches, we update the main dispatch status
+    
     if (barcode) {
         // Case 1: Specific product update (when barcode is provided)
-        // First, check if this dispatch has items in warehouse_dispatch_items
-        const checkItemsSql = `SELECT COUNT(*) as item_count FROM warehouse_dispatch_items WHERE dispatch_id = ?`;
+        // First verify the product exists in this dispatch
+        const verifyProductSql = `
+            SELECT wd.id, wd.barcode as main_barcode, wdi.barcode as item_barcode
+            FROM warehouse_dispatch wd
+            LEFT JOIN warehouse_dispatch_items wdi ON wd.id = wdi.dispatch_id
+            WHERE wd.id = ? AND (wd.barcode = ? OR wdi.barcode = ?)
+        `;
         
-        db.query(checkItemsSql, [dispatchId], (err, itemCheck) => {
+        db.query(verifyProductSql, [dispatchId, barcode, barcode], (err, verification) => {
             if (err) {
-                console.error('❌ Item check error:', err);
+                console.error('❌ Product verification error:', err);
                 return res.status(500).json({
                     success: false,
                     error: err.message
                 });
             }
 
-            const hasItems = itemCheck[0].item_count > 0;
-
-            if (hasItems) {
-                // Update specific item in warehouse_dispatch_items
-                const updateItemSql = `
-                    UPDATE warehouse_dispatch_items 
-                    SET status = ? 
-                    WHERE dispatch_id = ? AND barcode = ?
-                `;
-                
-                db.query(updateItemSql, [status, dispatchId, barcode], (err, result) => {
-                    if (err) {
-                        console.error('❌ Item status update error:', err);
-                        return res.status(500).json({
-                            success: false,
-                            error: err.message
-                        });
-                    }
-
-                    if (result.affectedRows === 0) {
-                        return res.status(404).json({
-                            success: false,
-                            message: 'Product not found in this dispatch'
-                        });
-                    }
-
-                    // Also update the main dispatch status if all items have the same status
-                    const checkAllItemsStatusSql = `
-                        SELECT DISTINCT status FROM warehouse_dispatch_items WHERE dispatch_id = ?
-                    `;
-                    
-                    db.query(checkAllItemsStatusSql, [dispatchId], (err, statusCheck) => {
-                        if (err) {
-                            console.log('⚠️ Status check failed:', err);
-                            // Continue anyway, item was updated successfully
-                        } else if (statusCheck.length === 1 && statusCheck[0].status === status) {
-                            // All items have the same status, update main dispatch
-                            const updateMainSql = `UPDATE warehouse_dispatch SET status = ? WHERE id = ?`;
-                            db.query(updateMainSql, [status, dispatchId], (err) => {
-                                if (err) {
-                                    console.log('⚠️ Main dispatch status update failed:', err);
-                                }
-                            });
-                        }
-                    });
-
-                    console.log('✅ Product status updated successfully');
-
-                    res.json({
-                        success: true,
-                        message: 'Product status updated successfully',
-                        dispatch_id: dispatchId,
-                        barcode: barcode,
-                        new_status: status
-                    });
-                });
-            } else {
-                // No items table, update main dispatch with barcode check
-                const updateMainSql = `
-                    UPDATE warehouse_dispatch 
-                    SET status = ? 
-                    WHERE id = ? AND barcode = ?
-                `;
-                
-                db.query(updateMainSql, [status, dispatchId, barcode], (err, result) => {
-                    if (err) {
-                        console.error('❌ Main dispatch status update error:', err);
-                        return res.status(500).json({
-                            success: false,
-                            error: err.message
-                        });
-                    }
-
-                    if (result.affectedRows === 0) {
-                        return res.status(404).json({
-                            success: false,
-                            message: 'Dispatch not found or barcode mismatch'
-                        });
-                    }
-
-                    console.log('✅ Dispatch status updated successfully');
-
-                    res.json({
-                        success: true,
-                        message: 'Dispatch status updated successfully',
-                        dispatch_id: dispatchId,
-                        new_status: status
-                    });
+            if (verification.length === 0) {
+                return res.status(404).json({
+                    success: false,
+                    message: 'Product not found in this dispatch'
                 });
             }
+
+            // Product exists, update the main dispatch status
+            // Note: For multi-product dispatches, this updates the entire dispatch status
+            // This is the correct behavior as status applies to the entire shipment
+            const updateMainSql = `UPDATE warehouse_dispatch SET status = ? WHERE id = ?`;
+            
+            db.query(updateMainSql, [status, dispatchId], (err, result) => {
+                if (err) {
+                    console.error('❌ Status update error:', err);
+                    return res.status(500).json({
+                        success: false,
+                        error: err.message
+                    });
+                }
+
+                if (result.affectedRows === 0) {
+                    return res.status(404).json({
+                        success: false,
+                        message: 'Dispatch not found'
+                    });
+                }
+
+                console.log('✅ Dispatch status updated successfully');
+
+                res.json({
+                    success: true,
+                    message: 'Dispatch status updated successfully',
+                    dispatch_id: dispatchId,
+                    barcode: barcode,
+                    new_status: status,
+                    note: 'Status updated for entire dispatch (affects all products in this AWB)'
+                });
+            });
         });
     } else {
         // Case 2: Update entire dispatch (when no barcode provided - backward compatibility)
@@ -1076,20 +1033,6 @@ exports.updateDispatchStatus = (req, res) => {
                     message: 'Dispatch not found'
                 });
             }
-
-            // Also update all items if they exist
-            const updateAllItemsSql = `
-                UPDATE warehouse_dispatch_items 
-                SET status = ? 
-                WHERE dispatch_id = ?
-            `;
-            
-            db.query(updateAllItemsSql, [status, dispatchId], (err) => {
-                if (err) {
-                    console.log('⚠️ Items status update failed:', err);
-                    // Continue anyway, main dispatch was updated
-                }
-            });
 
             console.log('✅ Status updated successfully');
 
