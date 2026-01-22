@@ -405,9 +405,9 @@ export default function OrderSheet() {
                 queryParams.append('warehouse', selectedWarehouses[0]); // Use first selected warehouse
             }
             
-            // Add date filters if available
-            if (dateFrom) queryParams.append('dateFrom', dateFrom);
-            if (dateTo) queryParams.append('dateTo', dateTo);
+            // Add date filters if available (fix: use fromDate/toDate instead of dateFrom/dateTo)
+            if (fromDate) queryParams.append('dateFrom', fromDate);
+            if (toDate) queryParams.append('dateTo', toDate);
             
             const exportUrl = `${process.env.NEXT_PUBLIC_API_BASE}/api/order-tracking/export?${queryParams.toString()}`;
             
