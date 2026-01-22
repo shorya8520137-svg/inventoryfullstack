@@ -361,7 +361,7 @@ exports.getAllDispatches = (req, res) => {
         ${dateFrom ? 'AND ilb.event_time >= ?' : ''}
         ${dateTo ? 'AND ilb.event_time <= ?' : ''}
         
-        ORDER BY timestamp ASC
+        ORDER BY timestamp DESC
     `;
 
     // Build values array for the combined query
