@@ -288,18 +288,18 @@ exports.getAllDispatches = (req, res) => {
 
     // Combined query for both dispatches (with items) and self transfers
     const sql = `
-        SELECT 
+        SELECT DISTINCT
             'dispatch' as source_type,
             wd.id,
             wd.timestamp,
             wd.warehouse,
             wd.order_ref,
             wd.customer,
-            COALESCE(wdi.product_name, wd.product_name) as product_name,
-            COALESCE(wdi.barcode, wd.barcode) as barcode,
-            COALESCE(wdi.qty, wd.qty) as qty,
-            COALESCE(wdi.variant, wd.variant) as variant,
-            wdi.selling_price,
+            wd.product_name,
+            wd.barcode,
+            wd.qty,
+            wd.variant,
+            0 as selling_price,
             wd.awb,
             wd.logistics,
             wd.parcel_type,
@@ -316,25 +316,24 @@ exports.getAllDispatches = (req, res) => {
             COALESCE(rec.recovery_count, 0) as recovery_count,
             COALESCE(sb.current_stock, 0) as current_stock
         FROM warehouse_dispatch wd
-        LEFT JOIN warehouse_dispatch_items wdi ON wd.id = wdi.dispatch_id
         LEFT JOIN (
             SELECT barcode, COUNT(*) as damage_count 
             FROM damage_recovery_log 
             WHERE action_type = 'damage' 
             GROUP BY barcode
-        ) d ON COALESCE(wdi.barcode, wd.barcode) = d.barcode
+        ) d ON wd.barcode = d.barcode
         LEFT JOIN (
             SELECT barcode, COUNT(*) as recovery_count 
             FROM damage_recovery_log 
             WHERE action_type = 'recover' 
             GROUP BY barcode
-        ) rec ON COALESCE(wdi.barcode, wd.barcode) = rec.barcode
+        ) rec ON wd.barcode = rec.barcode
         LEFT JOIN (
             SELECT barcode, SUM(qty_available) as current_stock 
             FROM stock_batches 
             WHERE status = 'active'
             GROUP BY barcode
-        ) sb ON COALESCE(wdi.barcode, wd.barcode) = sb.barcode
+        ) sb ON wd.barcode = sb.barcode
         ${whereClause}
         
         UNION ALL
