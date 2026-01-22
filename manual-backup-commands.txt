@@ -1,0 +1,27 @@
+MANUAL BACKUP COMMANDS FOR STOCKIQ
+==================================
+
+1. CREATE BACKUP DIRECTORY:
+mkdir C:\Users\Admin\Desktop\StockIQ_Backup
+mkdir C:\Users\Admin\Desktop\StockIQ_Backup\project
+mkdir C:\Users\Admin\Desktop\StockIQ_Backup\database
+
+2. DOWNLOAD PROJECT FILES:
+scp -i "C:\Users\Admin\awsconection.pem" -r ubuntu@16.171.197.86:inventoryfullstack C:\Users\Admin\Desktop\StockIQ_Backup\project\
+
+3. CREATE DATABASE BACKUP ON SERVER:
+ssh -i "C:\Users\Admin\awsconection.pem" ubuntu@16.171.197.86
+sudo mysqldump -u root -p inventory_db > stockiq_backup.sql
+exit
+
+4. DOWNLOAD DATABASE BACKUP:
+scp -i "C:\Users\Admin\awsconection.pem" ubuntu@16.171.197.86:stockiq_backup.sql C:\Users\Admin\Desktop\StockIQ_Backup\database\
+
+5. CLEAN UP SERVER:
+ssh -i "C:\Users\Admin\awsconection.pem" ubuntu@16.171.197.86 "rm -f stockiq_backup.sql"
+
+NOTES:
+- You'll be prompted for MySQL password (gfx998sd)
+- Database name is: inventory_db
+- Project will be in: C:\Users\Admin\Desktop\StockIQ_Backup\project\inventoryfullstack\
+- Database will be in: C:\Users\Admin\Desktop\StockIQ_Backup\database\stockiq_backup.sql
