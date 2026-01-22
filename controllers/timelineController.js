@@ -160,6 +160,9 @@ exports.getProductTimeline = (req, res) => {
             // Sort timeline by timestamp (oldest first) for balance calculation
             const sortedTimeline = timeline.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
             
+            // Find the first BULK_UPLOAD entry to mark as OPENING
+            let firstBulkUploadFound = false;
+            
             let runningBalance = 0;
             const formattedTimeline = sortedTimeline.map(item => {
                 const quantity = parseInt(item.quantity);
@@ -171,10 +174,17 @@ exports.getProductTimeline = (req, res) => {
                     runningBalance -= quantity;
                 }
                 
+                // LOGIC: First BULK_UPLOAD becomes OPENING, subsequent ones remain BULK_UPLOAD
+                let displayType = item.type.toUpperCase();
+                if (displayType === 'BULK_UPLOAD' && !firstBulkUploadFound) {
+                    displayType = 'OPENING';
+                    firstBulkUploadFound = true;
+                }
+                
                 return {
                     id: item.id,
                     timestamp: item.timestamp,
-                    type: item.type.toUpperCase(),
+                    type: displayType, // Use modified type (OPENING for first bulk upload)
                     product_name: item.product_name,
                     barcode: item.barcode,
                     warehouse: item.warehouse,
@@ -183,7 +193,7 @@ exports.getProductTimeline = (req, res) => {
                     reference: item.reference,
                     source: item.source,
                     balance_after: runningBalance,
-                    description: getTimelineDescription(item),
+                    description: getTimelineDescription({...item, type: displayType}), // Pass modified type to description
                     // Include dispatch details for DISPATCH entries (only if we have the data)
                     dispatch_details: (item.type.toUpperCase() === 'DISPATCH' && item.customer) ? {
                         customer: item.customer,
