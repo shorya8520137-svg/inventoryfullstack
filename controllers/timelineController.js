@@ -251,7 +251,8 @@ exports.getProductTimeline = (req, res) => {
                         current_stock: currentStockFromBatches,
                         // Breakdown by operation type for this warehouse
                         breakdown: {
-                            bulk_upload: formattedTimeline.filter(t => t.type === 'BULK_UPLOAD' || t.type === 'OPENING').reduce((sum, t) => sum + (t.direction === 'IN' ? t.quantity : 0), 0),
+                            opening: formattedTimeline.filter(t => t.type === 'OPENING').reduce((sum, t) => sum + (t.direction === 'IN' ? t.quantity : 0), 0),
+                            bulk_upload: formattedTimeline.filter(t => t.type === 'BULK_UPLOAD').reduce((sum, t) => sum + (t.direction === 'IN' ? t.quantity : 0), 0),
                             dispatch: formattedTimeline.filter(t => t.type === 'DISPATCH').reduce((sum, t) => sum + t.quantity, 0),
                             damage: formattedTimeline.filter(t => t.type === 'DAMAGE').reduce((sum, t) => sum + t.quantity, 0),
                             recovery: formattedTimeline.filter(t => t.type === 'RECOVER').reduce((sum, t) => sum + t.quantity, 0),
