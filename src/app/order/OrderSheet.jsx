@@ -400,10 +400,17 @@ export default function OrderSheet() {
             // Use the new backend API for export
             const queryParams = new URLSearchParams();
             
-            // Add warehouse filter
-            if (selectedWarehouses.length > 0) {
-                queryParams.append('warehouse', selectedWarehouses[0]); // Use first selected warehouse
+            // FIXED: Handle multiple warehouses correctly
+            // If all warehouses are selected, don't add warehouse filter (export ALL)
+            const allWarehouses = getUniqueWarehouses();
+            const isAllWarehousesSelected = selectedWarehouses.length === allWarehouses.length;
+            
+            if (!isAllWarehousesSelected && selectedWarehouses.length === 1) {
+                // Only add warehouse filter if single warehouse is selected
+                queryParams.append('warehouse', selectedWarehouses[0]);
             }
+            // If multiple warehouses selected but not all, we'll export all data
+            // (backend doesn't support multiple warehouse filtering in single query)
             
             // Add date filters if available (fix: use fromDate/toDate instead of dateFrom/dateTo)
             if (fromDate) queryParams.append('dateFrom', fromDate);
@@ -456,7 +463,12 @@ export default function OrderSheet() {
             window.URL.revokeObjectURL(url);
             
             setShowExportDropdown(false);
-            setSuccessMsg(`Exported dispatch data successfully`);
+            
+            // Show appropriate success message
+            const exportScope = isAllWarehousesSelected || selectedWarehouses.length > 1 
+                ? "all warehouses" 
+                : `warehouse ${selectedWarehouses[0]}`;
+            setSuccessMsg(`Exported dispatch data for ${exportScope} successfully`);
             setTimeout(() => setSuccessMsg(""), 3000);
             
         } catch (error) {

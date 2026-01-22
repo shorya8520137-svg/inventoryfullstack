@@ -1138,7 +1138,8 @@ exports.updateDispatchStatus = (req, res) => {
 
 /**
  * EXPORT DISPATCHES TO CSV
- * Export all dispatches with optional filters as CSV file
+ * Export all dispatches AND self-transfers with optional filters as CSV file
+ * FIXED: Now includes both dispatches and self-transfers like getAllDispatches
  */
 exports.exportDispatches = (req, res) => {
     const { 
@@ -1173,9 +1174,10 @@ exports.exportDispatches = (req, res) => {
 
     const whereClause = filters.length > 0 ? `WHERE ${filters.join(' AND ')}` : '';
 
-    // Export query - get all dispatch data for CSV
+    // FIXED: Use the same query as getAllDispatches to include both dispatches and self-transfers
     const sql = `
         SELECT 
+            'dispatch' as source_type,
             wd.id,
             wd.timestamp,
             wd.warehouse,
@@ -1201,10 +1203,52 @@ exports.exportDispatches = (req, res) => {
         FROM warehouse_dispatch wd
         LEFT JOIN warehouse_dispatch_items wdi ON wd.id = wdi.dispatch_id
         ${whereClause}
-        ORDER BY wd.timestamp DESC
+        
+        UNION ALL
+        
+        SELECT 
+            'self_transfer' as source_type,
+            st.id,
+            ilb.event_time as timestamp,
+            ilb.location_code as warehouse,
+            st.order_ref,
+            CONCAT('Self Transfer from ', st.source_location) as customer,
+            ilb.product_name,
+            ilb.barcode,
+            ilb.qty,
+            NULL as variant,
+            0 as selling_price,
+            st.awb_number as awb,
+            st.logistics,
+            'Self Transfer' as parcel_type,
+            st.length,
+            st.width,
+            st.height,
+            st.weight as actual_weight,
+            st.payment_mode,
+            st.invoice_amount,
+            st.executive as processed_by,
+            st.remarks,
+            st.status
+        FROM inventory_ledger_base ilb
+        INNER JOIN self_transfer st ON ilb.reference = st.transfer_reference
+        WHERE ilb.movement_type = 'SELF_TRANSFER'
+        AND ilb.direction = 'IN'
+        ${warehouse ? 'AND ilb.location_code = ?' : ''}
+        ${dateFrom ? 'AND ilb.event_time >= ?' : ''}
+        ${dateTo ? 'AND ilb.event_time <= ?' : ''}
+        
+        ORDER BY timestamp DESC
     `;
 
-    db.query(sql, values, (err, results) => {
+    // Build values array for the combined query (same as getAllDispatches)
+    const combinedValues = [...values]; // For warehouse_dispatch WHERE clause
+    
+    // Add values for self_transfer WHERE clause
+    if (warehouse) combinedValues.push(warehouse);
+    if (dateFrom) combinedValues.push(`${dateFrom} 00:00:00`);
+    if (dateTo) combinedValues.push(`${dateTo} 23:59:59`);
+    db.query(sql, combinedValues, (err, results) => {
         if (err) {
             console.error('❌ Export query error:', err);
             return res.status(500).json({
@@ -1213,9 +1257,9 @@ exports.exportDispatches = (req, res) => {
             });
         }
 
-        // Generate CSV
+        // Generate CSV with updated headers to include source_type
         const csvHeader = [
-            'ID', 'Date', 'Warehouse', 'Order Ref', 'Customer', 'Product Name', 
+            'ID', 'Date', 'Type', 'Warehouse', 'Order Ref', 'Customer', 'Product Name', 
             'Barcode', 'Quantity', 'Variant', 'Selling Price', 'AWB', 'Logistics', 
             'Parcel Type', 'Length', 'Width', 'Height', 'Weight', 'Payment Mode', 
             'Invoice Amount', 'Processed By', 'Remarks', 'Status'
@@ -1224,6 +1268,7 @@ exports.exportDispatches = (req, res) => {
         const csvRows = results.map(row => [
             row.id,
             row.timestamp ? new Date(row.timestamp).toISOString().split('T')[0] : '',
+            `"${row.source_type || 'dispatch'}"`,
             `"${row.warehouse || ''}"`,
             `"${row.order_ref || ''}"`,
             `"${row.customer || ''}"`,
@@ -1249,11 +1294,11 @@ exports.exportDispatches = (req, res) => {
         const csv = csvHeader + csvRows;
 
         // Set CSV headers
-        const fileName = `dispatches_${warehouse || 'all'}_${new Date().toISOString().split('T')[0]}.csv`;
+        const fileName = `dispatches_and_transfers_${warehouse || 'all'}_${new Date().toISOString().split('T')[0]}.csv`;
         res.setHeader('Content-Type', 'text/csv');
         res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
         
-        console.log(`✅ Exported ${results.length} dispatch records to CSV`);
+        console.log(`✅ Exported ${results.length} dispatch and self-transfer records to CSV`);
         res.send(csv);
     });
 };
