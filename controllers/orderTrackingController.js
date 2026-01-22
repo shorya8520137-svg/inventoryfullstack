@@ -341,7 +341,7 @@ exports.getAllDispatches = (req, res) => {
         
         SELECT 
             'self_transfer' as source_type,
-            ilb.id,
+            st.id,
             ilb.event_time as timestamp,
             ilb.location_code as warehouse,
             st.order_ref,
@@ -367,7 +367,7 @@ exports.getAllDispatches = (req, res) => {
             0 as recovery_count,
             COALESCE(sb2.current_stock, 0) as current_stock
         FROM inventory_ledger_base ilb
-        LEFT JOIN self_transfer st ON ilb.reference = st.transfer_reference
+        INNER JOIN self_transfer st ON ilb.reference = st.transfer_reference
         LEFT JOIN (
             SELECT barcode, SUM(qty_available) as current_stock 
             FROM stock_batches 
@@ -915,8 +915,8 @@ exports.deleteDispatch = (req, res) => {
 
 /**
  * UPDATE DISPATCH STATUS
- * Updates the status of a dispatch order
- * FIXED: Properly handles multiple products with same AWB
+ * Updates the status of a dispatch order OR self-transfer
+ * FIXED: Properly handles multiple products with same AWB + Self-Transfer support
  */
 exports.updateDispatchStatus = (req, res) => {
     const { dispatchId } = req.params;
@@ -938,112 +938,253 @@ exports.updateDispatchStatus = (req, res) => {
         });
     }
 
-    // Valid status values
-    const validStatuses = [
+    // Valid status values for dispatches
+    const validDispatchStatuses = [
         'Pending', 'Processing', 'Confirmed', 'Packed', 'Dispatched',
         'In Transit', 'Out for Delivery', 'Delivered', 'Cancelled', 'Returned'
     ];
 
-    if (!validStatuses.includes(status)) {
-        return res.status(400).json({
-            success: false,
-            message: `Invalid status. Must be one of: ${validStatuses.join(', ')}`
-        });
-    }
+    // Valid status values for self-transfers
+    const validSelfTransferStatuses = [
+        'Pending', 'Processing', 'Confirmed', 'Completed', 'Cancelled'
+    ];
 
-    // CORRECTED LOGIC: warehouse_dispatch_items table doesn't have status column
-    // Status is only stored in the main warehouse_dispatch table
-    // For multi-product dispatches, we update the main dispatch status
-    
-    if (barcode) {
-        // Case 1: Specific product update (when barcode is provided)
-        // First verify the product exists in this dispatch
-        const verifyProductSql = `
-            SELECT wd.id, wd.barcode as main_barcode, wdi.barcode as item_barcode
-            FROM warehouse_dispatch wd
-            LEFT JOIN warehouse_dispatch_items wdi ON wd.id = wdi.dispatch_id
-            WHERE wd.id = ? AND (wd.barcode = ? OR wdi.barcode = ?)
-        `;
+    // First, determine if this is a dispatch or self-transfer by checking both tables
+    const checkTypeSql = `
+        SELECT 'dispatch' as type, id FROM warehouse_dispatch WHERE id = ?
+        UNION ALL
+        SELECT 'self_transfer' as type, id FROM self_transfer WHERE id = ?
+    `;
+
+    db.query(checkTypeSql, [dispatchId, dispatchId], (err, typeResult) => {
+        if (err) {
+            console.error('❌ Type check error:', err);
+            return res.status(500).json({
+                success: false,
+                error: err.message
+            });
+        }
+
+        if (typeResult.length === 0) {
+            return res.status(404).json({
+                success: false,
+                message: 'Record not found in dispatch or self-transfer tables'
+            });
+        }
+
+        const recordType = typeResult[0].type;
+        console.log(`📋 Record type detected: ${recordType}`);
+
+        // Validate status based on record type
+        const validStatuses = recordType === 'dispatch' ? validDispatchStatuses : validSelfTransferStatuses;
         
-        db.query(verifyProductSql, [dispatchId, barcode, barcode], (err, verification) => {
-            if (err) {
-                console.error('❌ Product verification error:', err);
-                return res.status(500).json({
-                    success: false,
-                    error: err.message
-                });
-            }
+        if (!validStatuses.includes(status)) {
+            return res.status(400).json({
+                success: false,
+                message: `Invalid status for ${recordType}. Must be one of: ${validStatuses.join(', ')}`
+            });
+        }
 
-            if (verification.length === 0) {
-                return res.status(404).json({
-                    success: false,
-                    message: 'Product not found in this dispatch'
-                });
-            }
+        if (recordType === 'dispatch') {
+            // Handle dispatch status update (existing logic)
+            handleDispatchStatusUpdate();
+        } else {
+            // Handle self-transfer status update (new logic)
+            handleSelfTransferStatusUpdate();
+        }
 
-            // Product exists, update the main dispatch status
-            // Note: For multi-product dispatches, this updates the entire dispatch status
-            // This is the correct behavior as status applies to the entire shipment
-            const updateMainSql = `UPDATE warehouse_dispatch SET status = ? WHERE id = ?`;
+        function handleDispatchStatusUpdate() {
+            // CORRECTED LOGIC: warehouse_dispatch_items table doesn't have status column
+            // Status is only stored in the main warehouse_dispatch table
+            // For multi-product dispatches, we update the main dispatch status
             
-            db.query(updateMainSql, [status, dispatchId], (err, result) => {
-                if (err) {
-                    console.error('❌ Status update error:', err);
-                    return res.status(500).json({
-                        success: false,
-                        error: err.message
+            if (barcode) {
+                // Case 1: Specific product update (when barcode is provided)
+                // First verify the product exists in this dispatch
+                const verifyProductSql = `
+                    SELECT wd.id, wd.barcode as main_barcode, wdi.barcode as item_barcode
+                    FROM warehouse_dispatch wd
+                    LEFT JOIN warehouse_dispatch_items wdi ON wd.id = wdi.dispatch_id
+                    WHERE wd.id = ? AND (wd.barcode = ? OR wdi.barcode = ?)
+                `;
+                
+                db.query(verifyProductSql, [dispatchId, barcode, barcode], (err, verification) => {
+                    if (err) {
+                        console.error('❌ Product verification error:', err);
+                        return res.status(500).json({
+                            success: false,
+                            error: err.message
+                        });
+                    }
+
+                    if (verification.length === 0) {
+                        return res.status(404).json({
+                            success: false,
+                            message: 'Product not found in this dispatch'
+                        });
+                    }
+
+                    // Product exists, update the main dispatch status
+                    // Note: For multi-product dispatches, this updates the entire dispatch status
+                    // This is the correct behavior as status applies to the entire shipment
+                    const updateMainSql = `UPDATE warehouse_dispatch SET status = ? WHERE id = ?`;
+                    
+                    db.query(updateMainSql, [status, dispatchId], (err, result) => {
+                        if (err) {
+                            console.error('❌ Status update error:', err);
+                            return res.status(500).json({
+                                success: false,
+                                error: err.message
+                            });
+                        }
+
+                        if (result.affectedRows === 0) {
+                            return res.status(404).json({
+                                success: false,
+                                message: 'Dispatch not found'
+                            });
+                        }
+
+                        console.log('✅ Dispatch status updated successfully');
+
+                        res.json({
+                            success: true,
+                            message: 'Dispatch status updated successfully',
+                            dispatch_id: dispatchId,
+                            barcode: barcode,
+                            new_status: status,
+                            type: 'dispatch',
+                            note: 'Status updated for entire dispatch (affects all products in this AWB)'
+                        });
                     });
-                }
-
-                if (result.affectedRows === 0) {
-                    return res.status(404).json({
-                        success: false,
-                        message: 'Dispatch not found'
-                    });
-                }
-
-                console.log('✅ Dispatch status updated successfully');
-
-                res.json({
-                    success: true,
-                    message: 'Dispatch status updated successfully',
-                    dispatch_id: dispatchId,
-                    barcode: barcode,
-                    new_status: status,
-                    note: 'Status updated for entire dispatch (affects all products in this AWB)'
                 });
-            });
-        });
-    } else {
-        // Case 2: Update entire dispatch (when no barcode provided - backward compatibility)
-        const updateSql = `UPDATE warehouse_dispatch SET status = ? WHERE id = ?`;
-        
-        db.query(updateSql, [status, dispatchId], (err, result) => {
-            if (err) {
-                console.error('❌ Status update error:', err);
-                return res.status(500).json({
-                    success: false,
-                    error: err.message
+            } else {
+                // Case 2: Update entire dispatch (when no barcode provided - backward compatibility)
+                const updateSql = `UPDATE warehouse_dispatch SET status = ? WHERE id = ?`;
+                
+                db.query(updateSql, [status, dispatchId], (err, result) => {
+                    if (err) {
+                        console.error('❌ Status update error:', err);
+                        return res.status(500).json({
+                            success: false,
+                            error: err.message
+                        });
+                    }
+
+                    if (result.affectedRows === 0) {
+                        return res.status(404).json({
+                            success: false,
+                            message: 'Dispatch not found'
+                        });
+                    }
+
+                    console.log('✅ Dispatch status updated successfully');
+
+                    res.json({
+                        success: true,
+                        message: 'Dispatch status updated successfully',
+                        dispatch_id: dispatchId,
+                        new_status: status,
+                        type: 'dispatch'
+                    });
                 });
             }
+        }
 
-            if (result.affectedRows === 0) {
-                return res.status(404).json({
-                    success: false,
-                    message: 'Dispatch not found'
+        function handleSelfTransferStatusUpdate() {
+            console.log('🔄 Handling self-transfer status update');
+            
+            if (barcode) {
+                // Case 1: Specific product update for self-transfer
+                // First verify the product exists in this self-transfer
+                const verifyProductSql = `
+                    SELECT st.id, sti.barcode
+                    FROM self_transfer st
+                    LEFT JOIN self_transfer_items sti ON st.id = sti.transfer_id
+                    WHERE st.id = ? AND sti.barcode = ?
+                `;
+                
+                db.query(verifyProductSql, [dispatchId, barcode], (err, verification) => {
+                    if (err) {
+                        console.error('❌ Self-transfer product verification error:', err);
+                        return res.status(500).json({
+                            success: false,
+                            error: err.message
+                        });
+                    }
+
+                    if (verification.length === 0) {
+                        return res.status(404).json({
+                            success: false,
+                            message: 'Product not found in this self-transfer'
+                        });
+                    }
+
+                    // Product exists, update the self-transfer status
+                    const updateSelfTransferSql = `UPDATE self_transfer SET status = ? WHERE id = ?`;
+                    
+                    db.query(updateSelfTransferSql, [status, dispatchId], (err, result) => {
+                        if (err) {
+                            console.error('❌ Self-transfer status update error:', err);
+                            return res.status(500).json({
+                                success: false,
+                                error: err.message
+                            });
+                        }
+
+                        if (result.affectedRows === 0) {
+                            return res.status(404).json({
+                                success: false,
+                                message: 'Self-transfer not found'
+                            });
+                        }
+
+                        console.log('✅ Self-transfer status updated successfully');
+
+                        res.json({
+                            success: true,
+                            message: 'Self-transfer status updated successfully',
+                            transfer_id: dispatchId,
+                            barcode: barcode,
+                            new_status: status,
+                            type: 'self_transfer',
+                            note: 'Status updated for entire self-transfer'
+                        });
+                    });
+                });
+            } else {
+                // Case 2: Update entire self-transfer (when no barcode provided)
+                const updateSql = `UPDATE self_transfer SET status = ? WHERE id = ?`;
+                
+                db.query(updateSql, [status, dispatchId], (err, result) => {
+                    if (err) {
+                        console.error('❌ Self-transfer status update error:', err);
+                        return res.status(500).json({
+                            success: false,
+                            error: err.message
+                        });
+                    }
+
+                    if (result.affectedRows === 0) {
+                        return res.status(404).json({
+                            success: false,
+                            message: 'Self-transfer not found'
+                        });
+                    }
+
+                    console.log('✅ Self-transfer status updated successfully');
+
+                    res.json({
+                        success: true,
+                        message: 'Self-transfer status updated successfully',
+                        transfer_id: dispatchId,
+                        new_status: status,
+                        type: 'self_transfer'
+                    });
                 });
             }
-
-            console.log('✅ Status updated successfully');
-
-            res.json({
-                success: true,
-                message: 'Status updated successfully',
-                dispatch_id: dispatchId,
-                new_status: status
-            });
-        });
-    }
+        }
+    });
 };
 
 module.exports = exports;
