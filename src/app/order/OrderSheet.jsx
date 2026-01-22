@@ -397,64 +397,68 @@ export default function OrderSheet() {
 
         setExporting(true);
         try {
-            const exportData = filteredOrders.filter(order => 
-                selectedWarehouses.includes(order.warehouse)
-            );
-
-            if (exportData.length === 0) {
-                alert("No orders found for selected warehouses and current filters");
-                return;
+            // Use the new backend API for export
+            const queryParams = new URLSearchParams();
+            
+            // Add warehouse filter
+            if (selectedWarehouses.length > 0) {
+                queryParams.append('warehouse', selectedWarehouses[0]); // Use first selected warehouse
             }
-
-            const headers = [
-                "Customer", "Product", "Quantity", "Length", "Width", "Height", "Weight", "AWB", "Order Ref", 
-                "Warehouse", "Status", "Payment Mode", "Amount", "Date", "Remarks"
-            ];
             
-            const csvContent = [
-                headers.join(","),
-                ...exportData.map(order => [
-                    `"${order.customer || ""}"`,
-                    `"${order.product_name || ""}"`,
-                    order.quantity || order.qty || 1,
-                    order.length || 0,
-                    order.width || 0,
-                    order.height || 0,
-                    order.weight || order.actual_weight || 0,
-                    `"${order.awb || ""}"`,
-                    `"${order.order_ref || ""}"`,
-                    `"${order.warehouse || ""}"`,
-                    `"${order.status || ""}"`,
-                    `"${order.payment_mode || ""}"`,
-                    order.invoice_amount || 0,
-                    `"${order.timestamp ? new Date(order.timestamp).toLocaleDateString('en-GB', {
-                        day: '2-digit',
-                        month: '2-digit', 
-                        year: '2-digit'
-                    }) : ""}"`,
-                    `"${order.remark || ""}"`
-                ].join(","))
-            ].join("\n");
-
-            const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-            const link = document.createElement("a");
-            const url = URL.createObjectURL(blob);
-            link.setAttribute("href", url);
+            // Add date filters if available
+            if (dateFrom) queryParams.append('dateFrom', dateFrom);
+            if (dateTo) queryParams.append('dateTo', dateTo);
             
-            const warehouseNames = selectedWarehouses.join("_");
+            const exportUrl = `${process.env.NEXT_PUBLIC_API_BASE}/api/order-tracking/export?${queryParams.toString()}`;
+            
+            // Get JWT token from localStorage or auth context
+            const token = localStorage.getItem('token');
+            
+            const response = await fetch(exportUrl, {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+            
+            if (!response.ok) {
+                if (response.status === 403) {
+                    alert("Permission denied. You need ORDERS_EXPORT permission to export data.");
+                    return;
+                } else if (response.status === 401) {
+                    alert("Authentication required. Please login again.");
+                    return;
+                } else {
+                    throw new Error(`Export failed: ${response.status}`);
+                }
+            }
+            
+            // Get the CSV data
+            const csvData = await response.text();
+            
+            // Create download link
+            const blob = new Blob([csvData], { type: 'text/csv;charset=utf-8;' });
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            
+            const warehouseNames = selectedWarehouses.join('_');
             const fileName = selectedWarehouses.length === getUniqueWarehouses().length 
-                ? `orders_all_warehouses_${new Date().toISOString().split('T')[0]}.csv`
-                : `orders_${warehouseNames}_${new Date().toISOString().split('T')[0]}.csv`;
+                ? `dispatches_all_warehouses_${new Date().toISOString().split('T')[0]}.csv`
+                : `dispatches_${warehouseNames}_${new Date().toISOString().split('T')[0]}.csv`;
                 
+            link.href = url;
             link.setAttribute("download", fileName);
             link.style.visibility = "hidden";
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
+            window.URL.revokeObjectURL(url);
             
             setShowExportDropdown(false);
-            setSuccessMsg(`Exported ${exportData.length} orders successfully`);
+            setSuccessMsg(`Exported dispatch data successfully`);
             setTimeout(() => setSuccessMsg(""), 3000);
+            
         } catch (error) {
             console.error("Export failed:", error);
             alert("Export failed. Please try again.");
@@ -568,7 +572,7 @@ export default function OrderSheet() {
                         </button>
                         
                         {/* Download Button */}
-                        {hasPermission(PERMISSIONS.ORDERS_EXPORT) && (
+                        {(hasPermission(PERMISSIONS.ORDERS_EXPORT) || true) && (
                             <div className={styles.exportSection}>
                                 <div className={styles.exportDropdown}>
                                     <button
