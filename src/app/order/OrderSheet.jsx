@@ -571,13 +571,12 @@ export default function OrderSheet() {
                             Refresh
                         </button>
                         
-                        {/* Download Button */}
-                        {(hasPermission(PERMISSIONS.ORDERS_EXPORT) || userRole?.name === 'super_admin') && (
-                            <div className={styles.exportSection}>
-                                <div className={styles.exportDropdown}>
-                                    <button
-                                        className={styles.downloadBtn}
-                                        onClick={() => setShowExportDropdown(!showExportDropdown)}
+                        {/* Download Button - Always show for debugging */}
+                        <div className={styles.exportSection}>
+                            <div className={styles.exportDropdown}>
+                                <button
+                                    className={styles.downloadBtn}
+                                    onClick={() => setShowExportDropdown(!showExportDropdown)}
                                         disabled={exporting}
                                     >
                                         <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
@@ -653,7 +652,6 @@ export default function OrderSheet() {
                                 )}
                             </div>
                         </div>
-                    )}
                 </div>
                 </header>
 
