@@ -6,14 +6,14 @@ const { authenticateToken, checkPermission } = require('../middleware/auth');
 // POST /api/bulk-upload - Upload bulk inventory data (main endpoint)
 router.post('/', 
     authenticateToken, 
-    checkPermission('inventory.bulk_upload'), 
+    checkPermission('INVENTORY_EDIT'), 
     bulkUploadController.bulkUpload
 );
 
 // POST /api/bulk-upload/progress - Upload bulk inventory data with real-time progress
 router.post('/progress', 
     authenticateToken, 
-    checkPermission('inventory.bulk_upload'), 
+    checkPermission('INVENTORY_EDIT'), 
     bulkUploadController.bulkUploadWithProgress
 );
 
@@ -26,7 +26,7 @@ router.get('/warehouses',
 // GET /api/bulk-upload/history - Get bulk upload history
 router.get('/history', 
     authenticateToken, 
-    checkPermission('inventory.bulk_upload'), 
+    checkPermission('INVENTORY_VIEW'), 
     bulkUploadController.getBulkUploadHistory
 );
 
