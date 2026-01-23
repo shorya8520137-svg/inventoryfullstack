@@ -172,7 +172,7 @@ export default function PermissionsPage() {
                     <div className={styles.sidebarHeader}>
                         <div className={styles.sidebarLogo}>
                             <div className={styles.logoIcon}>
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
                                     <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
                                 </svg>
                             </div>
@@ -186,7 +186,7 @@ export default function PermissionsPage() {
                                 className={`${styles.navItem} ${activeTab === "users" ? styles.active : ""}`}
                                 onClick={() => setActiveTab("users")}
                             >
-                                <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+                                <svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor">
                                     <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z" />
                                 </svg>
                                 <span>Users</span>
@@ -197,7 +197,7 @@ export default function PermissionsPage() {
                                 className={`${styles.navItem} ${activeTab === "roles" ? styles.active : ""}`}
                                 onClick={() => setActiveTab("roles")}
                             >
-                                <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+                                <svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor">
                                     <path fillRule="evenodd" d="M6 6V5a3 3 0 013-3h2a3 3 0 013 3v1h2a2 2 0 012 2v3.57A22.952 22.952 0 0110 13a22.95 22.95 0 01-8-1.43V8a2 2 0 012-2h2zm2-1a1 1 0 011-1h2a1 1 0 011 1v1H8V5zm1 5a1 1 0 011-1h.01a1 1 0 110 2H10a1 1 0 01-1-1z" clipRule="evenodd" />
                                 </svg>
                                 <span>Roles</span>
@@ -207,7 +207,7 @@ export default function PermissionsPage() {
                             className={`${styles.navItem} ${activeTab === "permissions" ? styles.active : ""}`}
                             onClick={() => setActiveTab("permissions")}
                         >
-                            <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+                            <svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor">
                                 <path fillRule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clipRule="evenodd" />
                             </svg>
                             <span>Permissions</span>
@@ -220,7 +220,7 @@ export default function PermissionsPage() {
                                     loadAuditLogs();
                                 }}
                             >
-                                <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+                                <svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor">
                                     <path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clipRule="evenodd" />
                                 </svg>
                                 <span>Audit Logs</span>
@@ -620,40 +620,154 @@ function PermissionsTab({ permissions, loading }) {
 
 // Audit Tab Component
 function AuditTab({ auditLogs, loading }) {
+    const [searchTerm, setSearchTerm] = useState('');
+    const [filterAction, setFilterAction] = useState('');
+    
     if (loading) {
-        return <div className={styles.loading}>Loading audit logs...</div>;
+        return (
+            <div className={styles.loadingContainer}>
+                <div className={styles.loadingSpinner}></div>
+                <p>Loading audit logs...</p>
+            </div>
+        );
     }
+
+    // Filter logs based on search and action filter
+    const filteredLogs = auditLogs.filter(log => {
+        const matchesSearch = !searchTerm || 
+            log.action?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            log.resource?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            log.details?.name?.toLowerCase().includes(searchTerm.toLowerCase());
+        
+        const matchesAction = !filterAction || log.action === filterAction;
+        
+        return matchesSearch && matchesAction;
+    });
+
+    // Get unique actions for filter dropdown
+    const uniqueActions = [...new Set(auditLogs.map(log => log.action))].filter(Boolean);
+
+    // Helper function to create user-friendly description
+    const getDescription = (log) => {
+        const details = typeof log.details === 'string' ? JSON.parse(log.details || '{}') : (log.details || {});
+        
+        switch (log.action) {
+            case 'CREATE':
+                if (log.resource === 'USER') {
+                    return `Created user "${details.name}" with email ${details.email}`;
+                }
+                return `Created ${log.resource.toLowerCase()} ${log.resource_id}`;
+            
+            case 'UPDATE':
+                if (log.resource === 'USER') {
+                    return `Updated user ${details.name || log.resource_id}`;
+                }
+                return `Updated ${log.resource.toLowerCase()} ${log.resource_id}`;
+            
+            case 'DELETE':
+                if (log.resource === 'ROLE') {
+                    return `Deleted role ${log.resource_id}`;
+                }
+                return `Deleted ${log.resource.toLowerCase()} ${log.resource_id}`;
+            
+            case 'LOGIN':
+                return `User logged into the system`;
+            
+            case 'DISPATCH':
+                return `Dispatched ${details.quantity || 'items'} to ${details.warehouse || 'warehouse'}`;
+            
+            case 'RETURN':
+                return `Processed return of ${details.quantity || 'items'} (${details.reason || 'No reason'})`;
+            
+            case 'DAMAGE':
+                return `Reported damage for ${details.quantity || 'items'} at ${details.location || 'warehouse'}`;
+            
+            case 'BULK_UPLOAD':
+                return `Uploaded bulk file "${details.filename}" with ${details.total_items || 'multiple'} items`;
+            
+            default:
+                return `Performed ${log.action.toLowerCase()} on ${log.resource.toLowerCase()}`;
+        }
+    };
+
+    // Helper function to get time ago
+    const getTimeAgo = (dateString) => {
+        const now = new Date();
+        const date = new Date(dateString);
+        const diffInSeconds = Math.floor((now - date) / 1000);
+        
+        if (diffInSeconds < 60) return 'Just now';
+        if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)} minutes ago`;
+        if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)} hours ago`;
+        if (diffInSeconds < 2592000) return `${Math.floor(diffInSeconds / 86400)} days ago`;
+        
+        return date.toLocaleDateString();
+    };
 
     return (
         <div className={styles.tabContent}>
             <div className={styles.tabHeader}>
-                <h2>Audit Logs</h2>
-                <div className={styles.auditStats}>
-                    <span>{auditLogs.length} recent activities</span>
+                <div className={styles.headerInfo}>
+                    <h2>Audit Logs</h2>
+                    <div className={styles.auditStats}>
+                        <span>{filteredLogs.length} activities</span>
+                    </div>
+                </div>
+                
+                <div className={styles.auditFilters}>
+                    <input
+                        type="text"
+                        placeholder="Search activities..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className={styles.searchInput}
+                    />
+                    <select
+                        value={filterAction}
+                        onChange={(e) => setFilterAction(e.target.value)}
+                        className={styles.filterSelect}
+                    >
+                        <option value="">All Actions</option>
+                        {uniqueActions.map(action => (
+                            <option key={action} value={action}>{action}</option>
+                        ))}
+                    </select>
                 </div>
             </div>
 
             <div className={styles.auditContainer}>
-                {auditLogs.map((log, index) => (
-                    <div key={index} className={styles.auditItem}>
-                        <div className={styles.auditIcon}>
-                            {getAuditIcon(log.action)}
-                        </div>
-                        <div className={styles.auditContent}>
-                            <div className={styles.auditHeader}>
-                                <span className={styles.auditUser}>{log.user_name || log.user_email}</span>
-                                <span className={styles.auditAction}>{log.action}</span>
-                                <span className={styles.auditTime}>
-                                    {new Date(log.created_at).toLocaleString()}
-                                </span>
-                            </div>
-                            <div className={styles.auditDetails}>
-                                {log.resource && <span>Resource: {log.resource}</span>}
-                                {log.resource_id && <span>ID: {log.resource_id}</span>}
-                            </div>
-                        </div>
+                {filteredLogs.length === 0 ? (
+                    <div className={styles.emptyState}>
+                        <div className={styles.emptyIcon}>📋</div>
+                        <h3>No audit logs found</h3>
+                        <p>No activities match your current filters.</p>
                     </div>
-                ))}
+                ) : (
+                    filteredLogs.map((log, index) => (
+                        <div key={log.id || index} className={styles.auditItem}>
+                            <div className={styles.auditIcon}>
+                                {getAuditIcon(log.action)}
+                            </div>
+                            <div className={styles.auditContent}>
+                                <div className={styles.auditHeader}>
+                                    <span className={styles.auditDescription}>
+                                        {getDescription(log)}
+                                    </span>
+                                    <span className={styles.auditTime}>
+                                        {getTimeAgo(log.created_at)}
+                                    </span>
+                                </div>
+                                <div className={styles.auditMeta}>
+                                    <span className={styles.auditAction}>{log.action}</span>
+                                    <span className={styles.auditResource}>{log.resource}</span>
+                                    {log.ip_address && (
+                                        <span className={styles.auditIp}>IP: {log.ip_address}</span>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    ))
+                )}
             </div>
         </div>
     );

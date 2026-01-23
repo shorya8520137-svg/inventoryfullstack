@@ -17,7 +17,7 @@
 }
 
 .sidebar {
-    width: 260px;
+    width: 200px;
     background: #ffffff;
     border-right: 1px solid #e2e8f0;
     display: flex;
@@ -399,7 +399,7 @@
 /* ================= MOBILE RESPONSIVE ================= */
 @media (max-width: 1200px) {
     .sidebar {
-        width: 220px;
+        width: 180px;
     }
     
     .table {
@@ -431,7 +431,7 @@
     
     .sidebar {
         position: fixed;
-        left: -260px;
+        left: -200px;
         height: 100vh;
         z-index: 1000;
         box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
@@ -508,7 +508,7 @@
 }
 
 .sidebarHeader {
-    padding: 20px 16px;
+    padding: 12px 16px;
     border-bottom: 1px solid #e2e8f0;
     background: #1e293b;
 }
@@ -516,43 +516,43 @@
 .sidebarLogo {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 8px;
     color: white;
 }
 
 .logoIcon {
-    width: 32px;
-    height: 32px;
+    width: 28px;
+    height: 28px;
     background: rgba(255, 255, 255, 0.1);
-    border-radius: 8px;
+    border-radius: 6px;
     display: flex;
     align-items: center;
     justify-content: center;
 }
 
 .sidebarLogo span {
-    font-size: 18px;
+    font-size: 16px;
     font-weight: 700;
 }
 
 .sidebarNav {
     flex: 1;
-    padding: 16px 12px;
+    padding: 12px 8px;
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: 2px;
 }
 
 .navItem {
     display: flex;
     align-items: center;
-    gap: 10px;
-    padding: 12px 16px;
+    gap: 8px;
+    padding: 10px 12px;
     background: transparent;
     border: none;
-    border-radius: 8px;
+    border-radius: 6px;
     color: #64748b;
-    font-size: 14px;
+    font-size: 13px;
     font-weight: 600;
     cursor: pointer;
     transition: all 0.2s ease;
@@ -563,16 +563,18 @@
 .navItem:hover {
     background: #f1f5f9;
     color: #1e293b;
+    transform: translateX(2px);
 }
 
 .navItem.active {
     background: #3b82f6;
     color: white;
+    box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2);
 }
 
 /* ================= USER PROFILE SECTION ================= */
 .userProfile {
-    padding: 16px 12px;
+    padding: 12px 8px;
     border-top: 1px solid #e2e8f0;
     background: #f8fafc;
 }
@@ -580,11 +582,11 @@
 .profileCard {
     display: flex;
     align-items: center;
-    gap: 10px;
-    padding: 12px;
+    gap: 8px;
+    padding: 8px;
     background: white;
     border: 1px solid #e2e8f0;
-    border-radius: 8px;
+    border-radius: 6px;
     cursor: pointer;
     transition: all 0.2s ease;
 }
@@ -592,12 +594,13 @@
 .profileCard:hover {
     border-color: #3b82f6;
     box-shadow: 0 2px 8px rgba(59, 130, 246, 0.15);
+    transform: translateY(-1px);
 }
 
 .profileAvatar {
-    width: 36px;
-    height: 36px;
-    border-radius: 8px;
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
     overflow: hidden;
 }
 
@@ -616,7 +619,7 @@
     align-items: center;
     justify-content: center;
     font-weight: 700;
-    font-size: 14px;
+    font-size: 12px;
 }
 
 .profileInfo {
@@ -625,17 +628,17 @@
 }
 
 .profileName {
-    font-size: 13px;
+    font-size: 12px;
     font-weight: 600;
     color: #1e293b;
-    margin-bottom: 2px;
+    margin-bottom: 1px;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
 }
 
 .profileRole {
-    font-size: 11px;
+    font-size: 10px;
     color: #64748b;
     font-weight: 500;
     white-space: nowrap;
@@ -1334,4 +1337,176 @@
     text-align: center;
     color: #64748b;
     font-size: 16px;
+}
+
+/* Audit Tab Styles */
+.auditFilters {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+.searchInput {
+    padding: 8px 12px;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    font-size: 14px;
+    min-width: 200px;
+}
+
+.searchInput:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.filterSelect {
+    padding: 8px 12px;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    font-size: 14px;
+    background: white;
+    min-width: 120px;
+}
+
+.filterSelect:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.auditContainer {
+    max-height: calc(100vh - 200px);
+    overflow-y: auto;
+    padding-right: 8px;
+}
+
+.auditItem {
+    display: flex;
+    gap: 12px;
+    padding: 16px;
+    border-bottom: 1px solid #f3f4f6;
+    transition: background-color 0.2s;
+}
+
+.auditItem:hover {
+    background-color: #f9fafb;
+}
+
+.auditIcon {
+    flex-shrink: 0;
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    background: #f3f4f6;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #6b7280;
+}
+
+.auditContent {
+    flex: 1;
+    min-width: 0;
+}
+
+.auditHeader {
+    display: flex;
+    justify-content: between;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 4px;
+}
+
+.auditDescription {
+    flex: 1;
+    font-weight: 500;
+    color: #111827;
+    line-height: 1.4;
+}
+
+.auditTime {
+    flex-shrink: 0;
+    font-size: 12px;
+    color: #6b7280;
+    white-space: nowrap;
+}
+
+.auditMeta {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    font-size: 12px;
+    color: #6b7280;
+}
+
+.auditAction {
+    background: #dbeafe;
+    color: #1e40af;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-weight: 500;
+}
+
+.auditResource {
+    background: #f3f4f6;
+    color: #374151;
+    padding: 2px 6px;
+    border-radius: 4px;
+}
+
+.auditIp {
+    font-family: monospace;
+}
+
+.emptyState {
+    text-align: center;
+    padding: 60px 20px;
+    color: #6b7280;
+}
+
+.emptyIcon {
+    font-size: 48px;
+    margin-bottom: 16px;
+}
+
+.emptyState h3 {
+    margin: 0 0 8px 0;
+    color: #374151;
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.emptyState p {
+    margin: 0;
+    font-size: 14px;
+}
+
+/* Mobile responsive for audit */
+@media (max-width: 768px) {
+    .auditFilters {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
+    }
+    
+    .searchInput,
+    .filterSelect {
+        min-width: auto;
+        width: 100%;
+    }
+    
+    .auditHeader {
+        flex-direction: column;
+        gap: 4px;
+    }
+    
+    .auditTime {
+        align-self: flex-start;
+    }
+    
+    .auditMeta {
+        flex-wrap: wrap;
+        gap: 8px;
+    }
 }
