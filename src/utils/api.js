@@ -226,6 +226,20 @@ export const api = {
     deleteUser: (id) => 
         apiRequest(`/api/users/${id}`, { method: 'DELETE' }),
     
+    // User Profile Management
+    getUserProfile: () => apiRequest('/api/users/profile'),
+    
+    updateUserProfile: (formData) => {
+        const token = getToken();
+        return fetch(`${API_BASE}/api/users/profile`, {
+            method: 'PUT',
+            headers: {
+                'Authorization': `Bearer ${token}`
+            },
+            body: formData // FormData for file upload
+        }).then(response => response.json());
+    },
+    
     getRoles: () => apiRequest('/api/roles'),
     
     createRole: (role) => 

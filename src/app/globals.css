@@ -41,6 +41,16 @@ body::-webkit-scrollbar {
     background-color: rgba(156, 163, 175, 0.7);
 }
 
+/* Hidden Scrollbar Utility */
+.scrollbar-hide {
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* Internet Explorer 10+ */
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+    display: none; /* WebKit */
+}
+
 /* Professional Container Styles */
 .page-container {
     min-height: 100vh;

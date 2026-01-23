@@ -18,6 +18,9 @@ app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 app.use(morgan("dev"));
 
+// Serve static files from uploads directory
+app.use('/uploads', express.static('uploads'));
+
 // ===============================
 // DATABASE
 // ===============================
@@ -34,6 +37,9 @@ app.use("/api/auth", require("./routes/authRoutes"));
 
 // permissions routes (FIRST - before global auth middleware)
 app.use('/api', require('./routes/permissionsRoutes'));
+
+// users routes (profile management)
+app.use('/api/users', require('./routes/usersRoutes'));
 
 // ===============================
 // PROTECTED ROUTES (JWT REQUIRED)

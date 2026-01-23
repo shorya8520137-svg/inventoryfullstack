@@ -10,11 +10,13 @@ export default function PermissionsPage() {
     const [activeTab, setActiveTab] = useState("users");
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
+    const [sidebarOpen, setSidebarOpen] = useState(false);
     
     // Users state
     const [users, setUsers] = useState([]);
     const [selectedUser, setSelectedUser] = useState(null);
     const [showUserModal, setShowUserModal] = useState(false);
+    const [showProfileModal, setShowProfileModal] = useState(false);
     
     // Roles state
     const [roles, setRoles] = useState([]);
@@ -148,116 +150,171 @@ export default function PermissionsPage() {
 
     return (
         <div className={styles.container}>
-            <div className={styles.header}>
-                <div className={styles.headerContent}>
-                    <h1 className={styles.title}>Permissions Management</h1>
-                    <p className={styles.subtitle}>Manage users, roles, and system permissions</p>
-                </div>
-            </div>
-
-            {error && (
-                <div className={styles.errorMessage}>
-                    <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
-                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+            {/* Mobile Overlay */}
+            <div 
+                className={`${styles.mobileOverlay} ${sidebarOpen ? styles.open : ''}`}
+                onClick={() => setSidebarOpen(false)}
+            />
+            
+            <div className={styles.layout}>
+                {/* Mobile Menu Button */}
+                <button 
+                    className={styles.mobileMenuButton}
+                    onClick={() => setSidebarOpen(!sidebarOpen)}
+                >
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                        <path fillRule="evenodd" d="M3 6a1 1 0 011-1h16a1 1 0 110 2H4a1 1 0 01-1-1zM3 12a1 1 0 011-1h16a1 1 0 110 2H4a1 1 0 01-1-1zM3 18a1 1 0 011-1h16a1 1 0 110 2H4a1 1 0 01-1-1z" clipRule="evenodd" />
                     </svg>
-                    <span>{error}</span>
-                    <button onClick={() => setError("")} className={styles.errorClose}>×</button>
+                </button>
+
+                {/* Sidebar */}
+                <div className={`${styles.sidebar} ${sidebarOpen ? styles.open : ''}`}>
+                    <div className={styles.sidebarHeader}>
+                        <div className={styles.sidebarLogo}>
+                            <div className={styles.logoIcon}>
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+                                </svg>
+                            </div>
+                            <span>Permissions</span>
+                        </div>
+                    </div>
+
+                    <nav className={styles.sidebarNav}>
+                        {canManageUsers && (
+                            <button
+                                className={`${styles.navItem} ${activeTab === "users" ? styles.active : ""}`}
+                                onClick={() => setActiveTab("users")}
+                            >
+                                <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+                                    <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z" />
+                                </svg>
+                                <span>Users</span>
+                            </button>
+                        )}
+                        {canManageRoles && (
+                            <button
+                                className={`${styles.navItem} ${activeTab === "roles" ? styles.active : ""}`}
+                                onClick={() => setActiveTab("roles")}
+                            >
+                                <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fillRule="evenodd" d="M6 6V5a3 3 0 013-3h2a3 3 0 013 3v1h2a2 2 0 012 2v3.57A22.952 22.952 0 0110 13a22.95 22.95 0 01-8-1.43V8a2 2 0 012-2h2zm2-1a1 1 0 011-1h2a1 1 0 011 1v1H8V5zm1 5a1 1 0 011-1h.01a1 1 0 110 2H10a1 1 0 01-1-1z" clipRule="evenodd" />
+                                </svg>
+                                <span>Roles</span>
+                            </button>
+                        )}
+                        <button
+                            className={`${styles.navItem} ${activeTab === "permissions" ? styles.active : ""}`}
+                            onClick={() => setActiveTab("permissions")}
+                        >
+                            <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+                                <path fillRule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clipRule="evenodd" />
+                            </svg>
+                            <span>Permissions</span>
+                        </button>
+                        {canViewAudit && (
+                            <button
+                                className={`${styles.navItem} ${activeTab === "audit" ? styles.active : ""}`}
+                                onClick={() => {
+                                    setActiveTab("audit");
+                                    loadAuditLogs();
+                                }}
+                            >
+                                <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clipRule="evenodd" />
+                                </svg>
+                                <span>Audit Logs</span>
+                            </button>
+                        )}
+                    </nav>
+
+                    {/* User Profile Section */}
+                    <div className={styles.userProfile}>
+                        <div className={styles.profileCard} onClick={() => setShowProfileModal(true)}>
+                            <div className={styles.profileAvatar}>
+                                {user?.profile_image ? (
+                                    <img 
+                                        src={`${process.env.NEXT_PUBLIC_API_BASE}${user.profile_image}`} 
+                                        alt={user.name}
+                                        onError={(e) => {
+                                            e.target.style.display = 'none';
+                                            e.target.nextSibling.style.display = 'flex';
+                                        }}
+                                    />
+                                ) : null}
+                                <div className={styles.profileInitials} style={{display: user?.profile_image ? 'none' : 'flex'}}>
+                                    {user?.name?.charAt(0)?.toUpperCase()}
+                                </div>
+                            </div>
+                            <div className={styles.profileInfo}>
+                                <div className={styles.profileName}>{user?.name}</div>
+                                <div className={styles.profileRole}>{user?.role_display_name || user?.role_name}</div>
+                            </div>
+                            <svg className={styles.profileEdit} width="16" height="16" viewBox="0 0 20 20" fill="currentColor">
+                                <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+                            </svg>
+                        </div>
+                    </div>
                 </div>
-            )}
 
-            <div className={styles.tabsContainer}>
-                <div className={styles.tabs}>
-                    {canManageUsers && (
-                        <button
-                            className={`${styles.tab} ${activeTab === "users" ? styles.active : ""}`}
-                            onClick={() => setActiveTab("users")}
-                        >
+                {/* Main Content */}
+                <div className={styles.mainContent}>
+
+
+                    {error && (
+                        <div className={styles.errorMessage}>
                             <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
-                                <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z" />
+                                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
                             </svg>
-                            Users
-                        </button>
+                            <span>{error}</span>
+                            <button onClick={() => setError("")} className={styles.errorClose}>×</button>
+                        </div>
                     )}
-                    {canManageRoles && (
-                        <button
-                            className={`${styles.tab} ${activeTab === "roles" ? styles.active : ""}`}
-                            onClick={() => setActiveTab("roles")}
-                        >
-                            <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
-                                <path fillRule="evenodd" d="M6 6V5a3 3 0 013-3h2a3 3 0 013 3v1h2a2 2 0 012 2v3.57A22.952 22.952 0 0110 13a22.95 22.95 0 01-8-1.43V8a2 2 0 012-2h2zm2-1a1 1 0 011-1h2a1 1 0 011 1v1H8V5zm1 5a1 1 0 011-1h.01a1 1 0 110 2H10a1 1 0 01-1-1z" clipRule="evenodd" />
-                                <path d="M2 13.692V16a2 2 0 002 2h12a2 2 0 002-2v-2.308A24.974 24.974 0 0110 15c-2.796 0-5.487-.46-8-1.308z" />
-                            </svg>
-                            Roles
-                        </button>
-                    )}
-                    <button
-                        className={`${styles.tab} ${activeTab === "permissions" ? styles.active : ""}`}
-                        onClick={() => setActiveTab("permissions")}
-                    >
-                        <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
-                            <path fillRule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clipRule="evenodd" />
-                        </svg>
-                        Permissions
-                    </button>
-                    {canViewAudit && (
-                        <button
-                            className={`${styles.tab} ${activeTab === "audit" ? styles.active : ""}`}
-                            onClick={() => {
-                                setActiveTab("audit");
-                                loadAuditLogs();
-                            }}
-                        >
-                            <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
-                                <path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clipRule="evenodd" />
-                            </svg>
-                            Audit Logs
-                        </button>
-                    )}
+
+                    <div className={styles.content}>
+                        {activeTab === "users" && canManageUsers && (
+                            <UsersTab
+                                users={users}
+                                roles={roles}
+                                onCreateUser={() => {
+                                    setSelectedUser(null);
+                                    setShowUserModal(true);
+                                }}
+                                onEditUser={(user) => {
+                                    setSelectedUser(user);
+                                    setShowUserModal(true);
+                                }}
+                                onDeleteUser={handleDeleteUser}
+                                loading={loading}
+                            />
+                        )}
+
+                        {activeTab === "roles" && canManageRoles && (
+                            <RolesTab
+                                roles={roles}
+                                permissions={permissions}
+                                onCreateRole={() => {
+                                    setSelectedRole(null);
+                                    setShowRoleModal(true);
+                                }}
+                                onEditRole={(role) => {
+                                    setSelectedRole(role);
+                                    setShowRoleModal(true);
+                                }}
+                                onDeleteRole={handleDeleteRole}
+                                loading={loading}
+                            />
+                        )}
+
+                        {activeTab === "permissions" && (
+                            <PermissionsTab permissions={permissions} loading={loading} />
+                        )}
+
+                        {activeTab === "audit" && canViewAudit && (
+                            <AuditTab auditLogs={auditLogs} loading={loading} />
+                        )}
+                    </div>
                 </div>
-            </div>
-
-            <div className={styles.content}>
-                {activeTab === "users" && canManageUsers && (
-                    <UsersTab
-                        users={users}
-                        roles={roles}
-                        onCreateUser={() => {
-                            setSelectedUser(null);
-                            setShowUserModal(true);
-                        }}
-                        onEditUser={(user) => {
-                            setSelectedUser(user);
-                            setShowUserModal(true);
-                        }}
-                        onDeleteUser={handleDeleteUser}
-                        loading={loading}
-                    />
-                )}
-
-                {activeTab === "roles" && canManageRoles && (
-                    <RolesTab
-                        roles={roles}
-                        permissions={permissions}
-                        onCreateRole={() => {
-                            setSelectedRole(null);
-                            setShowRoleModal(true);
-                        }}
-                        onEditRole={(role) => {
-                            setSelectedRole(role);
-                            setShowRoleModal(true);
-                        }}
-                        onDeleteRole={handleDeleteRole}
-                        loading={loading}
-                    />
-                )}
-
-                {activeTab === "permissions" && (
-                    <PermissionsTab permissions={permissions} loading={loading} />
-                )}
-
-                {activeTab === "audit" && canViewAudit && (
-                    <AuditTab auditLogs={auditLogs} loading={loading} />
-                )}
             </div>
 
             {/* User Modal */}
@@ -285,6 +342,15 @@ export default function PermissionsPage() {
                     }}
                 />
             )}
+
+            {/* Profile Modal */}
+            {showProfileModal && (
+                <ProfileModal
+                    user={user}
+                    onClose={() => setShowProfileModal(false)}
+                    onUpdate={loadInitialData}
+                />
+            )}
         </div>
     );
 }
@@ -292,18 +358,33 @@ export default function PermissionsPage() {
 // Users Tab Component
 function UsersTab({ users, roles, onCreateUser, onEditUser, onDeleteUser, loading }) {
     if (loading) {
-        return <div className={styles.loading}>Loading users...</div>;
+        return (
+            <div className={styles.loadingContainer}>
+                <div className={styles.loadingSpinner}></div>
+                <p>Loading users...</p>
+            </div>
+        );
     }
 
     return (
         <div className={styles.tabContent}>
             <div className={styles.tabHeader}>
-                <h2>Users Management</h2>
-                <button className={styles.primaryButton} onClick={onCreateUser}>
-                    <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
-                        <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
+                <div className={styles.headerInfo}>
+                    <div className={styles.statsRow}>
+                        <div className={styles.statCard}>
+                            <span className={styles.statNumber}>{users.length}</span>
+                            <span className={styles.statLabel}>Total</span>
+                        </div>
+                        <div className={styles.statCard}>
+                            <span className={styles.statNumber}>{users.filter(u => u.is_active).length}</span>
+                            <span className={styles.statLabel}>Active</span>
+                        </div>
+                    </div>
+                </div>
+                <button className={styles.profileIconButton} onClick={onCreateUser} title="Add User">
+                    <svg width="18" height="18" viewBox="0 0 20 20" fill="currentColor">
+                        <path d="M8 9a3 3 0 100-6 3 3 0 000 6zM8 11a6 6 0 016 6H2a6 6 0 016-6zM16 7a1 1 0 10-2 0v1h-1a1 1 0 100 2h1v1a1 1 0 102 0v-1h1a1 1 0 100-2h-1V7z" />
                     </svg>
-                    Add User
                 </button>
             </div>
 
@@ -311,7 +392,7 @@ function UsersTab({ users, roles, onCreateUser, onEditUser, onDeleteUser, loadin
                 <table className={styles.table}>
                     <thead>
                         <tr>
-                            <th>Name</th>
+                            <th>User</th>
                             <th>Email</th>
                             <th>Role</th>
                             <th>Status</th>
@@ -322,39 +403,64 @@ function UsersTab({ users, roles, onCreateUser, onEditUser, onDeleteUser, loadin
                     <tbody>
                         {users.map((user) => (
                             <tr key={user.id}>
-                                <td>
+                                <td data-label="User">
                                     <div className={styles.userInfo}>
-                                        <div className={styles.avatar}>
-                                            {user.name.charAt(0).toUpperCase()}
+                                        <div className={styles.userAvatar}>
+                                            {user.profile_image ? (
+                                                <img 
+                                                    src={`${process.env.NEXT_PUBLIC_API_BASE}${user.profile_image}`} 
+                                                    alt={user.name}
+                                                    onError={(e) => {
+                                                        e.target.style.display = 'none';
+                                                        e.target.nextSibling.style.display = 'flex';
+                                                    }}
+                                                />
+                                            ) : null}
+                                            <div className={styles.userInitials} style={{display: user.profile_image ? 'none' : 'flex'}}>
+                                                {user.name.charAt(0).toUpperCase()}
+                                            </div>
                                         </div>
-                                        <span>{user.name}</span>
+                                        <div className={styles.userDetails}>
+                                            <span className={styles.userName}>{user.name}</span>
+                                            <span className={styles.userMeta}>ID: {user.id}</span>
+                                        </div>
                                     </div>
                                 </td>
-                                <td>{user.email}</td>
-                                <td>
-                                    <span className={`${styles.badge} ${styles[user.role_name]}`}>
+                                <td data-label="Email">
+                                    <span className={styles.userEmail}>{user.email}</span>
+                                </td>
+                                <td data-label="Role">
+                                    <span className={`${styles.roleBadge} ${styles[user.role_name]}`}>
                                         {user.role_display_name || user.role_name}
                                     </span>
                                 </td>
-                                <td>
-                                    <span className={`${styles.status} ${user.is_active ? styles.active : styles.inactive}`}>
-                                        {user.is_active ? 'Active' : 'Inactive'}
+                                <td data-label="Status">
+                                    <div className={`${styles.statusDot} ${user.is_active ? styles.active : styles.inactive}`}></div>
+                                </td>
+                                <td data-label="Last Login">
+                                    <span className={styles.lastLogin}>
+                                        {user.last_login ? new Date(user.last_login).toLocaleDateString() : 'Never'}
                                     </span>
                                 </td>
-                                <td>{user.last_login ? new Date(user.last_login).toLocaleDateString() : 'Never'}</td>
-                                <td>
+                                <td data-label="Actions">
                                     <div className={styles.actions}>
                                         <button
                                             className={styles.editButton}
                                             onClick={() => onEditUser(user)}
+                                            title="Edit User"
                                         >
-                                            Edit
+                                            <svg width="12" height="12" viewBox="0 0 20 20" fill="currentColor">
+                                                <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+                                            </svg>
                                         </button>
                                         <button
                                             className={styles.deleteButton}
                                             onClick={() => onDeleteUser(user.id)}
+                                            title="Delete User"
                                         >
-                                            Delete
+                                            <svg width="12" height="12" viewBox="0 0 20 20" fill="currentColor">
+                                                <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
+                                            </svg>
                                         </button>
                                     </div>
                                 </td>
@@ -376,57 +482,90 @@ function RolesTab({ roles, permissions, onCreateRole, onEditRole, onDeleteRole, 
     return (
         <div className={styles.tabContent}>
             <div className={styles.tabHeader}>
-                <h2>Roles Management</h2>
-                <button className={styles.primaryButton} onClick={onCreateRole}>
-                    <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
-                        <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
+                <div className={styles.headerInfo}>
+                    <div className={styles.statsRow}>
+                        <div className={styles.statCard}>
+                            <span className={styles.statNumber}>{roles.length}</span>
+                            <span className={styles.statLabel}>Total</span>
+                        </div>
+                        <div className={styles.statCard}>
+                            <span className={styles.statNumber}>{roles.filter(r => r.user_count > 0).length}</span>
+                            <span className={styles.statLabel}>Active</span>
+                        </div>
+                    </div>
+                </div>
+                <button className={styles.profileIconButton} onClick={onCreateRole} title="Add Role">
+                    <svg width="18" height="18" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M6 6V5a3 3 0 013-3h2a3 3 0 013 3v1h2a2 2 0 012 2v3.57A22.952 22.952 0 0110 13a22.95 22.95 0 01-8-1.43V8a2 2 0 012-2h2zm2-1a1 1 0 011-1h2a1 1 0 011 1v1H8V5zm1 5a1 1 0 011-1h.01a1 1 0 110 2H10a1 1 0 01-1-1z" clipRule="evenodd" />
                     </svg>
-                    Add Role
                 </button>
             </div>
 
-            <div className={styles.rolesGrid}>
-                {roles.map((role) => (
-                    <div 
-                        key={role.id} 
-                        className={styles.roleCard}
-                        style={{ '--role-color': role.color || '#6366f1' }}
-                    >
-                        <div className={styles.roleHeader}>
-                            <div className={styles.roleIcon} style={{ backgroundColor: role.color || '#6366f1' }}>
-                                {role.display_name?.charAt(0) || role.name?.charAt(0)}
-                            </div>
-                            <div className={styles.roleInfo}>
-                                <h3>{role.display_name || role.name}</h3>
-                                <p>{role.description || 'No description'}</p>
-                            </div>
-                        </div>
-                        <div className={styles.roleStats}>
-                            <div className={styles.stat}>
-                                <span className={styles.statNumber}>{role.user_count || 0}</span>
-                                <span className={styles.statLabel}>Users</span>
-                            </div>
-                            <div className={styles.stat}>
-                                <span className={styles.statNumber}>{role.permission_count || 0}</span>
-                                <span className={styles.statLabel}>Permissions</span>
-                            </div>
-                        </div>
-                        <div className={styles.roleActions}>
-                            <button
-                                className={styles.editButton}
-                                onClick={() => onEditRole(role)}
-                            >
-                                ✏️ Edit
-                            </button>
-                            <button
-                                className={styles.deleteButton}
-                                onClick={() => onDeleteRole(role.id)}
-                            >
-                                🗑️ Delete
-                            </button>
-                        </div>
-                    </div>
-                ))}
+            <div className={styles.tableContainer}>
+                <table className={styles.table}>
+                    <thead>
+                        <tr>
+                            <th>Role</th>
+                            <th>Description</th>
+                            <th>Users</th>
+                            <th>Permissions</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {roles.map((role) => (
+                            <tr key={role.id}>
+                                <td data-label="Role">
+                                    <div className={styles.roleInfo}>
+                                        <div 
+                                            className={styles.roleIcon} 
+                                            style={{ backgroundColor: role.color || '#6366f1' }}
+                                        >
+                                            {role.display_name?.charAt(0) || role.name?.charAt(0)}
+                                        </div>
+                                        <div className={styles.roleDetails}>
+                                            <span className={styles.roleName}>{role.display_name || role.name}</span>
+                                            <span className={styles.roleMeta}>ID: {role.id}</span>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td data-label="Description">
+                                    <span className={styles.roleDescription}>
+                                        {role.description || 'No description'}
+                                    </span>
+                                </td>
+                                <td data-label="Users">
+                                    <span className={styles.statNumber}>{role.user_count || 0}</span>
+                                </td>
+                                <td data-label="Permissions">
+                                    <span className={styles.statNumber}>{role.permission_count || 0}</span>
+                                </td>
+                                <td data-label="Actions">
+                                    <div className={styles.actions}>
+                                        <button
+                                            className={styles.editButton}
+                                            onClick={() => onEditRole(role)}
+                                            title="Edit Role"
+                                        >
+                                            <svg width="12" height="12" viewBox="0 0 20 20" fill="currentColor">
+                                                <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+                                            </svg>
+                                        </button>
+                                        <button
+                                            className={styles.deleteButton}
+                                            onClick={() => onDeleteRole(role.id)}
+                                            title="Delete Role"
+                                        >
+                                            <svg width="12" height="12" viewBox="0 0 20 20" fill="currentColor">
+                                                <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
+                                            </svg>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
             </div>
         </div>
     );
@@ -726,16 +865,238 @@ function RoleModal({ role, permissions, onSave, onClose }) {
 function getAuditIcon(action) {
     switch (action) {
         case 'LOGIN':
-            return '🔑';
+            return (
+                <svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M3 3a1 1 0 011 1v12a1 1 0 11-2 0V4a1 1 0 011-1zm7.707 3.293a1 1 0 010 1.414L9.414 9H17a1 1 0 110 2H9.414l1.293 1.293a1 1 0 01-1.414 1.414l-3-3a1 1 0 010-1.414l3-3a1 1 0 011.414 0z" clipRule="evenodd" />
+                </svg>
+            );
         case 'LOGOUT':
-            return '🚪';
+            return (
+                <svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M3 3a1 1 0 00-1 1v12a1 1 0 102 0V4a1 1 0 00-1-1zm10.293 9.293a1 1 0 001.414 1.414l3-3a1 1 0 000-1.414l-3-3a1 1 0 10-1.414 1.414L14.586 9H7a1 1 0 100 2h7.586l-1.293 1.293z" clipRule="evenodd" />
+                </svg>
+            );
         case 'CREATE':
-            return '➕';
+            return (
+                <svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
+                </svg>
+            );
         case 'UPDATE':
-            return '✏️';
+            return (
+                <svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor">
+                    <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+                </svg>
+            );
         case 'DELETE':
-            return '🗑️';
+            return (
+                <svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
+                </svg>
+            );
         default:
-            return '📝';
+            return (
+                <svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                </svg>
+            );
     }
+}
+
+// Profile Modal Component
+function ProfileModal({ user, onClose, onUpdate }) {
+    const [formData, setFormData] = useState({
+        name: user?.name || '',
+        email: user?.email || '',
+        phone: user?.phone || '',
+        address: user?.address || '',
+        profile_image: null
+    });
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState('');
+    const [imagePreview, setImagePreview] = useState(
+        user?.profile_image ? `${process.env.NEXT_PUBLIC_API_BASE}${user.profile_image}` : null
+    );
+
+    const handleImageChange = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            if (file.size > 5 * 1024 * 1024) { // 5MB limit
+                setError('Image size must be less than 5MB');
+                return;
+            }
+            
+            setFormData({ ...formData, profile_image: file });
+            
+            // Create preview
+            const reader = new FileReader();
+            reader.onload = (e) => setImagePreview(e.target.result);
+            reader.readAsDataURL(file);
+        }
+    };
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        setLoading(true);
+        setError('');
+
+        try {
+            const formDataToSend = new FormData();
+            formDataToSend.append('name', formData.name);
+            formDataToSend.append('email', formData.email);
+            formDataToSend.append('phone', formData.phone || '');
+            formDataToSend.append('address', formData.address || '');
+            
+            if (formData.profile_image) {
+                formDataToSend.append('profile_image', formData.profile_image);
+            }
+
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE}/api/users/profile`, {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                },
+                body: formDataToSend
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                // Update user in localStorage
+                const updatedUser = { ...user, ...data.user };
+                localStorage.setItem('user', JSON.stringify(updatedUser));
+                
+                onUpdate && onUpdate();
+                onClose();
+            } else {
+                setError(data.message || 'Failed to update profile');
+            }
+        } catch (err) {
+            setError('Network error. Please try again.');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    return (
+        <div className={styles.modalOverlay} onClick={onClose}>
+            <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+                <div className={styles.modalHeader}>
+                    <h2>Edit Profile</h2>
+                    <button className={styles.closeButton} onClick={onClose}>×</button>
+                </div>
+                
+                {error && (
+                    <div className={styles.errorMessage}>
+                        <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+                            <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                        </svg>
+                        <span>{error}</span>
+                    </div>
+                )}
+
+                <form onSubmit={handleSubmit} className={styles.modalForm}>
+                    {/* Profile Image Section */}
+                    <div className={styles.profileImageSection}>
+                        <div className={styles.imageUploadContainer}>
+                            <div className={styles.imagePreview}>
+                                {imagePreview ? (
+                                    <img src={imagePreview} alt="Profile" />
+                                ) : (
+                                    <div className={styles.imagePlaceholder}>
+                                        <svg width="48" height="48" viewBox="0 0 20 20" fill="currentColor">
+                                            <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
+                                        </svg>
+                                    </div>
+                                )}
+                                <div className={styles.imageOverlay}>
+                                    <svg width="24" height="24" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fillRule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clipRule="evenodd" />
+                                    </svg>
+                                </div>
+                            </div>
+                            <input
+                                type="file"
+                                accept="image/*"
+                                onChange={handleImageChange}
+                                className={styles.imageInput}
+                                id="profile-image"
+                            />
+                            <label htmlFor="profile-image" className={styles.imageUploadButton}>
+                                Change Photo
+                            </label>
+                        </div>
+                    </div>
+
+                    <div className={styles.formRow}>
+                        <div className={styles.formGroup}>
+                            <label>Full Name</label>
+                            <input
+                                type="text"
+                                value={formData.name}
+                                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                                required
+                            />
+                        </div>
+                        <div className={styles.formGroup}>
+                            <label>Email Address</label>
+                            <input
+                                type="email"
+                                value={formData.email}
+                                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                                required
+                            />
+                        </div>
+                    </div>
+
+                    <div className={styles.formRow}>
+                        <div className={styles.formGroup}>
+                            <label>Phone Number</label>
+                            <input
+                                type="tel"
+                                value={formData.phone}
+                                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                                placeholder="Enter phone number"
+                            />
+                        </div>
+                        <div className={styles.formGroup}>
+                            <label>Role</label>
+                            <input
+                                type="text"
+                                value={user?.role_display_name || user?.role_name}
+                                disabled
+                                className={styles.disabledInput}
+                            />
+                        </div>
+                    </div>
+
+                    <div className={styles.formGroup}>
+                        <label>Address</label>
+                        <textarea
+                            value={formData.address}
+                            onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                            rows={3}
+                            placeholder="Enter your address"
+                        />
+                    </div>
+
+                    <div className={styles.modalActions}>
+                        <button type="button" className={styles.secondaryButton} onClick={onClose}>
+                            Cancel
+                        </button>
+                        <button type="submit" className={styles.primaryButton} disabled={loading}>
+                            {loading ? (
+                                <>
+                                    <div className={styles.spinner}></div>
+                                    Updating...
+                                </>
+                            ) : (
+                                'Update Profile'
+                            )}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    );
 }
