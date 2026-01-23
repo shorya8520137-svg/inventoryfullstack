@@ -4,7 +4,7 @@
 const https = require('https');
 process.env["NODE_TLS_REJECT_UNAUTHORIZED"] = 0;
 
-const API_BASE = 'https://16.171.196.15.nip.io/api';
+const API_BASE = 'https://16.171.5.50.nip.io/api';
 const LOGIN_EMAIL = 'tetstetstestdt@company.com';
 const LOGIN_PASSWORD = 'gfx998sd';
 

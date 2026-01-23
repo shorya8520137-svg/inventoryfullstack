@@ -21,7 +21,7 @@ async function testLogin(credentials) {
         const loginData = JSON.stringify(credentials);
         
         const options = {
-            hostname: '16.171.196.15.nip.io',
+            hostname: '16.171.5.50.nip.io',
             port: 443,
             path: '/api/auth/login',
             method: 'POST',

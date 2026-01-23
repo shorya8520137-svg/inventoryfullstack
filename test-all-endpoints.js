@@ -8,12 +8,12 @@ console.log('🔍 Testing all possible API endpoint configurations');
 console.log('='.repeat(60));
 
 const endpoints = [
-    'http://16.171.196.15:5000',
-    'https://16.171.196.15:5000', 
-    'http://16.171.196.15:3000',
-    'https://16.171.196.15:3000',
-    'https://16.171.196.15.nip.io',
-    'http://16.171.196.15.nip.io'
+    'http://16.171.5.50:5000',
+    'https://16.171.5.50:5000', 
+    'http://16.171.5.50:3000',
+    'https://16.171.5.50:3000',
+    'https://16.171.5.50.nip.io',
+    'http://16.171.5.50.nip.io'
 ];
 
 function makeRequest(url, useHttps = false) {
@@ -196,7 +196,7 @@ async function runAllTests() {
         }
     } else {
         console.log('\n❌ No working endpoints found!');
-        console.log('🔧 Check if the API server is running on 16.171.196.15');
+        console.log('🔧 Check if the API server is running on 16.171.5.50');
     }
     
     console.log('\n' + '='.repeat(60));

@@ -4,7 +4,7 @@
 
 const https = require('https');
 
-const API_BASE = 'https://16.171.196.15.nip.io';
+const API_BASE = 'https://16.171.5.50.nip.io';
 
 // Admin credentials
 const adminCredentials = {
@@ -20,7 +20,7 @@ function login() {
         const loginData = JSON.stringify(adminCredentials);
         
         const options = {
-            hostname: '16.171.196.15.nip.io',
+            hostname: '16.171.5.50.nip.io',
             port: 443,
             path: '/api/auth/login',
             method: 'POST',
@@ -59,7 +59,7 @@ function login() {
 function getPermissions(token) {
     return new Promise((resolve, reject) => {
         const options = {
-            hostname: '16.171.196.15.nip.io',
+            hostname: '16.171.5.50.nip.io',
             port: 443,
             path: '/api/permissions',
             method: 'GET',
@@ -92,7 +92,7 @@ function getPermissions(token) {
 function getRoles(token) {
     return new Promise((resolve, reject) => {
         const options = {
-            hostname: '16.171.196.15.nip.io',
+            hostname: '16.171.5.50.nip.io',
             port: 443,
             path: '/api/roles',
             method: 'GET',
@@ -125,7 +125,7 @@ function getRoles(token) {
 function getRolePermissions(token, roleId) {
     return new Promise((resolve, reject) => {
         const options = {
-            hostname: '16.171.196.15.nip.io',
+            hostname: '16.171.5.50.nip.io',
             port: 443,
             path: `/api/roles/${roleId}/permissions`,
             method: 'GET',
@@ -160,7 +160,7 @@ function updateRolePermissions(token, roleId, permissionIds) {
         const updateData = JSON.stringify({ permissionIds });
         
         const options = {
-            hostname: '16.171.196.15.nip.io',
+            hostname: '16.171.5.50.nip.io',
             port: 443,
             path: `/api/roles/${roleId}/permissions`,
             method: 'PUT',

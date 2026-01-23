@@ -6,7 +6,7 @@
 const https = require('https');
 
 // Test configuration
-const API_BASE = 'https://16.171.196.15.nip.io';
+const API_BASE = 'https://16.171.5.50.nip.io';
 const TEST_CREDENTIALS = {
     email: 'admin@company.com',
     password: 'admin@123'

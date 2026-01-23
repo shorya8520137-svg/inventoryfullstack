@@ -4,7 +4,7 @@ const https = require('https');
 process.env["NODE_TLS_REJECT_UNAUTHORIZED"] = 0;
 
 const FRONTEND_URL = 'https://stockiqfullstacktest.vercel.app';
-const API_URL = 'https://16.171.196.15.nip.io';
+const API_URL = 'https://16.171.5.50.nip.io';
 
 console.log('🎯 FINAL PRODUCTION TEST');
 console.log('='.repeat(50));

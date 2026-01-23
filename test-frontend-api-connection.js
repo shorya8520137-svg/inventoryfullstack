@@ -7,7 +7,7 @@ const https = require('https');
 process.env["NODE_TLS_REJECT_UNAUTHORIZED"] = 0;
 
 // Use the same environment variable that the frontend uses
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'https://16.171.196.15.nip.io';
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'https://16.171.5.50.nip.io';
 
 console.log('🌐 Testing Frontend API Connection');
 console.log('='.repeat(50));

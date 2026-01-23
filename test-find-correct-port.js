@@ -4,7 +4,7 @@ const https = require('https');
 // Disable SSL verification
 process.env["NODE_TLS_REJECT_UNAUTHORIZED"] = 0;
 
-const IP = '16.171.196.15';
+const IP = '16.171.5.50';
 const PORTS_TO_TEST = [
     { port: 5000, protocol: 'http' },
     { port: 3000, protocol: 'http' },

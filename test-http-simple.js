@@ -1,6 +1,6 @@
 const http = require('http');
 
-const API_BASE = 'http://16.171.196.15:5000';
+const API_BASE = 'http://16.171.5.50:5000';
 
 console.log('🔍 Testing HTTP API (no SSL complications)');
 console.log('='.repeat(50));

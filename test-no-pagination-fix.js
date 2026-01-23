@@ -5,7 +5,7 @@
 
 const https = require('https');
 
-const API_BASE = 'https://16.171.196.15.nip.io';
+const API_BASE = 'https://16.171.5.50.nip.io';
 
 // Test credentials
 const testCredentials = {
@@ -21,7 +21,7 @@ function login() {
         const loginData = JSON.stringify(testCredentials);
         
         const options = {
-            hostname: '16.171.196.15.nip.io',
+            hostname: '16.171.5.50.nip.io',
             port: 443,
             path: '/api/auth/login',
             method: 'POST',
@@ -60,7 +60,7 @@ function login() {
 function testGetAllDispatches(token) {
     return new Promise((resolve, reject) => {
         const options = {
-            hostname: '16.171.196.15.nip.io',
+            hostname: '16.171.5.50.nip.io',
             port: 443,
             path: '/api/order-tracking/dispatches',
             method: 'GET',

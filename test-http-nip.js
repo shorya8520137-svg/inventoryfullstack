@@ -1,6 +1,6 @@
 const http = require('http');
 
-const API_BASE = 'http://16.171.196.15.nip.io';
+const API_BASE = 'http://16.171.5.50.nip.io';
 
 console.log('🔍 Testing HTTP with nip.io (no SSL)');
 console.log('='.repeat(50));
@@ -111,6 +111,6 @@ testHTTPNip().then(success => {
     } else {
         console.log('❌ HTTP nip.io failed');
         console.log('🔧 Server might be redirecting HTTP to HTTPS');
-        console.log('💡 Try: NEXT_PUBLIC_API_BASE=https://16.171.196.15.nip.io');
+        console.log('💡 Try: NEXT_PUBLIC_API_BASE=https://16.171.5.50.nip.io');
     }
 }).catch(console.error);

@@ -3,9 +3,9 @@ const https = require('https');
 // Disable SSL verification for testing
 process.env["NODE_TLS_REJECT_UNAUTHORIZED"] = 0;
 
-const API_BASE = 'https://16.171.196.15.nip.io';
+const API_BASE = 'https://16.171.5.50.nip.io';
 
-console.log('🚀 Testing API with new IP address: 16.171.196.15');
+console.log('🚀 Testing API with new IP address: 16.171.5.50');
 console.log('='.repeat(60));
 
 // Test configuration

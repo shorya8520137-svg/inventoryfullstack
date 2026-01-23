@@ -3,7 +3,7 @@ const https = require('https');
 // Disable SSL verification for testing
 process.env["NODE_TLS_REJECT_UNAUTHORIZED"] = 0;
 
-const API_BASE = 'https://16.171.196.15.nip.io';
+const API_BASE = 'https://16.171.5.50.nip.io';
 
 console.log('🎯 FINAL VERIFICATION TEST');
 console.log('='.repeat(50));
@@ -112,7 +112,7 @@ async function main() {
         console.log('   5. Return to login page and try again');
     } else {
         console.log('❌ FAILED! API is not responding correctly');
-        console.log('🔧 Check if the API server is running on 16.171.196.15');
+        console.log('🔧 Check if the API server is running on 16.171.5.50');
     }
     
     console.log(`\n📡 API Base URL: ${API_BASE}`);

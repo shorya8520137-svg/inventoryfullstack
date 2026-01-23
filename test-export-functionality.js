@@ -4,7 +4,7 @@
 
 const https = require('https');
 
-const API_BASE = 'https://16.171.196.15.nip.io';
+const API_BASE = 'https://16.171.5.50.nip.io';
 
 console.log('📊 Testing Order Export Functionality...\n');
 
@@ -12,7 +12,7 @@ console.log('📊 Testing Order Export Functionality...\n');
 function testExportAPI() {
     return new Promise((resolve, reject) => {
         const options = {
-            hostname: '16.171.196.15.nip.io',
+            hostname: '16.171.5.50.nip.io',
             port: 443,
             path: '/api/order-tracking/export',
             method: 'GET',

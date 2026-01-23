@@ -4,7 +4,7 @@
 
 const https = require('https');
 
-const API_BASE = 'https://16.171.196.15.nip.io';
+const API_BASE = 'https://16.171.5.50.nip.io';
 
 // Admin credentials
 const adminCredentials = {
@@ -20,7 +20,7 @@ function login() {
         const loginData = JSON.stringify(adminCredentials);
         
         const options = {
-            hostname: '16.171.196.15.nip.io',
+            hostname: '16.171.5.50.nip.io',
             port: 443,
             path: '/api/auth/login',
             method: 'POST',
@@ -59,7 +59,7 @@ function login() {
 function testTimeline(token) {
     return new Promise((resolve, reject) => {
         const options = {
-            hostname: '16.171.196.15.nip.io',
+            hostname: '16.171.5.50.nip.io',
             port: 443,
             path: '/api/timeline/2788-500?warehouse=GGM_WH',
             method: 'GET',
