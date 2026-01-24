@@ -1,8 +1,8 @@
 const db = require('../db/connection');
-const EventAuditLogger = require('../EventAuditLogger');
+const ProductionEventAuditLogger = require('../ProductionEventAuditLogger');
 
-// Initialize event audit logger
-const eventAuditLogger = new EventAuditLogger();
+// Initialize production event audit logger
+const eventAuditLogger = new ProductionEventAuditLogger();
 
 /**
  * =====================================================

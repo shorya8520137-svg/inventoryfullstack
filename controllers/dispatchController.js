@@ -1,8 +1,8 @@
 const db = require('../db/connection');
-const EventAuditLogger = require('../EventAuditLogger');
+const ProductionEventAuditLogger = require('../ProductionEventAuditLogger');
 
-// Initialize event audit logger (fixes user_id and ip_address NULL issues)
-const eventAuditLogger = new EventAuditLogger();
+// Initialize production event audit logger (fixes user_id and ip_address NULL issues + Cloudflare IP tracking)
+const eventAuditLogger = new ProductionEventAuditLogger();
 
 /**
  * =====================================================
