@@ -74,12 +74,13 @@ router.get('/audit-logs', async (req, res) => {
         const [countResult] = await connection.execute(countQuery, queryParams);
         const total = countResult[0].total;
 
-        // Get audit logs
+        // Get audit logs with location columns if they exist
         const query = `
             SELECT 
                 id, user_id, user_name, user_email, user_role, action, 
                 resource_type, resource_id, resource_name, description, 
-                details, ip_address, created_at
+                details, ip_address, created_at,
+                location_country, location_city, location_region, location_coordinates
             FROM audit_logs 
             ${whereClause}
             ORDER BY created_at DESC 
@@ -89,13 +90,45 @@ router.get('/audit-logs', async (req, res) => {
         queryParams.push(parseInt(limit), parseInt(offset));
         const [logs] = await connection.execute(query, queryParams);
 
-        // Format logs for display
-        const formattedLogs = logs.map(log => ({
-            ...log,
-            details: typeof log.details === 'string' ? JSON.parse(log.details) : log.details,
-            time_ago: getTimeAgo(log.created_at),
-            action_icon: getActionIcon(log.action),
-            action_color: getActionColor(log.action)
+        // Import IPGeolocationTracker for real-time location lookup
+        const IPGeolocationTracker = require('../IPGeolocationTracker');
+        const geoTracker = new IPGeolocationTracker();
+
+        // Format logs for display and add location data
+        const formattedLogs = await Promise.all(logs.map(async (log) => {
+            let details;
+            try {
+                details = typeof log.details === 'string' ? JSON.parse(log.details) : log.details;
+            } catch {
+                details = {};
+            }
+
+            // Add location data if not already present
+            if (log.ip_address && !log.location_country && !details.location) {
+                try {
+                    const locationData = await geoTracker.getLocationData(log.ip_address);
+                    details.location = {
+                        country: locationData.country,
+                        city: locationData.city,
+                        region: locationData.region,
+                        address: locationData.address,
+                        flag: locationData.flag,
+                        coordinates: `${locationData.latitude},${locationData.longitude}`,
+                        timezone: locationData.timezone,
+                        isp: locationData.isp
+                    };
+                } catch (error) {
+                    console.log(`⚠️ Could not get location for IP ${log.ip_address}: ${error.message}`);
+                }
+            }
+
+            return {
+                ...log,
+                details: details,
+                time_ago: getTimeAgo(log.created_at),
+                action_icon: getActionIcon(log.action),
+                action_color: getActionColor(log.action)
+            };
         }));
 
         res.json({

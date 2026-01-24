@@ -773,7 +773,7 @@ class PermissionsController {
     
     // ================= AUDIT LOG ================= //
     
-    static getAuditLogs(req, res) {
+    static async getAuditLogs(req, res) {
         const { page = 1, limit = 50, userId, action, resource } = req.query;
         const offset = (page - 1) * limit;
         
@@ -796,7 +796,8 @@ class PermissionsController {
         }
         
         const logsSql = `
-            SELECT al.*, u.name as user_name, u.email as user_email
+            SELECT al.*, u.name as user_name, u.email as user_email,
+                   al.location_country, al.location_city, al.location_region, al.location_coordinates
             FROM audit_logs al
             LEFT JOIN users u ON al.user_id = u.id
             WHERE ${whereClause}
@@ -804,7 +805,7 @@ class PermissionsController {
             LIMIT ? OFFSET ?
         `;
         
-        db.query(logsSql, [...params, parseInt(limit), parseInt(offset)], (err, logs) => {
+        db.query(logsSql, [...params, parseInt(limit), parseInt(offset)], async (err, logs) => {
             if (err) {
                 console.error('Get audit logs error:', err);
                 return res.status(500).json({
@@ -812,6 +813,44 @@ class PermissionsController {
                     message: 'Failed to fetch audit logs'
                 });
             }
+            
+            // Add location data to logs that don't have it
+            const IPGeolocationTracker = require('../IPGeolocationTracker');
+            const geoTracker = new IPGeolocationTracker();
+            
+            const enhancedLogs = await Promise.all(logs.map(async (log) => {
+                let details;
+                try {
+                    details = typeof log.details === 'string' ? JSON.parse(log.details) : (log.details || {});
+                } catch {
+                    details = {};
+                }
+                
+                // Add location data if not already present and IP address exists
+                if (log.ip_address && !log.location_country && !details.location) {
+                    try {
+                        const locationData = await geoTracker.getLocationData(log.ip_address);
+                        details.location = {
+                            country: locationData.country,
+                            city: locationData.city,
+                            region: locationData.region,
+                            address: locationData.address,
+                            flag: locationData.flag,
+                            coordinates: `${locationData.latitude},${locationData.longitude}`,
+                            timezone: locationData.timezone,
+                            isp: locationData.isp
+                        };
+                        console.log(`📍 Added location for IP ${log.ip_address}: ${locationData.flag} ${locationData.city}, ${locationData.country}`);
+                    } catch (error) {
+                        console.log(`⚠️ Could not get location for IP ${log.ip_address}: ${error.message}`);
+                    }
+                }
+                
+                return {
+                    ...log,
+                    details: details
+                };
+            }));
             
             const countSql = `
                 SELECT COUNT(*) as total
@@ -831,7 +870,7 @@ class PermissionsController {
                 res.json({
                     success: true,
                     data: {
-                        logs,
+                        logs: enhancedLogs,
                         pagination: {
                             page: parseInt(page),
                             limit: parseInt(limit),
