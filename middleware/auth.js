@@ -148,6 +148,7 @@ module.exports = {
     generateToken,
     authenticateToken,
     checkPermission,
+    requirePermission: checkPermission, // Alias for compatibility
     getUserPermissions,
     JWT_SECRET
 };
