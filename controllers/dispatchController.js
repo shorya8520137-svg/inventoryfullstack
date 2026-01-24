@@ -14,7 +14,7 @@ const eventAuditLogger = new EventAuditLogger();
 /**
  * CREATE NEW DISPATCH - Enhanced for frontend form
  */
-exports.createDispatch = (req, res) => {
+exports.createDispatch = async (req, res) => {
     // Handle both API formats (original and frontend form)
     const isFormData = req.body.selectedWarehouse !== undefined;
     

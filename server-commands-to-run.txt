@@ -1,0 +1,48 @@
+SERVER COMMANDS TO RUN AFTER SSH
+=====================================
+
+1. SSH to server:
+ssh -i "C:\Users\Admin\awsconection.pem" ubuntu@16.171.5.50
+
+2. Navigate to project:
+cd /home/ubuntu/inventoryfullstack
+
+3. Pull latest changes:
+git pull origin main
+
+4. Check if server is running:
+pm2 status
+
+5. Restart server:
+pm2 restart server
+
+6. Check server logs:
+pm2 logs server --lines 20
+
+7. If server is not starting, check for errors:
+pm2 logs server --err --lines 50
+
+8. Test if server is responding:
+curl -k https://localhost:3001/api/auth/login
+
+WHAT WAS FIXED:
+===============
+✅ Fixed syntax error in dispatch controller (await without async)
+✅ Fixed user_id NULL issue (req.user?.userId -> req.user?.id)
+✅ Fixed ip_address NULL issue (proper IP extraction)
+✅ Made createDispatch function async
+✅ Added proper error handling for audit logging
+
+EXPECTED RESULT:
+================
+- Server should start without syntax errors
+- Audit API should return data
+- New audit entries should have proper user_id and ip_address
+- Dispatch creation should log audit events
+
+TEST AFTER SERVER RESTART:
+===========================
+Run this on your local machine:
+node test-audit-api-now.js
+
+This will show if the fixes are working.

@@ -125,7 +125,7 @@ class PermissionsController {
     static logout(req, res) {
         try {
             // Log audit
-            PermissionsController.createAuditLog(req.user?.userId, 'LOGOUT', 'USER', req.user?.userId, { ip: req.ip }, () => {});
+            PermissionsController.createAuditLog(req.user?.id, 'LOGOUT', 'USER', req.user?.id, { ip: req.ip }, () => {});
             
             res.json({
                 success: true,
@@ -327,7 +327,7 @@ class PermissionsController {
                     }
                     
                     // Log audit
-                    PermissionsController.createAuditLog(req.user?.userId, 'CREATE', 'USER', result.insertId, {
+                    PermissionsController.createAuditLog(req.user?.id, 'CREATE', 'USER', result.insertId, {
                         name, email, role_id, is_active
                     }, () => {});
                     
@@ -469,7 +469,7 @@ class PermissionsController {
                 }
                 
                 // Log audit
-                PermissionsController.createAuditLog(req.user?.userId, 'DELETE', 'USER', userId, {}, () => {});
+                PermissionsController.createAuditLog(req.user?.id, 'DELETE', 'USER', userId, {}, () => {});
                 
                 res.json({
                     success: true,
@@ -556,7 +556,7 @@ class PermissionsController {
                     }
                     
                     // Log audit
-                    PermissionsController.createAuditLog(req.user?.userId, 'CREATE', 'ROLE', roleId, {
+                    PermissionsController.createAuditLog(req.user?.id, 'CREATE', 'ROLE', roleId, {
                         name, displayName: finalDisplayName, description, color, permissionIds
                     }, () => {});
                     
@@ -568,7 +568,7 @@ class PermissionsController {
                 });
             } else {
                 // No permissions to assign
-                PermissionsController.createAuditLog(req.user?.userId, 'CREATE', 'ROLE', roleId, {
+                PermissionsController.createAuditLog(req.user?.id, 'CREATE', 'ROLE', roleId, {
                     name, displayName: finalDisplayName, description, color, permissionIds
                 }, () => {});
                 
@@ -647,7 +647,7 @@ class PermissionsController {
                             }
                             
                             // Log audit
-                            PermissionsController.createAuditLog(req.user?.userId, 'UPDATE', 'ROLE', roleId, {
+                            PermissionsController.createAuditLog(req.user?.id, 'UPDATE', 'ROLE', roleId, {
                                 name, displayName: finalDisplayName, description, color, permissionIds
                             }, () => {});
                             
@@ -658,7 +658,7 @@ class PermissionsController {
                         });
                     } else {
                         // No permissions to assign
-                        PermissionsController.createAuditLog(req.user?.userId, 'UPDATE', 'ROLE', roleId, {
+                        PermissionsController.createAuditLog(req.user?.id, 'UPDATE', 'ROLE', roleId, {
                             name, displayName: finalDisplayName, description, color, permissionIds
                         }, () => {});
                         
@@ -670,7 +670,7 @@ class PermissionsController {
                 });
             } else {
                 // No permission update requested
-                PermissionsController.createAuditLog(req.user?.userId, 'UPDATE', 'ROLE', roleId, {
+                PermissionsController.createAuditLog(req.user?.id, 'UPDATE', 'ROLE', roleId, {
                     name, displayName: finalDisplayName, description, color
                 }, () => {});
                 
