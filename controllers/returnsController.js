@@ -194,39 +194,6 @@ function addLedgerEntryAndCommit(returnId, barcode, product_type, warehouse, qty
     });
 }
 
-    const movementType = condition === 'good' ? 'RETURN' : `RETURN_${condition.toUpperCase()}`;
-    const reference = `RETURN_${returnId}_${awb || 'NO_AWB'}`;
-
-    db.query(ledgerSql, [
-        movementType, barcode, product_type, warehouse, qty, reference
-    ], (err) => {
-        if (err) {
-            return db.rollback(() =>
-                res.status(500).json({ success: false, error: err.message })
-            );
-        }
-
-        // Commit transaction
-        db.commit(err => {
-            if (err) {
-                return db.rollback(() =>
-                    res.status(500).json({ success: false, message: err.message })
-                );
-            }
-
-            res.status(201).json({
-                success: true,
-                message: `Return processed successfully${condition !== 'good' ? ` (${condition} - no stock added)` : ''}`,
-                return_id: returnId,
-                quantity_returned: qty,
-                condition,
-                stock_added: condition === 'good',
-                reference
-            });
-        });
-    });
-}
-
 /**
  * GET ALL RETURNS WITH FILTERS
  */
