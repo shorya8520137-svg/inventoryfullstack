@@ -6,14 +6,16 @@
 
 const mysql = require('mysql2/promise');
 const crypto = require('crypto');
+require('dotenv').config();
 
 class EventAuditLogger {
     constructor() {
         this.dbConfig = {
-            host: '127.0.0.1',
-            port: 3306,
-            user: 'inventory_user',
-            database: 'inventory_db'
+            host: process.env.DB_HOST || '127.0.0.1',
+            port: process.env.DB_PORT || 3306,
+            user: process.env.DB_USER || 'inventory_user',
+            password: process.env.DB_PASSWORD || 'StrongPass@123',
+            database: process.env.DB_NAME || 'inventory_db'
         };
         this.sessions = new Map(); // Track active sessions
     }
