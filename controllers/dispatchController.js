@@ -1,8 +1,8 @@
 const db = require('../db/connection');
-const AuditLogger = require('../AuditLogger');
+const EventAuditLogger = require('../EventAuditLogger');
 
-// Initialize audit logger
-const auditLogger = new AuditLogger();
+// Initialize event audit logger (fixes user_id and ip_address NULL issues)
+const eventAuditLogger = new EventAuditLogger();
 
 /**
  * =====================================================
@@ -241,43 +241,22 @@ exports.createDispatch = (req, res) => {
                                         );
                                     }
 
-                                    // Log audit activity for form dispatch
+                                    // Log audit activity for form dispatch (FIXED)
                                     if (req.user) {
                                         const totalQty = products.reduce((sum, p) => sum + (parseInt(p.qty) || 1), 0);
                                         const productNames = products.map(p => extractProductName(p.name)).join(', ');
                                         
-                                        auditLogger.logActivity({
-                                            user_id: req.user.id,
-                                            user_name: req.user.name,
-                                            user_email: req.user.email,
-                                            user_role: req.user.role_name,
-                                            action: 'DISPATCH',
-                                            resource_type: 'order',
-                                            resource_id: dispatchId.toString(),
-                                            resource_name: order_ref,
-                                            description: `${req.user.name} dispatched ${totalQty} items (${productNames}) to ${warehouse} warehouse (AWB: ${awb})`,
-                                            details: {
-                                                dispatch_id: dispatchId,
-                                                order_ref: order_ref,
-                                                customer: customer,
-                                                warehouse: warehouse,
-                                                awb_number: awb,
-                                                logistics: logistics,
-                                                total_quantity: totalQty,
-                                                products: products.map(p => ({
-                                                    name: extractProductName(p.name),
-                                                    quantity: parseInt(p.qty) || 1,
-                                                    barcode: extractBarcode(p.name)
-                                                })),
-                                                invoice_amount: invoice_amount,
-                                                processed_by: processed_by,
-                                                dispatch_time: new Date().toISOString()
-                                            },
-                                            ip_address: req.ip || req.connection.remoteAddress,
-                                            user_agent: req.get('User-Agent'),
-                                            request_method: 'POST',
-                                            request_url: '/api/dispatch'
-                                        }).catch(err => console.error('Audit logging failed:', err));
+                                        // Use new EventAuditLogger with proper user_id and ip_address
+                                        await eventAuditLogger.logDispatchCreate(req.user, {
+                                            dispatch_id: dispatchId,
+                                            order_ref: order_ref,
+                                            customer: customer,
+                                            product_name: productNames,
+                                            quantity: totalQty,
+                                            warehouse: warehouse,
+                                            awb: awb,
+                                            logistics: logistics
+                                        }, req, 'success');
                                     }
 
                                     res.status(201).json({
@@ -370,38 +349,19 @@ exports.createDispatch = (req, res) => {
                                     );
                                 }
 
-                                // Log audit activity for single product dispatch
+                                // Log audit activity for single product dispatch (FIXED)
                                 if (req.user) {
-                                    auditLogger.logActivity({
-                                        user_id: req.user.id,
-                                        user_name: req.user.name,
-                                        user_email: req.user.email,
-                                        user_role: req.user.role_name,
-                                        action: 'DISPATCH',
-                                        resource_type: 'product',
-                                        resource_id: dispatchId.toString(),
-                                        resource_name: product_name,
-                                        description: `${req.user.name} dispatched ${quantity} units of ${product_name} to ${warehouse} warehouse (AWB: ${awb})`,
-                                        details: {
-                                            dispatch_id: dispatchId,
-                                            order_ref: order_ref,
-                                            customer: customer,
-                                            product_name: product_name,
-                                            quantity: quantity,
-                                            variant: variant,
-                                            barcode: barcode,
-                                            warehouse: warehouse,
-                                            awb_number: awb,
-                                            logistics: logistics,
-                                            invoice_amount: invoice_amount,
-                                            processed_by: processed_by,
-                                            dispatch_time: new Date().toISOString()
-                                        },
-                                        ip_address: req.ip || req.connection.remoteAddress,
-                                        user_agent: req.get('User-Agent'),
-                                        request_method: 'POST',
-                                        request_url: '/api/dispatch'
-                                    }).catch(err => console.error('Audit logging failed:', err));
+                                    // Use new EventAuditLogger with proper user_id and ip_address
+                                    await eventAuditLogger.logDispatchCreate(req.user, {
+                                        dispatch_id: dispatchId,
+                                        order_ref: order_ref,
+                                        customer: customer,
+                                        product_name: product_name,
+                                        quantity: quantity,
+                                        warehouse: warehouse,
+                                        awb: awb,
+                                        logistics: logistics
+                                    }, req, 'success');
                                 }
 
                                 res.status(201).json({
