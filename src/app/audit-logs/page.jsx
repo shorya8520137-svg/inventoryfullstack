@@ -2,16 +2,51 @@
 
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Calendar, User, Activity, MapPin, Clock, Filter, Search, RefreshCw } from 'lucide-react';
+
+// Simple Badge component
+const Badge = ({ children, className = '', variant = 'default' }) => {
+    const baseClasses = 'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium';
+    const variantClasses = {
+        default: 'bg-gray-100 text-gray-800',
+        outline: 'border border-gray-300 text-gray-700',
+        secondary: 'bg-blue-100 text-blue-800'
+    };
+    
+    return (
+        <span className={`${baseClasses} ${variantClasses[variant]} ${className}`}>
+            {children}
+        </span>
+    );
+};
+
+// Simple Select component
+const Select = ({ value, onValueChange, children, placeholder }) => {
+    return (
+        <select 
+            value={value} 
+            onChange={(e) => onValueChange(e.target.value)}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+        >
+            <option value="">{placeholder}</option>
+            {children}
+        </select>
+    );
+};
+
+const SelectItem = ({ value, children }) => {
+    return <option value={value}>{children}</option>;
+};
 
 export default function AuditLogsPage() {
     const [auditLogs, setAuditLogs] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [autoRefresh, setAutoRefresh] = useState(true);
+    const [refreshInterval, setRefreshInterval] = useState(30); // seconds
+    const [lastRefresh, setLastRefresh] = useState(null);
     const [filters, setFilters] = useState({
         action: '',
         resource: '',
@@ -21,9 +56,9 @@ export default function AuditLogsPage() {
         limit: 50
     });
 
-    const fetchAuditLogs = async () => {
+    const fetchAuditLogs = async (showLoading = true) => {
         try {
-            setLoading(true);
+            if (showLoading) setLoading(true);
             const token = localStorage.getItem('token');
             
             if (!token) {
@@ -39,7 +74,7 @@ export default function AuditLogsPage() {
             queryParams.append('page', filters.page.toString());
             queryParams.append('limit', filters.limit.toString());
 
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/audit-logs?${queryParams}`, {
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE}/api/audit-logs?${queryParams}`, {
                 headers: {
                     'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json'
@@ -56,6 +91,8 @@ export default function AuditLogsPage() {
                 // Handle different response formats
                 const logs = data.data?.logs || data.data || [];
                 setAuditLogs(logs);
+                setError(null);
+                setLastRefresh(new Date());
             } else {
                 setError(data.message || 'Failed to fetch audit logs');
             }
@@ -63,13 +100,24 @@ export default function AuditLogsPage() {
             console.error('Error fetching audit logs:', err);
             setError(err.message || 'Failed to fetch audit logs');
         } finally {
-            setLoading(false);
+            if (showLoading) setLoading(false);
         }
     };
 
     useEffect(() => {
         fetchAuditLogs();
     }, [filters]);
+
+    // Auto-refresh effect
+    useEffect(() => {
+        if (!autoRefresh) return;
+
+        const interval = setInterval(() => {
+            fetchAuditLogs(false); // Don't show loading spinner for auto-refresh
+        }, refreshInterval * 1000);
+
+        return () => clearInterval(interval);
+    }, [autoRefresh, refreshInterval, filters]);
 
     const getActionBadgeColor = (action) => {
         switch (action) {
@@ -162,10 +210,41 @@ export default function AuditLogsPage() {
                     <h1 className="text-3xl font-bold text-gray-900">Audit Logs</h1>
                     <p className="text-gray-600 mt-1">Complete user journey and system activity tracking</p>
                 </div>
-                <Button onClick={fetchAuditLogs} variant="outline">
-                    <RefreshCw className="w-4 h-4 mr-2" />
-                    Refresh
-                </Button>
+                <div className="flex items-center space-x-3">
+                    {/* Auto-refresh controls */}
+                    <div className="flex items-center space-x-2 text-sm">
+                        <label className="flex items-center space-x-1">
+                            <input
+                                type="checkbox"
+                                checked={autoRefresh}
+                                onChange={(e) => setAutoRefresh(e.target.checked)}
+                                className="rounded"
+                            />
+                            <span>Auto-refresh</span>
+                        </label>
+                        {autoRefresh && (
+                            <select
+                                value={refreshInterval}
+                                onChange={(e) => setRefreshInterval(Number(e.target.value))}
+                                className="px-2 py-1 border border-gray-300 rounded text-xs"
+                            >
+                                <option value={10}>10s</option>
+                                <option value={30}>30s</option>
+                                <option value={60}>1m</option>
+                                <option value={300}>5m</option>
+                            </select>
+                        )}
+                        {lastRefresh && (
+                            <span className="text-gray-500 text-xs">
+                                Last: {lastRefresh.toLocaleTimeString()}
+                            </span>
+                        )}
+                    </div>
+                    <Button onClick={() => fetchAuditLogs()} variant="outline">
+                        <RefreshCw className="w-4 h-4 mr-2" />
+                        Refresh
+                    </Button>
+                </div>
             </div>
 
             {/* Filters */}
@@ -180,34 +259,24 @@ export default function AuditLogsPage() {
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                         <div>
                             <label className="block text-sm font-medium mb-2">Action</label>
-                            <Select value={filters.action} onValueChange={(value) => handleFilterChange('action', value)}>
-                                <SelectTrigger>
-                                    <SelectValue placeholder="All Actions" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="">All Actions</SelectItem>
-                                    <SelectItem value="LOGIN">Login</SelectItem>
-                                    <SelectItem value="LOGOUT">Logout</SelectItem>
-                                    <SelectItem value="CREATE">Create</SelectItem>
-                                    <SelectItem value="UPDATE">Update</SelectItem>
-                                    <SelectItem value="DELETE">Delete</SelectItem>
-                                </SelectContent>
+                            <Select value={filters.action} onValueChange={(value) => handleFilterChange('action', value)} placeholder="All Actions">
+                                <SelectItem value="">All Actions</SelectItem>
+                                <SelectItem value="LOGIN">Login</SelectItem>
+                                <SelectItem value="LOGOUT">Logout</SelectItem>
+                                <SelectItem value="CREATE">Create</SelectItem>
+                                <SelectItem value="UPDATE">Update</SelectItem>
+                                <SelectItem value="DELETE">Delete</SelectItem>
                             </Select>
                         </div>
                         
                         <div>
                             <label className="block text-sm font-medium mb-2">Resource</label>
-                            <Select value={filters.resource} onValueChange={(value) => handleFilterChange('resource', value)}>
-                                <SelectTrigger>
-                                    <SelectValue placeholder="All Resources" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="">All Resources</SelectItem>
-                                    <SelectItem value="SESSION">Session</SelectItem>
-                                    <SelectItem value="DISPATCH">Dispatch</SelectItem>
-                                    <SelectItem value="USER">User</SelectItem>
-                                    <SelectItem value="ROLE">Role</SelectItem>
-                                </SelectContent>
+                            <Select value={filters.resource} onValueChange={(value) => handleFilterChange('resource', value)} placeholder="All Resources">
+                                <SelectItem value="">All Resources</SelectItem>
+                                <SelectItem value="SESSION">Session</SelectItem>
+                                <SelectItem value="DISPATCH">Dispatch</SelectItem>
+                                <SelectItem value="USER">User</SelectItem>
+                                <SelectItem value="ROLE">Role</SelectItem>
                             </Select>
                         </div>
                         
@@ -249,6 +318,12 @@ export default function AuditLogsPage() {
                         <span className="flex items-center">
                             <Activity className="w-5 h-5 mr-2" />
                             Audit Trail ({auditLogs.length} entries)
+                            {autoRefresh && (
+                                <span className="ml-3 flex items-center text-sm text-green-600">
+                                    <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse mr-1"></div>
+                                    Live
+                                </span>
+                            )}
                         </span>
                     </CardTitle>
                 </CardHeader>
@@ -290,7 +365,12 @@ export default function AuditLogsPage() {
                                                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
                                                         <div className="flex items-center text-gray-600">
                                                             <User className="w-4 h-4 mr-1" />
-                                                            <span>User: {log.user_id || 'System'}</span>
+                                                            <span>
+                                                                User: {log.user_name || log.user_id || 'System'}
+                                                                {log.user_email && (
+                                                                    <span className="text-xs text-gray-500 ml-1">({log.user_email})</span>
+                                                                )}
+                                                            </span>
                                                         </div>
                                                         
                                                         <div className="flex items-center text-gray-600">

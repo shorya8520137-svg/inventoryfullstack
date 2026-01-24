@@ -8,7 +8,7 @@ const mysql = require('mysql2/promise');
 
 // Database connection configuration
 const dbConfig = {
-    host: '16.171.5.50',
+    host: '13.60.36.159',
     user: 'root', // Assuming root user, adjust if different
     password: '', // Will need the actual password
     database: 'inventory_system' // Assuming database name, adjust if different
@@ -18,7 +18,7 @@ async function analyzeDatabase() {
     let connection;
     
     try {
-        console.log('🔍 Connecting to database at 16.171.5.50...\n');
+        console.log('🔍 Connecting to database at 13.60.36.159...\n');
         
         // First, let's try to connect and see what databases exist
         connection = await mysql.createConnection({
@@ -128,7 +128,7 @@ async function analyzeDatabase() {
     } catch (error) {
         console.error('❌ Database connection error:', error.message);
         console.log('\n💡 Common issues:');
-        console.log('1. Check if MySQL is running on 16.171.5.50');
+        console.log('1. Check if MySQL is running on 13.60.36.159');
         console.log('2. Verify database credentials');
         console.log('3. Check firewall settings');
         console.log('4. Ensure database name is correct');

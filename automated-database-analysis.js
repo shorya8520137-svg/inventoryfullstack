@@ -10,7 +10,7 @@ const path = require('path');
 
 // SSH Configuration
 const sshConfig = {
-    host: '16.171.5.50',
+    host: '13.60.36.159',
     port: 22,
     username: 'ubuntu',
     privateKey: fs.readFileSync('C:\\Users\\Admin\\awsconection.pem')
@@ -32,7 +32,7 @@ function runAutomatedAnalysis() {
     const conn = new Client();
     
     conn.on('ready', () => {
-        console.log('✅ SSH Connection established to 16.171.5.50\n');
+        console.log('✅ SSH Connection established to 13.60.36.159\n');
         
         // Start the analysis sequence
         checkMySQLStatus(conn);

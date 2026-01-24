@@ -14,7 +14,7 @@ const api = axios.create({
     timeout: 15000
 });
 
-const API_BASE = 'https://16.171.5.50.nip.io';
+const API_BASE = 'https://13.60.36.159.nip.io';
 const ADMIN_CREDENTIALS = {
     email: 'admin@company.com',
     password: 'admin@123'

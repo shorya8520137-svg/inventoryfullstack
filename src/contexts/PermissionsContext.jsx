@@ -44,6 +44,12 @@ export const PERMISSIONS = {
     
     // Tracking permissions
     TRACKING_VIEW: 'TRACKING_VIEW',
+    TRACKING_CREATE: 'TRACKING_CREATE',
+    TRACKING_EDIT: 'TRACKING_EDIT',
+    TRACKING_DELETE: 'TRACKING_DELETE',
+    TRACKING_EXPORT: 'TRACKING_EXPORT',
+    TRACKING_TIMELINE: 'TRACKING_TIMELINE',
+    TRACKING_BULK: 'TRACKING_BULK',
     
     // Messages permissions
     MESSAGES_VIEW: 'MESSAGES_VIEW',
@@ -93,6 +99,12 @@ export const ROLES = {
             PERMISSIONS.OPERATIONS_SELF_TRANSFER,
             PERMISSIONS.DASHBOARD_VIEW,
             PERMISSIONS.TRACKING_VIEW,
+            PERMISSIONS.TRACKING_CREATE,
+            PERMISSIONS.TRACKING_EDIT,
+            PERMISSIONS.TRACKING_DELETE,
+            PERMISSIONS.TRACKING_EXPORT,
+            PERMISSIONS.TRACKING_TIMELINE,
+            PERMISSIONS.TRACKING_BULK,
             PERMISSIONS.MESSAGES_VIEW,
         ],
         color: '#ea580c', // Orange
@@ -120,6 +132,9 @@ export const ROLES = {
             PERMISSIONS.OPERATIONS_DISPATCH,
             PERMISSIONS.OPERATIONS_DAMAGE,
             PERMISSIONS.OPERATIONS_RETURN,
+            // Tracking (view, timeline)
+            PERMISSIONS.TRACKING_VIEW,
+            PERMISSIONS.TRACKING_TIMELINE,
         ],
         color: '#2563eb', // Blue
         priority: 3
@@ -194,7 +209,16 @@ export const FEATURES = {
         name: 'Tracking',
         requiredPermissions: [PERMISSIONS.TRACKING_VIEW],
         route: '/tracking',
-        icon: 'MapPin'
+        icon: 'MapPin',
+        subFeatures: {
+            VIEW: { requiredPermissions: [PERMISSIONS.TRACKING_VIEW] },
+            CREATE: { requiredPermissions: [PERMISSIONS.TRACKING_CREATE] },
+            EDIT: { requiredPermissions: [PERMISSIONS.TRACKING_EDIT] },
+            DELETE: { requiredPermissions: [PERMISSIONS.TRACKING_DELETE] },
+            EXPORT: { requiredPermissions: [PERMISSIONS.TRACKING_EXPORT] },
+            TIMELINE: { requiredPermissions: [PERMISSIONS.TRACKING_TIMELINE] },
+            BULK: { requiredPermissions: [PERMISSIONS.TRACKING_BULK] }
+        }
     },
     MESSAGES: {
         name: 'Messages',
