@@ -466,7 +466,14 @@ export default function AuditLogsPage() {
                                                         
                                                         <div className="flex items-center text-gray-600">
                                                             <MapPin className="w-4 h-4 mr-1" />
-                                                            <span>IP: {log.ip_address || 'Unknown'}</span>
+                                                            <span>
+                                                                IP: {log.ip_address || 'Unknown'}
+                                                                {log.location_country && (
+                                                                    <span className="ml-2 text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
+                                                                        {details?.location?.flag || '🌍'} {log.location_city}, {log.location_country}
+                                                                    </span>
+                                                                )}
+                                                            </span>
                                                         </div>
                                                         
                                                         <div className="flex items-center text-gray-600">
@@ -654,6 +661,70 @@ export default function AuditLogsPage() {
                                                                     ))}
                                                                 </div>
                                                             </div>
+                                                            
+                                                            {/* Location Information Section */}
+                                                            {(log.location_country || details?.location) && (
+                                                                <div className="border-t pt-3 mt-3">
+                                                                    <div className="text-xs text-gray-500 mb-2 flex items-center">
+                                                                        <MapPin className="w-3 h-3 mr-1" />
+                                                                        Location Information:
+                                                                    </div>
+                                                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                                                        {(log.location_country || details?.location?.country) && (
+                                                                            <div className="flex items-center text-sm">
+                                                                                <span className="font-medium text-blue-600 mr-2">
+                                                                                    {details?.location?.flag || '🌍'} Country:
+                                                                                </span>
+                                                                                <span className="text-gray-800">
+                                                                                    {log.location_country || details?.location?.country}
+                                                                                </span>
+                                                                            </div>
+                                                                        )}
+                                                                        {(log.location_city || details?.location?.city) && (
+                                                                            <div className="flex items-center text-sm">
+                                                                                <span className="font-medium text-green-600 mr-2">🏙️ City:</span>
+                                                                                <span className="text-gray-800">
+                                                                                    {log.location_city || details?.location?.city}
+                                                                                </span>
+                                                                            </div>
+                                                                        )}
+                                                                        {(log.location_region || details?.location?.region) && (
+                                                                            <div className="flex items-center text-sm">
+                                                                                <span className="font-medium text-purple-600 mr-2">🗺️ Region:</span>
+                                                                                <span className="text-gray-800">
+                                                                                    {log.location_region || details?.location?.region}
+                                                                                </span>
+                                                                            </div>
+                                                                        )}
+                                                                        {details?.location?.address && (
+                                                                            <div className="flex items-center text-sm">
+                                                                                <span className="font-medium text-orange-600 mr-2">📍 Address:</span>
+                                                                                <span className="text-gray-800">{details.location.address}</span>
+                                                                            </div>
+                                                                        )}
+                                                                        {(log.location_coordinates || details?.location?.coordinates) && (
+                                                                            <div className="flex items-center text-sm">
+                                                                                <span className="font-medium text-red-600 mr-2">🎯 Coordinates:</span>
+                                                                                <span className="text-gray-800 font-mono text-xs">
+                                                                                    {log.location_coordinates || details?.location?.coordinates}
+                                                                                </span>
+                                                                            </div>
+                                                                        )}
+                                                                        {details?.location?.timezone && (
+                                                                            <div className="flex items-center text-sm">
+                                                                                <span className="font-medium text-indigo-600 mr-2">🕐 Timezone:</span>
+                                                                                <span className="text-gray-800">{details.location.timezone}</span>
+                                                                            </div>
+                                                                        )}
+                                                                        {details?.location?.isp && (
+                                                                            <div className="flex items-center text-sm">
+                                                                                <span className="font-medium text-teal-600 mr-2">🌐 ISP:</span>
+                                                                                <span className="text-gray-800">{details.location.isp}</span>
+                                                                            </div>
+                                                                        )}
+                                                                    </div>
+                                                                </div>
+                                                            )}
                                                         </div>
                                                     )}
                                                 </div>

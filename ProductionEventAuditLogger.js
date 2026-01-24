@@ -6,6 +6,7 @@
 
 const mysql = require('mysql2/promise');
 const crypto = require('crypto');
+const IPGeolocationTracker = require('./IPGeolocationTracker');
 require('dotenv').config();
 
 class ProductionEventAuditLogger {
@@ -18,6 +19,7 @@ class ProductionEventAuditLogger {
             database: process.env.DB_NAME || 'inventory_db'
         };
         this.sessions = new Map();
+        this.geoTracker = new IPGeolocationTracker();
         
         // Major Cloudflare IP ranges (simplified)
         this.CLOUDFLARE_RANGES = [
@@ -119,30 +121,53 @@ class ProductionEventAuditLogger {
         return sessionId;
     }
 
-    // Core event logging
+    // Core event logging with location tracking
     async logEvent(eventData) {
         let connection;
         try {
             connection = await mysql.createConnection(this.dbConfig);
             
+            // Get location data for IP address
+            const locationData = await this.geoTracker.getLocationData(eventData.ip_address);
+            
             const sql = `
                 INSERT INTO audit_logs (
                     user_id, action, resource, resource_id, details, 
-                    ip_address, user_agent, created_at
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, NOW())
+                    ip_address, user_agent, location_country, location_city, 
+                    location_region, location_coordinates, created_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
             `;
+            
+            // Combine original details with location data
+            const enhancedDetails = {
+                ...eventData.details,
+                location: {
+                    country: locationData.country,
+                    city: locationData.city,
+                    region: locationData.region,
+                    address: locationData.address,
+                    flag: locationData.flag,
+                    timezone: locationData.timezone,
+                    isp: locationData.isp,
+                    coordinates: `${locationData.latitude},${locationData.longitude}`
+                }
+            };
             
             await connection.execute(sql, [
                 eventData.user_id || null,
                 eventData.action,
                 eventData.resource,
                 eventData.resource_id,
-                JSON.stringify(eventData.details),
+                JSON.stringify(enhancedDetails),
                 eventData.ip_address || '127.0.0.1',
-                eventData.user_agent || 'Unknown'
+                eventData.user_agent || 'Unknown',
+                locationData.country || 'Unknown',
+                locationData.city || 'Unknown',
+                locationData.region || 'Unknown',
+                `${locationData.latitude || 0},${locationData.longitude || 0}`
             ]);
             
-            console.log(`📝 Event logged: ${eventData.action} by user ${eventData.user_id} from ${eventData.ip_address}`);
+            console.log(`📝 Event logged: ${eventData.action} by user ${eventData.user_id} from ${locationData.flag} ${locationData.address} (${eventData.ip_address})`);
         } catch (error) {
             console.error('❌ Event logging failed:', error.message);
         } finally {
