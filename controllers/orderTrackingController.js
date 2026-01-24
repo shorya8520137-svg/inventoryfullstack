@@ -845,6 +845,27 @@ exports.deleteDispatch = (req, res) => {
                                     );
                                 }
 
+                                // Log ORDER_DELETE audit using PermissionsController
+                                if (req.user) {
+                                    const ipAddress = req.headers['x-forwarded-for']?.split(',')[0]?.trim() ||
+                                                     req.headers['x-real-ip'] ||
+                                                     req.connection.remoteAddress ||
+                                                     req.ip ||
+                                                     '127.0.0.1';
+                                    
+                                    const PermissionsController = require('../controllers/permissionsController');
+                                    PermissionsController.createAuditLog(req.user.id, 'DELETE', 'DISPATCH', dispatchId, {
+                                        user_name: req.user.name || 'Unknown',
+                                        user_email: req.user.email || 'Unknown',
+                                        dispatch_id: dispatchId,
+                                        warehouse: warehouse,
+                                        restored_products: totalProducts,
+                                        delete_time: new Date().toISOString(),
+                                        ip_address: ipAddress,
+                                        user_agent: req.get('User-Agent') || 'Unknown'
+                                    });
+                                }
+
                                 res.json({
                                     success: true,
                                     message: 'Dispatch deleted successfully and stock restored',

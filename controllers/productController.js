@@ -171,7 +171,7 @@ class ProductController {
             cost_price || null,
             weight || null,
             dimensions || null
-        ], (err) => {
+        ], (err, result) => {
             if (err) {
                 console.error('createProduct:', err);
                 if (err.code === 'ER_DUP_ENTRY') {
@@ -183,6 +183,30 @@ class ProductController {
                 return res.status(500).json({ 
                     success: false, 
                     message: 'Failed to create product' 
+                });
+            }
+
+            // Log PRODUCT_CREATE audit using PermissionsController
+            if (req.user) {
+                const ipAddress = req.headers['x-forwarded-for']?.split(',')[0]?.trim() ||
+                                 req.headers['x-real-ip'] ||
+                                 req.connection.remoteAddress ||
+                                 req.ip ||
+                                 '127.0.0.1';
+                
+                const PermissionsController = require('../controllers/permissionsController');
+                PermissionsController.createAuditLog(req.user.id, 'CREATE', 'PRODUCT', result.insertId, {
+                    user_name: req.user.name || 'Unknown',
+                    user_email: req.user.email || 'Unknown',
+                    product_name,
+                    product_variant,
+                    barcode,
+                    description,
+                    price,
+                    cost_price,
+                    create_time: new Date().toISOString(),
+                    ip_address: ipAddress,
+                    user_agent: req.get('User-Agent') || 'Unknown'
                 });
             }
 
@@ -265,6 +289,30 @@ class ProductController {
                 });
             }
 
+            // Log PRODUCT_UPDATE audit using PermissionsController
+            if (req.user) {
+                const ipAddress = req.headers['x-forwarded-for']?.split(',')[0]?.trim() ||
+                                 req.headers['x-real-ip'] ||
+                                 req.connection.remoteAddress ||
+                                 req.ip ||
+                                 '127.0.0.1';
+                
+                const PermissionsController = require('../controllers/permissionsController');
+                PermissionsController.createAuditLog(req.user.id, 'UPDATE', 'PRODUCT', id, {
+                    user_name: req.user.name || 'Unknown',
+                    user_email: req.user.email || 'Unknown',
+                    product_name,
+                    product_variant,
+                    barcode,
+                    description,
+                    price,
+                    cost_price,
+                    update_time: new Date().toISOString(),
+                    ip_address: ipAddress,
+                    user_agent: req.get('User-Agent') || 'Unknown'
+                });
+            }
+
             res.json({ 
                 success: true, 
                 message: 'Product updated successfully' 
@@ -294,6 +342,25 @@ class ProductController {
                     return res.status(404).json({ 
                         success: false, 
                         message: 'Product not found' 
+                    });
+                }
+
+                // Log PRODUCT_DELETE audit using PermissionsController
+                if (req.user) {
+                    const ipAddress = req.headers['x-forwarded-for']?.split(',')[0]?.trim() ||
+                                     req.headers['x-real-ip'] ||
+                                     req.connection.remoteAddress ||
+                                     req.ip ||
+                                     '127.0.0.1';
+                    
+                    const PermissionsController = require('../controllers/permissionsController');
+                    PermissionsController.createAuditLog(req.user.id, 'DELETE', 'PRODUCT', id, {
+                        user_name: req.user.name || 'Unknown',
+                        user_email: req.user.email || 'Unknown',
+                        product_id: id,
+                        delete_time: new Date().toISOString(),
+                        ip_address: ipAddress,
+                        user_agent: req.get('User-Agent') || 'Unknown'
                     });
                 }
 

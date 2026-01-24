@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Calendar, User, Activity, MapPin, Clock, Filter, Search, RefreshCw } from 'lucide-react';
+import { User, Activity, MapPin, Clock, Filter, Search, RefreshCw } from 'lucide-react';
 
 // Simple Badge component
 const Badge = ({ children, className = '', variant = 'default' }) => {
@@ -62,7 +62,7 @@ export default function AuditLogsPage() {
             const token = localStorage.getItem('token');
             
             if (!token) {
-                setError('No authentication token found');
+                setError('No authentication token found. Please login again.');
                 return;
             }
 
@@ -74,31 +74,42 @@ export default function AuditLogsPage() {
             queryParams.append('page', filters.page.toString());
             queryParams.append('limit', filters.limit.toString());
 
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE}/api/audit-logs?${queryParams}`, {
+            const apiUrl = `${process.env.NEXT_PUBLIC_API_BASE}/api/audit-logs?${queryParams}`;
+            console.log('🔍 Fetching audit logs from:', apiUrl);
+
+            const response = await fetch(apiUrl, {
                 headers: {
                     'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json'
                 }
             });
 
+            console.log('📡 Response status:', response.status);
+            console.log('📡 Response headers:', Object.fromEntries(response.headers.entries()));
+
             if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
+                const errorText = await response.text();
+                console.error('❌ API Error Response:', errorText);
+                throw new Error(`HTTP ${response.status}: ${errorText || 'Failed to fetch audit logs'}`);
             }
 
             const data = await response.json();
+            console.log('📊 API Response:', data);
             
             if (data.success) {
                 // Handle different response formats
                 const logs = data.data?.logs || data.data || [];
+                console.log(`✅ Found ${logs.length} audit logs`);
                 setAuditLogs(logs);
                 setError(null);
                 setLastRefresh(new Date());
             } else {
+                console.error('❌ API returned error:', data.message);
                 setError(data.message || 'Failed to fetch audit logs');
             }
         } catch (err) {
-            console.error('Error fetching audit logs:', err);
-            setError(err.message || 'Failed to fetch audit logs');
+            console.error('❌ Error fetching audit logs:', err);
+            setError(`Failed to fetch audit logs: ${err.message}`);
         } finally {
             if (showLoading) setLoading(false);
         }
@@ -121,22 +132,29 @@ export default function AuditLogsPage() {
 
     const getActionBadgeColor = (action) => {
         switch (action) {
-            case 'LOGIN': return 'bg-green-100 text-green-800';
-            case 'LOGOUT': return 'bg-gray-100 text-gray-800';
-            case 'CREATE': return 'bg-blue-100 text-blue-800';
-            case 'UPDATE': return 'bg-yellow-100 text-yellow-800';
-            case 'DELETE': return 'bg-red-100 text-red-800';
-            default: return 'bg-gray-100 text-gray-800';
+            case 'LOGIN': return 'bg-green-100 text-green-800 border-green-200';
+            case 'LOGOUT': return 'bg-gray-100 text-gray-800 border-gray-200';
+            case 'CREATE': return 'bg-blue-100 text-blue-800 border-blue-200';
+            case 'UPDATE': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+            case 'DELETE': return 'bg-red-100 text-red-800 border-red-200';
+            case 'EDIT': return 'bg-orange-100 text-orange-800 border-orange-200';
+            case 'VIEW': return 'bg-purple-100 text-purple-800 border-purple-200';
+            default: return 'bg-gray-100 text-gray-800 border-gray-200';
         }
     };
 
     const getResourceIcon = (resource) => {
         switch (resource) {
-            case 'SESSION': return <User className="w-4 h-4" />;
-            case 'DISPATCH': return <Activity className="w-4 h-4" />;
-            case 'USER': return <User className="w-4 h-4" />;
-            case 'ROLE': return <User className="w-4 h-4" />;
-            default: return <Activity className="w-4 h-4" />;
+            case 'SESSION': return <User className="w-4 h-4 text-blue-600" />;
+            case 'DISPATCH': return <Activity className="w-4 h-4 text-green-600" />;
+            case 'USER': return <User className="w-4 h-4 text-purple-600" />;
+            case 'ROLE': return <User className="w-4 h-4 text-indigo-600" />;
+            case 'PRODUCT': return <Activity className="w-4 h-4 text-orange-600" />;
+            case 'INVENTORY': return <Activity className="w-4 h-4 text-teal-600" />;
+            case 'RETURN': return <RefreshCw className="w-4 h-4 text-yellow-600" />;
+            case 'DAMAGE': return <Activity className="w-4 h-4 text-red-600" />;
+            case 'RECOVERY': return <Activity className="w-4 h-4 text-emerald-600" />;
+            default: return <Activity className="w-4 h-4 text-gray-600" />;
         }
     };
 
@@ -190,8 +208,17 @@ export default function AuditLogsPage() {
                         <div className="text-center text-red-600">
                             <Activity className="w-12 h-12 mx-auto mb-4" />
                             <h3 className="text-lg font-semibold mb-2">Error Loading Audit Logs</h3>
-                            <p className="text-sm">{error}</p>
-                            <Button onClick={fetchAuditLogs} className="mt-4">
+                            <p className="text-sm mb-4">{error}</p>
+                            
+                            {/* Debug Information */}
+                            <div className="mt-4 p-4 bg-gray-100 rounded text-left text-xs">
+                                <h4 className="font-semibold mb-2">Debug Information:</h4>
+                                <p><strong>API Base:</strong> {process.env.NEXT_PUBLIC_API_BASE}</p>
+                                <p><strong>Token:</strong> {localStorage.getItem('token') ? 'Present' : 'Missing'}</p>
+                                <p><strong>Full URL:</strong> {process.env.NEXT_PUBLIC_API_BASE}/api/audit-logs</p>
+                            </div>
+                            
+                            <Button onClick={() => fetchAuditLogs()} className="mt-4">
                                 <RefreshCw className="w-4 h-4 mr-2" />
                                 Retry
                             </Button>
@@ -247,6 +274,65 @@ export default function AuditLogsPage() {
                 </div>
             </div>
 
+            {/* Summary Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                <Card>
+                    <CardContent className="p-4">
+                        <div className="flex items-center">
+                            <Activity className="w-8 h-8 text-green-600 mr-3" />
+                            <div>
+                                <p className="text-sm font-medium text-gray-600">Dispatches</p>
+                                <p className="text-2xl font-bold text-gray-900">
+                                    {auditLogs.filter(log => log.resource === 'DISPATCH').length}
+                                </p>
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
+                
+                <Card>
+                    <CardContent className="p-4">
+                        <div className="flex items-center">
+                            <RefreshCw className="w-8 h-8 text-yellow-600 mr-3" />
+                            <div>
+                                <p className="text-sm font-medium text-gray-600">Returns</p>
+                                <p className="text-2xl font-bold text-gray-900">
+                                    {auditLogs.filter(log => log.resource === 'RETURN').length}
+                                </p>
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
+                
+                <Card>
+                    <CardContent className="p-4">
+                        <div className="flex items-center">
+                            <Activity className="w-8 h-8 text-red-600 mr-3" />
+                            <div>
+                                <p className="text-sm font-medium text-gray-600">Damage Reports</p>
+                                <p className="text-2xl font-bold text-gray-900">
+                                    {auditLogs.filter(log => log.resource === 'DAMAGE').length}
+                                </p>
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
+                
+                <Card>
+                    <CardContent className="p-4">
+                        <div className="flex items-center">
+                            <User className="w-8 h-8 text-blue-600 mr-3" />
+                            <div>
+                                <p className="text-sm font-medium text-gray-600">User Actions</p>
+                                <p className="text-2xl font-bold text-gray-900">
+                                    {auditLogs.filter(log => log.resource === 'USER').length}
+                                </p>
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
+            </div>
+
             {/* Filters */}
             <Card>
                 <CardHeader>
@@ -277,6 +363,11 @@ export default function AuditLogsPage() {
                                 <SelectItem value="DISPATCH">Dispatch</SelectItem>
                                 <SelectItem value="USER">User</SelectItem>
                                 <SelectItem value="ROLE">Role</SelectItem>
+                                <SelectItem value="PRODUCT">Product</SelectItem>
+                                <SelectItem value="INVENTORY">Inventory</SelectItem>
+                                <SelectItem value="RETURN">Return</SelectItem>
+                                <SelectItem value="DAMAGE">Damage</SelectItem>
+                                <SelectItem value="RECOVERY">Recovery</SelectItem>
                             </Select>
                         </div>
                         
@@ -385,17 +476,183 @@ export default function AuditLogsPage() {
                                                     </div>
                                                     
                                                     {details && Object.keys(details).length > 0 && (
-                                                        <div className="mt-3 p-3 bg-gray-100 rounded text-sm">
-                                                            <div className="font-medium text-gray-700 mb-2">Details:</div>
-                                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                                                                {Object.entries(details).map(([key, value]) => (
-                                                                    <div key={key} className="flex">
-                                                                        <span className="font-medium text-gray-600 mr-2">{key}:</span>
-                                                                        <span className="text-gray-800 break-all">
-                                                                            {typeof value === 'object' ? JSON.stringify(value) : String(value)}
-                                                                        </span>
-                                                                    </div>
-                                                                ))}
+                                                        <div className="mt-3 p-3 bg-gray-50 rounded-lg border text-sm">
+                                                            <div className="font-medium text-gray-700 mb-3 flex items-center">
+                                                                <Activity className="w-4 h-4 mr-1" />
+                                                                Operation Details:
+                                                            </div>
+                                                            
+                                                            {/* Special formatting for different resource types */}
+                                                            {log.resource === 'DISPATCH' && (
+                                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
+                                                                    {details.customer && (
+                                                                        <div className="flex items-center">
+                                                                            <span className="font-medium text-blue-600 mr-2">👥 Customer:</span>
+                                                                            <span className="text-gray-800">{details.customer}</span>
+                                                                        </div>
+                                                                    )}
+                                                                    {details.product_name && (
+                                                                        <div className="flex items-center">
+                                                                            <span className="font-medium text-green-600 mr-2">📦 Product:</span>
+                                                                            <span className="text-gray-800">{details.product_name}</span>
+                                                                        </div>
+                                                                    )}
+                                                                    {details.quantity && (
+                                                                        <div className="flex items-center">
+                                                                            <span className="font-medium text-purple-600 mr-2">🔢 Quantity:</span>
+                                                                            <span className="text-gray-800">{details.quantity}</span>
+                                                                        </div>
+                                                                    )}
+                                                                    {details.warehouse && (
+                                                                        <div className="flex items-center">
+                                                                            <span className="font-medium text-orange-600 mr-2">🏢 Warehouse:</span>
+                                                                            <span className="text-gray-800">{details.warehouse}</span>
+                                                                        </div>
+                                                                    )}
+                                                                    {details.awb_number && (
+                                                                        <div className="flex items-center">
+                                                                            <span className="font-medium text-indigo-600 mr-2">📮 AWB:</span>
+                                                                            <span className="text-gray-800">{details.awb_number}</span>
+                                                                        </div>
+                                                                    )}
+                                                                    {details.logistics && (
+                                                                        <div className="flex items-center">
+                                                                            <span className="font-medium text-teal-600 mr-2">🚚 Logistics:</span>
+                                                                            <span className="text-gray-800">{details.logistics}</span>
+                                                                        </div>
+                                                                    )}
+                                                                </div>
+                                                            )}
+                                                            
+                                                            {log.resource === 'DAMAGE' && (
+                                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
+                                                                    {details.product_name && (
+                                                                        <div className="flex items-center">
+                                                                            <span className="font-medium text-red-600 mr-2">📦 Damaged Product:</span>
+                                                                            <span className="text-gray-800">{details.product_name}</span>
+                                                                        </div>
+                                                                    )}
+                                                                    {details.quantity && (
+                                                                        <div className="flex items-center">
+                                                                            <span className="font-medium text-red-600 mr-2">🔢 Damaged Qty:</span>
+                                                                            <span className="text-gray-800">{details.quantity}</span>
+                                                                        </div>
+                                                                    )}
+                                                                    {details.location && (
+                                                                        <div className="flex items-center">
+                                                                            <span className="font-medium text-red-600 mr-2">📍 Location:</span>
+                                                                            <span className="text-gray-800">{details.location}</span>
+                                                                        </div>
+                                                                    )}
+                                                                    {details.reason && (
+                                                                        <div className="flex items-center">
+                                                                            <span className="font-medium text-red-600 mr-2">❓ Reason:</span>
+                                                                            <span className="text-gray-800">{details.reason}</span>
+                                                                        </div>
+                                                                    )}
+                                                                </div>
+                                                            )}
+                                                            
+                                                            {log.resource === 'RETURN' && (
+                                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
+                                                                    {details.product_name && (
+                                                                        <div className="flex items-center">
+                                                                            <span className="font-medium text-yellow-600 mr-2">📦 Returned Product:</span>
+                                                                            <span className="text-gray-800">{details.product_name}</span>
+                                                                        </div>
+                                                                    )}
+                                                                    {details.quantity && (
+                                                                        <div className="flex items-center">
+                                                                            <span className="font-medium text-yellow-600 mr-2">🔢 Returned Qty:</span>
+                                                                            <span className="text-gray-800">{details.quantity}</span>
+                                                                        </div>
+                                                                    )}
+                                                                    {details.awb && (
+                                                                        <div className="flex items-center">
+                                                                            <span className="font-medium text-yellow-600 mr-2">📮 Return AWB:</span>
+                                                                            <span className="text-gray-800">{details.awb}</span>
+                                                                        </div>
+                                                                    )}
+                                                                    {details.reason && (
+                                                                        <div className="flex items-center">
+                                                                            <span className="font-medium text-yellow-600 mr-2">❓ Return Reason:</span>
+                                                                            <span className="text-gray-800">{details.reason}</span>
+                                                                        </div>
+                                                                    )}
+                                                                </div>
+                                                            )}
+                                                            
+                                                            {log.resource === 'PRODUCT' && (
+                                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
+                                                                    {details.product_name && (
+                                                                        <div className="flex items-center">
+                                                                            <span className="font-medium text-orange-600 mr-2">📦 Product:</span>
+                                                                            <span className="text-gray-800">{details.product_name}</span>
+                                                                        </div>
+                                                                    )}
+                                                                    {details.barcode && (
+                                                                        <div className="flex items-center">
+                                                                            <span className="font-medium text-orange-600 mr-2">🏷️ Barcode:</span>
+                                                                            <span className="text-gray-800">{details.barcode}</span>
+                                                                        </div>
+                                                                    )}
+                                                                    {details.category && (
+                                                                        <div className="flex items-center">
+                                                                            <span className="font-medium text-orange-600 mr-2">📂 Category:</span>
+                                                                            <span className="text-gray-800">{details.category}</span>
+                                                                        </div>
+                                                                    )}
+                                                                    {details.price && (
+                                                                        <div className="flex items-center">
+                                                                            <span className="font-medium text-orange-600 mr-2">💰 Price:</span>
+                                                                            <span className="text-gray-800">{details.price}</span>
+                                                                        </div>
+                                                                    )}
+                                                                </div>
+                                                            )}
+                                                            
+                                                            {log.resource === 'INVENTORY' && (
+                                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
+                                                                    {details.product_name && (
+                                                                        <div className="flex items-center">
+                                                                            <span className="font-medium text-teal-600 mr-2">📦 Product:</span>
+                                                                            <span className="text-gray-800">{details.product_name}</span>
+                                                                        </div>
+                                                                    )}
+                                                                    {details.warehouse && (
+                                                                        <div className="flex items-center">
+                                                                            <span className="font-medium text-teal-600 mr-2">🏢 Warehouse:</span>
+                                                                            <span className="text-gray-800">{details.warehouse}</span>
+                                                                        </div>
+                                                                    )}
+                                                                    {details.quantity && (
+                                                                        <div className="flex items-center">
+                                                                            <span className="font-medium text-teal-600 mr-2">🔢 Quantity:</span>
+                                                                            <span className="text-gray-800">{details.quantity}</span>
+                                                                        </div>
+                                                                    )}
+                                                                    {details.source_type && (
+                                                                        <div className="flex items-center">
+                                                                            <span className="font-medium text-teal-600 mr-2">📋 Source:</span>
+                                                                            <span className="text-gray-800">{details.source_type}</span>
+                                                                        </div>
+                                                                    )}
+                                                                </div>
+                                                            )}
+                                                            
+                                                            {/* Show all other details */}
+                                                            <div className="border-t pt-3">
+                                                                <div className="text-xs text-gray-500 mb-2">All Details:</div>
+                                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                                                                    {Object.entries(details).map(([key, value]) => (
+                                                                        <div key={key} className="flex text-xs">
+                                                                            <span className="font-medium text-gray-500 mr-2 min-w-0 truncate">{key}:</span>
+                                                                            <span className="text-gray-700 break-all">
+                                                                                {typeof value === 'object' ? JSON.stringify(value) : String(value)}
+                                                                            </span>
+                                                                        </div>
+                                                                    ))}
+                                                                </div>
                                                             </div>
                                                         </div>
                                                     )}

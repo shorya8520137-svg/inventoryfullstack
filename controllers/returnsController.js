@@ -1,4 +1,8 @@
 const db = require('../db/connection');
+const EventAuditLogger = require('../EventAuditLogger');
+
+// Initialize event audit logger
+const eventAuditLogger = new EventAuditLogger();
 
 /**
  * =====================================================
@@ -98,7 +102,7 @@ exports.createReturn = (req, res) => {
                             }
 
                             // Add ledger entry and complete transaction
-                            addLedgerEntryAndCommit(returnId, barcode, product_type, warehouse, qty, awb, res, db);
+                            addLedgerEntryAndCommit(returnId, barcode, product_type, warehouse, qty, awb, res, db, 'good', req);
                         });
                     } else {
                         // Create new batch
@@ -119,13 +123,13 @@ exports.createReturn = (req, res) => {
                             }
 
                             // Add ledger entry and complete transaction
-                            addLedgerEntryAndCommit(returnId, barcode, product_type, warehouse, qty, awb, res, db);
+                            addLedgerEntryAndCommit(returnId, barcode, product_type, warehouse, qty, awb, res, db, 'good', req);
                         });
                     }
                 });
             } else {
                 // For damaged/defective items, just add ledger entry without adding stock
-                addLedgerEntryAndCommit(returnId, barcode, product_type, warehouse, qty, awb, res, db, condition);
+                addLedgerEntryAndCommit(returnId, barcode, product_type, warehouse, qty, awb, res, db, condition, req);
             }
         });
     });
@@ -134,13 +138,61 @@ exports.createReturn = (req, res) => {
 /**
  * Helper function to add ledger entry and commit transaction
  */
-function addLedgerEntryAndCommit(returnId, barcode, product_type, warehouse, qty, awb, res, db, condition = 'good') {
+function addLedgerEntryAndCommit(returnId, barcode, product_type, warehouse, qty, awb, res, db, condition = 'good', req = null) {
     const ledgerSql = `
         INSERT INTO inventory_ledger_base (
             event_time, movement_type, barcode, product_name,
             location_code, qty, direction, reference
         ) VALUES (NOW(), ?, ?, ?, ?, ?, 'IN', ?)
     `;
+
+    const movementType = condition === 'good' ? 'RETURN' : `RETURN_${condition.toUpperCase()}`;
+    const reference = `RETURN_${returnId}_${awb || 'NO_AWB'}`;
+
+    db.query(ledgerSql, [
+        movementType, barcode, product_type, warehouse, qty, reference
+    ], (err) => {
+        if (err) {
+            return db.rollback(() =>
+                res.status(500).json({ success: false, error: err.message })
+            );
+        }
+
+        // Commit transaction
+        db.commit(err => {
+            if (err) {
+                return db.rollback(() =>
+                    res.status(500).json({ success: false, message: err.message })
+                );
+            }
+
+            // Log RETURN audit AFTER successful commit
+            if (req && req.user) {
+                console.log('🔍 DEBUG: About to create return audit log');
+                console.log('🔍 req.user:', req.user);
+                
+                // Use EventAuditLogger for consistent audit logging
+                eventAuditLogger.logReturnCreate(req.user, {
+                    return_id: returnId,
+                    product_name: product_type,
+                    quantity: qty,
+                    reason: req.body.return_reason || 'Return processed',
+                    awb: awb
+                }, req, 'success');
+            }
+
+            res.status(201).json({
+                success: true,
+                message: `Return processed successfully${condition !== 'good' ? ` (${condition} - no stock added)` : ''}`,
+                return_id: returnId,
+                quantity_returned: qty,
+                condition,
+                stock_added: condition === 'good',
+                reference
+            });
+        });
+    });
+}
 
     const movementType = condition === 'good' ? 'RETURN' : `RETURN_${condition.toUpperCase()}`;
     const reference = `RETURN_${returnId}_${awb || 'NO_AWB'}`;
