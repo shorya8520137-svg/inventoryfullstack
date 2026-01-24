@@ -1,18 +1,26 @@
 /**
- * Audit Logger Middleware
- * Tracks user activities with human-readable descriptions
+ * Audit Logger for inventory_db
+ * Auto-generated with correct database configuration
  */
 
 const mysql = require('mysql2/promise');
 
 class AuditLogger {
-    constructor(dbConfig) {
-        this.dbConfig = dbConfig;
+    constructor() {
+        this.dbConfig = {
+            host: '127.0.0.1',
+            port: 3306,
+            user: 'inventory_user',
+            database: 'inventory_db',
+            // Remove invalid options that cause warnings
+            // acquireTimeout, timeout, reconnect are not valid for mysql2
+        };
     }
 
     async logActivity(auditData) {
+        let connection;
         try {
-            const connection = await mysql.createConnection(this.dbConfig);
+            connection = await mysql.createConnection(this.dbConfig);
             
             const sql = `
                 INSERT INTO audit_logs (
@@ -39,10 +47,13 @@ class AuditLogger {
                 auditData.request_url
             ]);
             
-            await connection.end();
-            console.log('✅ Audit log:', auditData.description);
+            console.log('📝 Audit logged:', auditData.description);
         } catch (error) {
             console.error('❌ Audit logging failed:', error.message);
+        } finally {
+            if (connection) {
+                await connection.end();
+            }
         }
     }
 
@@ -65,7 +76,7 @@ class AuditLogger {
                 product_sku: product.sku,
                 dispatch_time: new Date().toISOString()
             },
-            ip_address: req.ip,
+            ip_address: req.ip || req.connection.remoteAddress,
             user_agent: req.get('User-Agent'),
             request_method: 'POST',
             request_url: '/api/dispatch'
@@ -91,36 +102,34 @@ class AuditLogger {
                 product_sku: product.sku,
                 return_time: new Date().toISOString()
             },
-            ip_address: req.ip,
+            ip_address: req.ip || req.connection.remoteAddress,
             user_agent: req.get('User-Agent'),
             request_method: 'POST',
             request_url: '/api/returns'
         });
     }
 
-    // Damage Activity
-    async logDamage(user, product, quantity, reason, location, req) {
+    // Login Activity
+    async logLogin(user, req) {
         await this.logActivity({
             user_id: user.id,
             user_name: user.name,
             user_email: user.email,
             user_role: user.role_name,
-            action: 'DAMAGE',
-            resource_type: 'product',
-            resource_id: product.id,
-            resource_name: product.name,
-            description: `${user.name} reported damage for ${quantity} units of ${product.name} at ${location}`,
+            action: 'LOGIN',
+            resource_type: 'session',
+            resource_id: `sess_${Date.now()}`,
+            resource_name: 'User Session',
+            description: `${user.name} logged into the system`,
             details: {
-                quantity: quantity,
-                reason: reason,
-                location: location,
-                product_sku: product.sku,
-                damage_time: new Date().toISOString()
+                login_time: new Date().toISOString(),
+                browser: this.parseBrowser(req.get('User-Agent')),
+                os: this.parseOS(req.get('User-Agent'))
             },
-            ip_address: req.ip,
+            ip_address: req.ip || req.connection.remoteAddress,
             user_agent: req.get('User-Agent'),
             request_method: 'POST',
-            request_url: '/api/damage'
+            request_url: '/api/login'
         });
     }
 
@@ -143,34 +152,10 @@ class AuditLogger {
                 success_rate: ((processedItems / totalItems) * 100).toFixed(2) + '%',
                 upload_time: new Date().toISOString()
             },
-            ip_address: req.ip,
+            ip_address: req.ip || req.connection.remoteAddress,
             user_agent: req.get('User-Agent'),
             request_method: 'POST',
             request_url: '/api/bulk-upload'
-        });
-    }
-
-    // Login Activity
-    async logLogin(user, req) {
-        await this.logActivity({
-            user_id: user.id,
-            user_name: user.name,
-            user_email: user.email,
-            user_role: user.role_name,
-            action: 'LOGIN',
-            resource_type: 'session',
-            resource_id: `sess_${Date.now()}`,
-            resource_name: 'User Session',
-            description: `${user.name} logged into the system`,
-            details: {
-                login_time: new Date().toISOString(),
-                browser: this.parseBrowser(req.get('User-Agent')),
-                os: this.parseOS(req.get('User-Agent'))
-            },
-            ip_address: req.ip,
-            user_agent: req.get('User-Agent'),
-            request_method: 'POST',
-            request_url: '/api/login'
         });
     }
 
