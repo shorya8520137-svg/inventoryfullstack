@@ -1,4 +1,8 @@
 const db = require('../db/connection');
+const AuditLogger = require('../AuditLogger');
+
+// Initialize audit logger
+const auditLogger = new AuditLogger();
 
 /**
  * =====================================================
@@ -237,6 +241,45 @@ exports.createDispatch = (req, res) => {
                                         );
                                     }
 
+                                    // Log audit activity for form dispatch
+                                    if (req.user) {
+                                        const totalQty = products.reduce((sum, p) => sum + (parseInt(p.qty) || 1), 0);
+                                        const productNames = products.map(p => extractProductName(p.name)).join(', ');
+                                        
+                                        auditLogger.logActivity({
+                                            user_id: req.user.id,
+                                            user_name: req.user.name,
+                                            user_email: req.user.email,
+                                            user_role: req.user.role_name,
+                                            action: 'DISPATCH',
+                                            resource_type: 'order',
+                                            resource_id: dispatchId.toString(),
+                                            resource_name: order_ref,
+                                            description: `${req.user.name} dispatched ${totalQty} items (${productNames}) to ${warehouse} warehouse (AWB: ${awb})`,
+                                            details: {
+                                                dispatch_id: dispatchId,
+                                                order_ref: order_ref,
+                                                customer: customer,
+                                                warehouse: warehouse,
+                                                awb_number: awb,
+                                                logistics: logistics,
+                                                total_quantity: totalQty,
+                                                products: products.map(p => ({
+                                                    name: extractProductName(p.name),
+                                                    quantity: parseInt(p.qty) || 1,
+                                                    barcode: extractBarcode(p.name)
+                                                })),
+                                                invoice_amount: invoice_amount,
+                                                processed_by: processed_by,
+                                                dispatch_time: new Date().toISOString()
+                                            },
+                                            ip_address: req.ip || req.connection.remoteAddress,
+                                            user_agent: req.get('User-Agent'),
+                                            request_method: 'POST',
+                                            request_url: '/api/dispatch'
+                                        }).catch(err => console.error('Audit logging failed:', err));
+                                    }
+
                                     res.status(201).json({
                                         success: true,
                                         message: 'Dispatch created successfully',
@@ -325,6 +368,40 @@ exports.createDispatch = (req, res) => {
                                     return db.rollback(() =>
                                         res.status(500).json({ success: false, message: err.message })
                                     );
+                                }
+
+                                // Log audit activity for single product dispatch
+                                if (req.user) {
+                                    auditLogger.logActivity({
+                                        user_id: req.user.id,
+                                        user_name: req.user.name,
+                                        user_email: req.user.email,
+                                        user_role: req.user.role_name,
+                                        action: 'DISPATCH',
+                                        resource_type: 'product',
+                                        resource_id: dispatchId.toString(),
+                                        resource_name: product_name,
+                                        description: `${req.user.name} dispatched ${quantity} units of ${product_name} to ${warehouse} warehouse (AWB: ${awb})`,
+                                        details: {
+                                            dispatch_id: dispatchId,
+                                            order_ref: order_ref,
+                                            customer: customer,
+                                            product_name: product_name,
+                                            quantity: quantity,
+                                            variant: variant,
+                                            barcode: barcode,
+                                            warehouse: warehouse,
+                                            awb_number: awb,
+                                            logistics: logistics,
+                                            invoice_amount: invoice_amount,
+                                            processed_by: processed_by,
+                                            dispatch_time: new Date().toISOString()
+                                        },
+                                        ip_address: req.ip || req.connection.remoteAddress,
+                                        user_agent: req.get('User-Agent'),
+                                        request_method: 'POST',
+                                        request_url: '/api/dispatch'
+                                    }).catch(err => console.error('Audit logging failed:', err));
                                 }
 
                                 res.status(201).json({
