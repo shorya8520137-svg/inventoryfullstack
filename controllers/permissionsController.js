@@ -94,8 +94,21 @@ class PermissionsController {
                         { expiresIn: '24h' }
                     );
                     
-                    // Log audit
-                    PermissionsController.createAuditLog(user.id, 'LOGIN', 'USER', user.id, { ip: req.ip }, () => {});
+                    // Log LOGIN audit with proper IP and user agent
+                    const ipAddress = req.headers['x-forwarded-for']?.split(',')[0]?.trim() ||
+                                     req.headers['x-real-ip'] ||
+                                     req.connection.remoteAddress ||
+                                     req.ip ||
+                                     '127.0.0.1';
+                    
+                    PermissionsController.createAuditLog(user.id, 'LOGIN', 'SESSION', user.id, { 
+                        user_name: user.name,
+                        user_email: user.email,
+                        user_role: user.role_name,
+                        login_time: new Date().toISOString(),
+                        ip_address: ipAddress,
+                        user_agent: req.get('User-Agent') || 'Unknown'
+                    }, () => {});
                     
                     res.json({
                         success: true,
@@ -124,8 +137,20 @@ class PermissionsController {
     
     static logout(req, res) {
         try {
-            // Log audit
-            PermissionsController.createAuditLog(req.user?.id, 'LOGOUT', 'USER', req.user?.id, { ip: req.ip }, () => {});
+            // Log LOGOUT audit with proper IP and user agent
+            const ipAddress = req.headers['x-forwarded-for']?.split(',')[0]?.trim() ||
+                             req.headers['x-real-ip'] ||
+                             req.connection.remoteAddress ||
+                             req.ip ||
+                             '127.0.0.1';
+            
+            PermissionsController.createAuditLog(req.user?.id, 'LOGOUT', 'SESSION', req.user?.id, { 
+                user_name: req.user?.name || 'Unknown',
+                user_email: req.user?.email || 'Unknown',
+                logout_time: new Date().toISOString(),
+                ip_address: ipAddress,
+                user_agent: req.get('User-Agent') || 'Unknown'
+            }, () => {});
             
             res.json({
                 success: true,

@@ -241,22 +241,33 @@ exports.createDispatch = async (req, res) => {
                                         );
                                     }
 
-                                    // Log audit activity for form dispatch (FIXED)
+                                    // Log DISPATCH audit activity (FIXED)
                                     if (req.user) {
                                         const totalQty = products.reduce((sum, p) => sum + (parseInt(p.qty) || 1), 0);
                                         const productNames = products.map(p => extractProductName(p.name)).join(', ');
                                         
-                                        // Use new EventAuditLogger with proper user_id and ip_address (no await needed)
-                                        eventAuditLogger.logDispatchCreate(req.user, {
+                                        const ipAddress = req.headers['x-forwarded-for']?.split(',')[0]?.trim() ||
+                                                         req.headers['x-real-ip'] ||
+                                                         req.connection.remoteAddress ||
+                                                         req.ip ||
+                                                         '127.0.0.1';
+                                        
+                                        const PermissionsController = require('../controllers/permissionsController');
+                                        PermissionsController.createAuditLog(req.user.id, 'CREATE', 'DISPATCH', dispatchId, {
+                                            user_name: req.user.name || 'Unknown',
+                                            user_email: req.user.email || 'Unknown',
                                             dispatch_id: dispatchId,
                                             order_ref: order_ref,
                                             customer: customer,
                                             product_name: productNames,
                                             quantity: totalQty,
                                             warehouse: warehouse,
-                                            awb: awb,
-                                            logistics: logistics
-                                        }, req, 'success').catch(err => console.error('Audit logging failed:', err));
+                                            awb_number: awb,
+                                            logistics: logistics,
+                                            create_time: new Date().toISOString(),
+                                            ip_address: ipAddress,
+                                            user_agent: req.get('User-Agent') || 'Unknown'
+                                        }, () => {});
                                     }
 
                                     res.status(201).json({
@@ -349,19 +360,30 @@ exports.createDispatch = async (req, res) => {
                                     );
                                 }
 
-                                // Log audit activity for single product dispatch (FIXED)
+                                // Log DISPATCH audit activity for single product (FIXED)
                                 if (req.user) {
-                                    // Use new EventAuditLogger with proper user_id and ip_address (no await needed)
-                                    eventAuditLogger.logDispatchCreate(req.user, {
+                                    const ipAddress = req.headers['x-forwarded-for']?.split(',')[0]?.trim() ||
+                                                     req.headers['x-real-ip'] ||
+                                                     req.connection.remoteAddress ||
+                                                     req.ip ||
+                                                     '127.0.0.1';
+                                    
+                                    const PermissionsController = require('../controllers/permissionsController');
+                                    PermissionsController.createAuditLog(req.user.id, 'CREATE', 'DISPATCH', dispatchId, {
+                                        user_name: req.user.name || 'Unknown',
+                                        user_email: req.user.email || 'Unknown',
                                         dispatch_id: dispatchId,
                                         order_ref: order_ref,
                                         customer: customer,
                                         product_name: product_name,
                                         quantity: quantity,
                                         warehouse: warehouse,
-                                        awb: awb,
-                                        logistics: logistics
-                                    }, req, 'success').catch(err => console.error('Audit logging failed:', err));
+                                        awb_number: awb,
+                                        logistics: logistics,
+                                        create_time: new Date().toISOString(),
+                                        ip_address: ipAddress,
+                                        user_agent: req.get('User-Agent') || 'Unknown'
+                                    }, () => {});
                                 }
 
                                 res.status(201).json({

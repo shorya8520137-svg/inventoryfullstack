@@ -15,7 +15,8 @@ import {
     Box,
     LogOut,
     Plus,
-    Shield
+    Shield,
+    Activity
 } from "lucide-react";
 import { cva } from "class-variance-authority";
 import { motion, AnimatePresence } from "framer-motion";
@@ -500,6 +501,24 @@ const InventoryMenu = ({ onOpenOperation }) => {
                                 >
                                     <Shield size={collapsed ? 16 : 16} />
                                     {!collapsed && <span>Permissions</span>}
+                                </Link>
+                            </motion.div>
+                        </SidebarMenuItem>
+                    )}
+
+                    {/* AUDIT LOGS */}
+                    {hasPermission(PERMISSIONS.SYSTEM_AUDIT_LOG) && (
+                        <SidebarMenuItem>
+                            <motion.div
+                                whileHover={{ scale: 1.02, x: 2 }}
+                                whileTap={{ scale: 0.98 }}
+                            >
+                                <Link 
+                                    href="/audit-logs" 
+                                    className={cn(sidebarMenuButtonVariants({ active: pathname === "/audit-logs", collapsed }))}
+                                >
+                                    <Activity size={collapsed ? 16 : 16} />
+                                    {!collapsed && <span>Audit Logs</span>}
                                 </Link>
                             </motion.div>
                         </SidebarMenuItem>
