@@ -902,18 +902,38 @@ class PermissionsController {
     
     static createAuditLog(userId, action, resource, resourceId, details, callback) {
         const sql = `
-            INSERT INTO audit_logs (user_id, action, resource, resource_id, details)
-            VALUES (?, ?, ?, ?, ?)
+            INSERT INTO audit_logs (user_id, action, resource, resource_id, details, ip_address, user_agent)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
         `;
+        
+        // Extract IP and user agent from details if provided
+        const ipAddress = details?.ip_address || '127.0.0.1';
+        const userAgent = details?.user_agent || 'Unknown';
+        
+        // Clean details (remove IP and user agent to avoid duplication)
+        const cleanDetails = { ...details };
+        delete cleanDetails.ip_address;
+        delete cleanDetails.user_agent;
+        
+        const values = [
+            userId,
+            action,
+            resource,
+            resourceId,
+            JSON.stringify(cleanDetails),
+            ipAddress,  // FIXED: Now captures IP address
+            userAgent   // FIXED: Now captures user agent
+        ];
         
         // If no callback provided, return a promise (for async/await usage)
         if (!callback) {
             return new Promise((resolve, reject) => {
-                db.query(sql, [userId, action, resource, resourceId, JSON.stringify(details)], (err, result) => {
+                db.query(sql, values, (err, result) => {
                     if (err) {
                         console.error('Create audit log error:', err);
                         reject(err);
                     } else {
+                        console.log(`📝 Audit logged: ${action} ${resource} by user ${userId} from ${ipAddress}`);
                         resolve(result);
                     }
                 });
@@ -921,9 +941,11 @@ class PermissionsController {
         }
         
         // Traditional callback usage
-        db.query(sql, [userId, action, resource, resourceId, JSON.stringify(details)], (err, result) => {
+        db.query(sql, values, (err, result) => {
             if (err) {
                 console.error('Create audit log error:', err);
+            } else {
+                console.log(`📝 Audit logged: ${action} ${resource} by user ${userId} from ${ipAddress}`);
             }
             callback(err, result);
         });

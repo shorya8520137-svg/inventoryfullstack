@@ -64,8 +64,22 @@ router.put('/users/:userId/role',
             
             await db.execute('UPDATE users SET role_id = ? WHERE id = ?', [roleId, userId]);
             
-            // Log audit
-            await PermissionsController.createAuditLog(req.user?.userId, 'UPDATE_ROLE', 'USER', userId, { roleId });
+            // FIXED: Log audit with proper user_id and IP
+            await PermissionsController.createAuditLog(
+                req.user?.id,  // FIXED: was req.user?.userId
+                'UPDATE_ROLE', 
+                'USER', 
+                userId, 
+                { 
+                    roleId,
+                    ip_address: req.headers['x-forwarded-for']?.split(',')[0]?.trim() ||
+                               req.headers['x-real-ip'] ||
+                               req.connection.remoteAddress ||
+                               req.ip ||
+                               '127.0.0.1',
+                    user_agent: req.get('User-Agent')
+                }
+            );
             
             res.json({
                 success: true,
@@ -183,10 +197,22 @@ router.put('/roles/:roleId',
                 }
             }
             
-            // Log audit
-            await PermissionsController.createAuditLog(req.user?.userId, 'UPDATE', 'ROLE', roleId, {
-                name, displayName: finalDisplayName, description, color, permissionIds
-            });
+            // FIXED: Log audit with proper user_id and IP
+            await PermissionsController.createAuditLog(
+                req.user?.id,  // FIXED: was req.user?.userId
+                'UPDATE', 
+                'ROLE', 
+                roleId, 
+                {
+                    name, displayName: finalDisplayName, description, color, permissionIds,
+                    ip_address: req.headers['x-forwarded-for']?.split(',')[0]?.trim() ||
+                               req.headers['x-real-ip'] ||
+                               req.connection.remoteAddress ||
+                               req.ip ||
+                               '127.0.0.1',
+                    user_agent: req.get('User-Agent')
+                }
+            );
             
             res.json({
                 success: true,
@@ -256,9 +282,22 @@ router.delete('/roles/:roleId',
                             });
                         }
                         
-                        // Log audit
+                        // FIXED: Log audit with proper user_id and IP
                         try {
-                            await PermissionsController.createAuditLog(req.user?.userId, 'DELETE', 'ROLE', roleId, {});
+                            await PermissionsController.createAuditLog(
+                                req.user?.id,  // FIXED: was req.user?.userId
+                                'DELETE', 
+                                'ROLE', 
+                                roleId, 
+                                {
+                                    ip_address: req.headers['x-forwarded-for']?.split(',')[0]?.trim() ||
+                                               req.headers['x-real-ip'] ||
+                                               req.connection.remoteAddress ||
+                                               req.ip ||
+                                               '127.0.0.1',
+                                    user_agent: req.get('User-Agent')
+                                }
+                            );
                         } catch (auditError) {
                             console.error('Audit log error:', auditError);
                             // Continue anyway - don't fail the deletion for audit log issues
@@ -332,8 +371,22 @@ router.post('/roles/:roleId/permissions',
                 VALUES (?, ?)
             `, [roleId, permissionId]);
             
-            // Log audit
-            await PermissionsController.createAuditLog(req.user?.userId, 'ASSIGN_PERMISSION', 'ROLE', roleId, { permissionId });
+            // FIXED: Log audit with proper user_id and IP
+            await PermissionsController.createAuditLog(
+                req.user?.id,  // FIXED: was req.user?.userId
+                'ASSIGN_PERMISSION', 
+                'ROLE', 
+                roleId, 
+                { 
+                    permissionId,
+                    ip_address: req.headers['x-forwarded-for']?.split(',')[0]?.trim() ||
+                               req.headers['x-real-ip'] ||
+                               req.connection.remoteAddress ||
+                               req.ip ||
+                               '127.0.0.1',
+                    user_agent: req.get('User-Agent')
+                }
+            );
             
             res.json({
                 success: true,
@@ -364,8 +417,22 @@ router.delete('/roles/:roleId/permissions/:permissionId',
                 WHERE role_id = ? AND permission_id = ?
             `, [roleId, permissionId]);
             
-            // Log audit
-            await PermissionsController.createAuditLog(req.user?.userId, 'REMOVE_PERMISSION', 'ROLE', roleId, { permissionId });
+            // FIXED: Log audit with proper user_id and IP
+            await PermissionsController.createAuditLog(
+                req.user?.id,  // FIXED: was req.user?.userId
+                'REMOVE_PERMISSION', 
+                'ROLE', 
+                roleId, 
+                { 
+                    permissionId,
+                    ip_address: req.headers['x-forwarded-for']?.split(',')[0]?.trim() ||
+                               req.headers['x-real-ip'] ||
+                               req.connection.remoteAddress ||
+                               req.ip ||
+                               '127.0.0.1',
+                    user_agent: req.get('User-Agent')
+                }
+            );
             
             res.json({
                 success: true,
@@ -408,8 +475,22 @@ router.put('/roles/:roleId/permissions',
                 
                 await db.execute('COMMIT');
                 
-                // Log audit
-                await PermissionsController.createAuditLog(req.user?.userId, 'UPDATE_PERMISSIONS', 'ROLE', roleId, { permissionIds });
+                // FIXED: Log audit with proper user_id and IP
+                await PermissionsController.createAuditLog(
+                    req.user?.id,  // FIXED: was req.user?.userId
+                    'UPDATE_PERMISSIONS', 
+                    'ROLE', 
+                    roleId, 
+                    { 
+                        permissionIds,
+                        ip_address: req.headers['x-forwarded-for']?.split(',')[0]?.trim() ||
+                                   req.headers['x-real-ip'] ||
+                                   req.connection.remoteAddress ||
+                                   req.ip ||
+                                   '127.0.0.1',
+                        user_agent: req.get('User-Agent')
+                    }
+                );
                 
                 res.json({
                     success: true,
