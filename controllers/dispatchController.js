@@ -246,8 +246,8 @@ exports.createDispatch = (req, res) => {
                                         const totalQty = products.reduce((sum, p) => sum + (parseInt(p.qty) || 1), 0);
                                         const productNames = products.map(p => extractProductName(p.name)).join(', ');
                                         
-                                        // Use new EventAuditLogger with proper user_id and ip_address
-                                        await eventAuditLogger.logDispatchCreate(req.user, {
+                                        // Use new EventAuditLogger with proper user_id and ip_address (no await needed)
+                                        eventAuditLogger.logDispatchCreate(req.user, {
                                             dispatch_id: dispatchId,
                                             order_ref: order_ref,
                                             customer: customer,
@@ -256,7 +256,7 @@ exports.createDispatch = (req, res) => {
                                             warehouse: warehouse,
                                             awb: awb,
                                             logistics: logistics
-                                        }, req, 'success');
+                                        }, req, 'success').catch(err => console.error('Audit logging failed:', err));
                                     }
 
                                     res.status(201).json({
@@ -351,8 +351,8 @@ exports.createDispatch = (req, res) => {
 
                                 // Log audit activity for single product dispatch (FIXED)
                                 if (req.user) {
-                                    // Use new EventAuditLogger with proper user_id and ip_address
-                                    await eventAuditLogger.logDispatchCreate(req.user, {
+                                    // Use new EventAuditLogger with proper user_id and ip_address (no await needed)
+                                    eventAuditLogger.logDispatchCreate(req.user, {
                                         dispatch_id: dispatchId,
                                         order_ref: order_ref,
                                         customer: customer,
@@ -361,7 +361,7 @@ exports.createDispatch = (req, res) => {
                                         warehouse: warehouse,
                                         awb: awb,
                                         logistics: logistics
-                                    }, req, 'success');
+                                    }, req, 'success').catch(err => console.error('Audit logging failed:', err));
                                 }
 
                                 res.status(201).json({
