@@ -1,6 +1,8 @@
 const bcrypt = require('bcryptjs');
 const db = require('../db/connection');
 const { generateToken, getUserPermissions } = require('../middleware/auth');
+const FirebaseNotificationService = require('../services/FirebaseNotificationService');
+const IPGeolocationTracker = require('../IPGeolocationTracker');
 
 /**
  * LOGIN USER
@@ -105,6 +107,31 @@ exports.login = async (req, res) => {
                 });
 
                 console.log('✅ Login successful for user:', user.email);
+
+                // Send login notification to other users
+                try {
+                    const geoTracker = new IPGeolocationTracker();
+                    const clientIP = req.ip || req.connection.remoteAddress || 'Unknown';
+                    let location = 'Unknown Location';
+                    
+                    try {
+                        const locationData = await geoTracker.getLocationData(clientIP);
+                        location = `${locationData.city}, ${locationData.country}`;
+                    } catch (geoError) {
+                        console.log('⚠️ Could not get location for login notification');
+                    }
+                    
+                    // Send notification to all other users
+                    FirebaseNotificationService.notifyUserLogin(user.id, user.name, location)
+                        .then(result => {
+                            console.log(`📱 Login notification sent to ${result.totalUsers || 0} users`);
+                        })
+                        .catch(notifError => {
+                            console.error('Login notification error:', notifError);
+                        });
+                } catch (error) {
+                    console.error('Login notification setup error:', error);
+                }
 
                 res.json({
                     success: true,

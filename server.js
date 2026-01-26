@@ -91,6 +91,9 @@ app.use('/api/orders', require('./routes/orderTrackingRoutes'));
 // self transfer routes
 app.use('/api/self-transfer', require('./routes/selfTransferRoutes'));
 
+// notification routes
+app.use('/api/notifications', require('./routes/notificationRoutes'));
+
 // auth routes (no /api prefix for backward compatibility)
 app.use('/auth', require('./routes/authRoutes'));
 

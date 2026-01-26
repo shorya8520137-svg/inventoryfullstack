@@ -1,5 +1,6 @@
 const db = require('../db/connection');
 const ProductionEventAuditLogger = require('../ProductionEventAuditLogger');
+const FirebaseNotificationService = require('../services/FirebaseNotificationService');
 
 // Initialize production event audit logger (fixes user_id and ip_address NULL issues + Cloudflare IP tracking)
 const eventAuditLogger = new ProductionEventAuditLogger();
@@ -279,6 +280,27 @@ exports.createDispatch = async (req, res) => {
                                         products_dispatched: totalProducts,
                                         total_quantity: products.reduce((sum, p) => sum + (parseInt(p.qty) || 1), 0)
                                     });
+
+                                    // Send dispatch notification to other users
+                                    try {
+                                        const userName = req.user?.name || 'Unknown User';
+                                        const productNames = products.map(p => p.product_name).join(', ');
+                                        const totalQty = products.reduce((sum, p) => sum + (parseInt(p.qty) || 1), 0);
+                                        
+                                        FirebaseNotificationService.notifyDispatchCreated(
+                                            req.user?.id || 0,
+                                            userName,
+                                            productNames,
+                                            totalQty,
+                                            warehouse
+                                        ).then(result => {
+                                            console.log(`📱 Dispatch notification sent to ${result.totalUsers || 0} users`);
+                                        }).catch(notifError => {
+                                            console.error('Dispatch notification error:', notifError);
+                                        });
+                                    } catch (error) {
+                                        console.error('Dispatch notification setup error:', error);
+                                    }
                                 });
                             }
                         });

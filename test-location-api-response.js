@@ -20,7 +20,7 @@ async function testLocationAPIResponse() {
         
         const loginResponse = await axios.post(`${API_BASE}/api/auth/login`, {
             email: 'admin@company.com',
-            password: 'admin123'
+            password: 'admin@123'
         }, {
             timeout: 10000,
             httpsAgent: new (require('https').Agent)({
