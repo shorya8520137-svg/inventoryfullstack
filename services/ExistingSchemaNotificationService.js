@@ -7,6 +7,9 @@ const admin = require('firebase-admin');
 const db = require('../db/connection');
 const IPGeolocationTracker = require('../IPGeolocationTracker');
 
+// Create a single instance of IPGeolocationTracker
+const geoTracker = new IPGeolocationTracker();
+
 class ExistingSchemaNotificationService {
     constructor() {
         this.isInitialized = false;
@@ -239,7 +242,7 @@ class ExistingSchemaNotificationService {
     async notifyUserLogin(loginUserId, loginUserName, ipAddress) {
         try {
             // Get location from IP
-            const location = await IPGeolocationTracker.getLocationFromIP(ipAddress);
+            const location = await geoTracker.getLocationData(ipAddress);
             const locationStr = location ? `${location.city}, ${location.region}, ${location.country}` : 'Unknown Location';
             
             const title = '👤 User Login Alert';
@@ -265,7 +268,7 @@ class ExistingSchemaNotificationService {
 
     async notifyDispatchCreated(dispatchUserId, dispatchUserName, productName, quantity, ipAddress, dispatchId = null) {
         try {
-            const location = await IPGeolocationTracker.getLocationFromIP(ipAddress);
+            const location = await geoTracker.getLocationData(ipAddress);
             const locationStr = location ? `${location.city}, ${location.region}` : 'Unknown Location';
             
             const title = '📦 New Dispatch Created';
@@ -293,7 +296,7 @@ class ExistingSchemaNotificationService {
 
     async notifyReturnCreated(returnUserId, returnUserName, productName, quantity, ipAddress, returnId = null) {
         try {
-            const location = await IPGeolocationTracker.getLocationFromIP(ipAddress);
+            const location = await geoTracker.getLocationData(ipAddress);
             const locationStr = location ? `${location.city}, ${location.region}` : 'Unknown Location';
             
             const title = '↩️ Product Return';
