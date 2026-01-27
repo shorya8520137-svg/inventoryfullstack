@@ -1,36 +1,18 @@
 /**
- * EXISTING SCHEMA NOTIFICATION SERVICE
- * Adapted to work with your existing notification tables
+ * DATABASE-ONLY NOTIFICATION SERVICE
+ * Simplified notification service that works without Firebase
+ * Perfect for testing and basic notification functionality
  */
 
-const admin = require('firebase-admin');
 const db = require('../db/connection');
 const IPGeolocationTracker = require('../IPGeolocationTracker');
 
 // Create a single instance of IPGeolocationTracker
 const geoTracker = new IPGeolocationTracker();
 
-class ExistingSchemaNotificationService {
+class DatabaseOnlyNotificationService {
     constructor() {
-        this.isInitialized = false;
-        this.initializeFirebase();
-    }
-
-    // Initialize Firebase Admin SDK
-    initializeFirebase() {
-        try {
-            if (!admin.apps.length) {
-                admin.initializeApp({
-                    credential: admin.credential.applicationDefault(),
-                });
-            }
-            this.isInitialized = true;
-            console.log('✅ Firebase Admin SDK initialized');
-        } catch (error) {
-            console.log('⚠️ Firebase initialization failed:', error.message);
-            console.log('💡 Notifications will be stored in database only');
-            this.isInitialized = false;
-        }
+        console.log('📱 Database-Only Notification Service initialized');
     }
 
     // Create notification using your existing schema
@@ -74,91 +56,6 @@ class ExistingSchemaNotificationService {
         });
     }
 
-    // Get user's Firebase tokens
-    async getUserTokens(userId) {
-        return new Promise((resolve, reject) => {
-            const query = `
-                SELECT token FROM firebase_tokens 
-                WHERE user_id = ? AND is_active = 1
-            `;
-            
-            db.query(query, [userId], (err, results) => {
-                if (err) {
-                    reject(err);
-                } else {
-                    const tokens = results.map(row => row.token);
-                    resolve(tokens);
-                }
-            });
-        });
-    }
-
-    // Send push notification via Firebase
-    async sendPushNotification(tokens, title, message, data = {}) {
-        if (!this.isInitialized || !tokens || tokens.length === 0) {
-            console.log('⚠️ Firebase not initialized or no tokens provided');
-            return { success: false, error: 'Firebase not available' };
-        }
-
-        try {
-            const payload = {
-                notification: {
-                    title: title,
-                    body: message,
-                    icon: '/icon-192x192.png',
-                    badge: '/icon-192x192.png'
-                },
-                data: {
-                    ...data,
-                    timestamp: Date.now().toString()
-                }
-            };
-
-            // Use the newer send method instead of sendToDevice
-            let response;
-            if (admin.messaging().sendEachForMulticast) {
-                // Newer Firebase Admin SDK
-                const multicastMessage = {
-                    tokens: tokens,
-                    notification: payload.notification,
-                    data: payload.data
-                };
-                response = await admin.messaging().sendEachForMulticast(multicastMessage);
-                
-                console.log(`🚀 Push notification sent to ${tokens.length} devices`);
-                console.log(`✅ Success: ${response.successCount}, Failed: ${response.failureCount}`);
-                
-                return {
-                    success: true,
-                    successCount: response.successCount,
-                    failureCount: response.failureCount,
-                    results: response.responses
-                };
-            } else if (admin.messaging().sendToDevice) {
-                // Older Firebase Admin SDK
-                response = await admin.messaging().sendToDevice(tokens, payload);
-                
-                console.log(`🚀 Push notification sent to ${tokens.length} devices`);
-                console.log(`✅ Success: ${response.successCount}, Failed: ${response.failureCount}`);
-                
-                return {
-                    success: true,
-                    successCount: response.successCount,
-                    failureCount: response.failureCount,
-                    results: response.results
-                };
-            } else {
-                // Firebase method not available - skip push notifications
-                console.log('⚠️ Firebase push notification methods not available');
-                return { success: false, error: 'Firebase push methods not available' };
-            }
-            
-        } catch (error) {
-            console.error('Push notification error:', error);
-            return { success: false, error: error.message };
-        }
-    }
-
     // Check user notification preferences
     async getUserPreferences(userId, notificationType) {
         return new Promise((resolve, reject) => {
@@ -176,17 +73,15 @@ class ExistingSchemaNotificationService {
                         resolve(results[0]);
                     } else {
                         // Default preferences if not found
-                        resolve({ enabled: 1, push_enabled: 1, email_enabled: 0 });
+                        resolve({ enabled: 1, push_enabled: 0, email_enabled: 0 });
                     }
                 }
             });
         });
     }
 
-    // Send notification to specific user (respecting preferences)
+    // Send notification to specific user (database only)
     async sendNotificationToUser(userId, title, message, type, options = {}) {
-        let tokens = []; // Initialize tokens variable
-        
         try {
             // Check user preferences
             const preferences = await this.getUserPreferences(userId, type);
@@ -202,27 +97,13 @@ class ExistingSchemaNotificationService {
                 ...options
             });
             
-            // Send push notification if enabled
-            let pushResult = null;
-            if (preferences.push_enabled) {
-                tokens = await this.getUserTokens(userId);
-                
-                if (tokens.length > 0) {
-                    pushResult = await this.sendPushNotification(tokens, title, message, {
-                        type: type,
-                        notificationId: notificationId.toString(),
-                        ...options.data
-                    });
-                } else {
-                    console.log(`📱 No Firebase tokens found for user ${userId}`);
-                }
-            }
+            console.log(`✅ Database notification sent to user ${userId}`);
             
             return {
                 success: true,
                 notificationId: notificationId,
-                pushResult: pushResult,
-                tokensCount: tokens.length
+                method: 'database',
+                tokensCount: 0 // No push notifications
             };
             
         } catch (error) {
@@ -237,7 +118,7 @@ class ExistingSchemaNotificationService {
             // Get all active users except sender
             const users = await new Promise((resolve, reject) => {
                 const query = `
-                    SELECT id FROM users 
+                    SELECT id, name FROM users 
                     WHERE is_active = 1 AND id != ?
                 `;
                 
@@ -252,7 +133,7 @@ class ExistingSchemaNotificationService {
             // Send notification to each user
             for (const user of users) {
                 const result = await this.sendNotificationToUser(user.id, title, message, type, options);
-                results.push({ userId: user.id, ...result });
+                results.push({ userId: user.id, userName: user.name, ...result });
             }
             
             console.log(`📢 Broadcast notification sent to ${users.length} users`);
@@ -353,32 +234,6 @@ class ExistingSchemaNotificationService {
         }
     }
 
-    // Register Firebase token for user
-    async registerToken(userId, token, deviceType = 'web', deviceInfo = {}) {
-        return new Promise((resolve, reject) => {
-            const query = `
-                INSERT INTO firebase_tokens (user_id, token, device_type, device_info)
-                VALUES (?, ?, ?, ?)
-                ON DUPLICATE KEY UPDATE
-                device_type = VALUES(device_type),
-                device_info = VALUES(device_info),
-                is_active = 1,
-                updated_at = CURRENT_TIMESTAMP,
-                last_used_at = CURRENT_TIMESTAMP
-            `;
-            
-            db.query(query, [userId, token, deviceType, JSON.stringify(deviceInfo)], (err, result) => {
-                if (err) {
-                    console.error('Register token error:', err);
-                    reject(err);
-                } else {
-                    console.log(`🔑 Firebase token registered for user ${userId}`);
-                    resolve(result);
-                }
-            });
-        });
-    }
-
     // Get user notifications
     async getUserNotifications(userId, limit = 50, offset = 0) {
         return new Promise((resolve, reject) => {
@@ -428,4 +283,4 @@ class ExistingSchemaNotificationService {
     }
 }
 
-module.exports = new ExistingSchemaNotificationService();
+module.exports = new DatabaseOnlyNotificationService();
