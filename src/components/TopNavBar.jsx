@@ -1,14 +1,14 @@
 "use client";
 
 import React, { useState } from "react";
-import { Search, Bell, User } from "lucide-react";
+import { Search, User } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import NotificationBell from "./NotificationBell";
 import styles from "./TopNavBar.module.css";
 
 export default function TopNavBar() {
     const { user } = useAuth();
     const [searchQuery, setSearchQuery] = useState("");
-    const [showNotifications, setShowNotifications] = useState(false);
 
     const handleSearch = (e) => {
         e.preventDefault();
@@ -37,50 +37,9 @@ export default function TopNavBar() {
 
                 {/* Actions Section */}
                 <div className={styles.actionsSection}>
-                    {/* Notifications */}
+                    {/* Real-time Notifications */}
                     <div className={styles.notificationWrapper}>
-                        <button
-                            className={styles.notificationBtn}
-                            onClick={() => setShowNotifications(!showNotifications)}
-                        >
-                            <Bell size={18} />
-                            <span className={styles.notificationBadge}>3</span>
-                        </button>
-                        
-                        {showNotifications && (
-                            <div className={styles.notificationDropdown}>
-                                <div className={styles.notificationHeader}>
-                                    <h4>Notifications</h4>
-                                    <span className={styles.notificationCount}>3 new</span>
-                                </div>
-                                <div className={styles.notificationList}>
-                                    <div className={styles.notificationItem}>
-                                        <div className={styles.notificationDot}></div>
-                                        <div>
-                                            <p className={styles.notificationTitle}>New order received</p>
-                                            <p className={styles.notificationTime}>2 minutes ago</p>
-                                        </div>
-                                    </div>
-                                    <div className={styles.notificationItem}>
-                                        <div className={styles.notificationDot}></div>
-                                        <div>
-                                            <p className={styles.notificationTitle}>Low stock alert</p>
-                                            <p className={styles.notificationTime}>15 minutes ago</p>
-                                        </div>
-                                    </div>
-                                    <div className={styles.notificationItem}>
-                                        <div className={styles.notificationDot}></div>
-                                        <div>
-                                            <p className={styles.notificationTitle}>Dispatch completed</p>
-                                            <p className={styles.notificationTime}>1 hour ago</p>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div className={styles.notificationFooter}>
-                                    <button className={styles.viewAllBtn}>View all notifications</button>
-                                </div>
-                            </div>
-                        )}
+                        <NotificationBell />
                     </div>
 
                     {/* User Profile */}
