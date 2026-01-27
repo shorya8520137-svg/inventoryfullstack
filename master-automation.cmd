@@ -27,22 +27,26 @@ echo 2. 🛠️  Full Server Setup (Database + Code + APIs)
 echo 3. 🔄 Update Code Only
 echo 4. 🗄️  Verify Database Setup
 echo 5. 🧪 Test All APIs
-echo 6. 📊 View Server Logs
-echo 7. 🔄 Restart Services
-echo 8. 📋 System Health Check
-echo 9. 🚪 Exit
+echo 6. 🔐 Test Admin Login & Token
+echo 7. 🎫 Test Authenticated Operations
+echo 8. 📊 View Server Logs
+echo 9. 🔄 Restart Services
+echo 10. 📋 System Health Check
+echo 11. 🚪 Exit
 echo.
-set /p choice="👉 Enter your choice (1-9): "
+set /p choice="👉 Enter your choice (1-11): "
 
 if "%choice%"=="1" goto check_status
 if "%choice%"=="2" goto full_setup
 if "%choice%"=="3" goto update_code
 if "%choice%"=="4" goto verify_database
 if "%choice%"=="5" goto test_apis
-if "%choice%"=="6" goto view_logs
-if "%choice%"=="7" goto restart_services
-if "%choice%"=="8" goto health_check
-if "%choice%"=="9" goto exit
+if "%choice%"=="6" goto test_admin_token
+if "%choice%"=="7" goto test_authenticated_ops
+if "%choice%"=="8" goto view_logs
+if "%choice%"=="9" goto restart_services
+if "%choice%"=="10" goto health_check
+if "%choice%"=="11" goto exit
 goto invalid_choice
 
 :check_status
@@ -126,6 +130,24 @@ echo ========================================
 node comprehensive-api-test.js
 goto menu
 
+:test_admin_token
+echo.
+echo 🔐 Testing Admin Login & Token Generation...
+echo ========================================
+echo Using credentials: admin@company.com / Admin@123
+echo.
+node test-admin-login-with-token.js
+goto menu
+
+:test_authenticated_ops
+echo.
+echo 🎫 Testing Authenticated Operations...
+echo ========================================
+echo This will test all API endpoints using admin token
+echo.
+node test-authenticated-operations.js
+goto menu
+
 :view_logs
 echo.
 echo 📊 Viewing Server Logs...
@@ -197,7 +219,7 @@ goto menu
 
 :invalid_choice
 echo.
-echo ❌ Invalid choice. Please enter a number between 1-9.
+echo ❌ Invalid choice. Please enter a number between 1-11.
 goto menu
 
 :exit
