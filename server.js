@@ -94,6 +94,9 @@ app.use('/api/self-transfer', require('./routes/selfTransferRoutes'));
 // notification routes
 app.use('/api/notifications', require('./routes/notificationRoutes'));
 
+// two-factor authentication routes
+app.use('/api/2fa', require('./routes/twoFactorRoutes'));
+
 // auth routes (no /api prefix for backward compatibility)
 app.use('/auth', require('./routes/authRoutes'));
 

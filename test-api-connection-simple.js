@@ -1,104 +1,60 @@
 /**
- * Simple API Connection Test
+ * SIMPLE API CONNECTION TEST
+ * Test basic connection to backend
  */
 
-const https = require('https');
+const http = require('http');
 
-const API_BASE = 'https://16.171.5.50.nip.io';
-
-console.log('🔗 Testing API Connection...\n');
-
-async function testConnection() {
+function testConnection(host, port) {
     return new Promise((resolve, reject) => {
-        const url = `${API_BASE}/api/health`;
-        
-        const req = https.request(url, {
-            method: 'GET',
-            rejectUnauthorized: false
-        }, (res) => {
-            let data = '';
-            res.on('data', chunk => data += chunk);
-            res.on('end', () => {
-                console.log(`Status: ${res.statusCode}`);
-                console.log(`Response: ${data}`);
-                resolve({ status: res.statusCode, data });
-            });
-        });
-
-        req.on('error', (error) => {
-            console.log('❌ Connection error:', error.message);
-            reject(error);
-        });
-        
-        req.setTimeout(10000, () => {
-            console.log('❌ Request timeout');
-            req.destroy();
-            reject(new Error('Timeout'));
-        });
-        
-        req.end();
-    });
-}
-
-async function testLogin() {
-    return new Promise((resolve, reject) => {
-        const url = `${API_BASE}/api/login`;
-        const postData = JSON.stringify({
-            email: 'admin@company.com',
-            password: 'admin@123'
-        });
-        
-        const req = https.request(url, {
+        const req = http.request({
+            hostname: host,
+            port: port,
+            path: '/api/auth/login',
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json',
-                'Content-Length': Buffer.byteLength(postData)
-            },
-            rejectUnauthorized: false
+                'Content-Type': 'application/json'
+            }
         }, (res) => {
-            let data = '';
-            res.on('data', chunk => data += chunk);
-            res.on('end', () => {
-                console.log(`Login Status: ${res.statusCode}`);
-                console.log(`Login Response: ${data}`);
-                resolve({ status: res.statusCode, data });
-            });
+            console.log(`✅ Connection successful to ${host}:${port}`);
+            console.log(`📡 Status: ${res.statusCode}`);
+            resolve(true);
         });
 
-        req.on('error', (error) => {
-            console.log('❌ Login error:', error.message);
-            reject(error);
+        req.on('error', (err) => {
+            console.log(`❌ Connection failed to ${host}:${port}`);
+            console.log(`🔥 Error: ${err.message}`);
+            resolve(false);
         });
+
+        req.write(JSON.stringify({
+            email: 'admin@company.com',
+            password: 'admin@123'
+        }));
         
-        req.setTimeout(10000, () => {
-            console.log('❌ Login timeout');
-            req.destroy();
-            reject(new Error('Timeout'));
-        });
-        
-        req.write(postData);
         req.end();
     });
 }
 
-async function runTests() {
-    console.log('🧪 Testing API Connection and Login\n');
+async function testMultiplePorts() {
+    console.log('🔍 Testing Backend Connection on Multiple Ports...\n');
     
-    try {
-        console.log('1. Testing basic connection...');
-        await testConnection();
-        console.log('✅ Connection test completed\n');
-    } catch (error) {
-        console.log('❌ Connection failed, trying login directly...\n');
+    const testCases = [
+        { host: '16.171.141.4', port: 5000 },
+        { host: '16.171.141.4', port: 3001 },
+        { host: '16.171.141.4', port: 3000 },
+        { host: 'localhost', port: 5000 },
+        { host: '127.0.0.1', port: 5000 }
+    ];
+    
+    for (const testCase of testCases) {
+        console.log(`Testing ${testCase.host}:${testCase.port}...`);
+        await testConnection(testCase.host, testCase.port);
+        console.log('');
     }
     
-    try {
-        console.log('2. Testing login endpoint...');
-        await testLogin();
-        console.log('✅ Login test completed');
-    } catch (error) {
-        console.log('❌ Login test failed:', error.message);
-    }
+    console.log('💡 If all connections failed, the backend server might not be running');
+    console.log('💡 Check if server is running with: ps aux | grep node');
 }
 
-runTests().catch(console.error);
+testMultiplePorts();

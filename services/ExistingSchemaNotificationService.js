@@ -116,7 +116,7 @@ class ExistingSchemaNotificationService {
 
             // Use the newer send method instead of sendToDevice
             let response;
-            if (admin.messaging().sendEachForMulticast) {
+            if (admin.messaging && admin.messaging().sendEachForMulticast) {
                 // Newer Firebase Admin SDK
                 const multicastMessage = {
                     tokens: tokens,
@@ -134,7 +134,7 @@ class ExistingSchemaNotificationService {
                     failureCount: response.failureCount,
                     results: response.responses
                 };
-            } else if (admin.messaging().sendToDevice) {
+            } else if (admin.messaging && admin.messaging().sendToDevice) {
                 // Older Firebase Admin SDK
                 response = await admin.messaging().sendToDevice(tokens, payload);
                 
@@ -185,8 +185,6 @@ class ExistingSchemaNotificationService {
 
     // Send notification to specific user (respecting preferences)
     async sendNotificationToUser(userId, title, message, type, options = {}) {
-        let tokens = []; // Initialize tokens variable
-        
         try {
             // Check user preferences
             const preferences = await this.getUserPreferences(userId, type);
@@ -204,8 +202,11 @@ class ExistingSchemaNotificationService {
             
             // Send push notification if enabled
             let pushResult = null;
+            let tokensCount = 0;
+            
             if (preferences.push_enabled) {
-                tokens = await this.getUserTokens(userId);
+                const tokens = await this.getUserTokens(userId);
+                tokensCount = tokens.length;
                 
                 if (tokens.length > 0) {
                     pushResult = await this.sendPushNotification(tokens, title, message, {
@@ -222,7 +223,7 @@ class ExistingSchemaNotificationService {
                 success: true,
                 notificationId: notificationId,
                 pushResult: pushResult,
-                tokensCount: tokens.length
+                tokensCount: tokensCount
             };
             
         } catch (error) {
@@ -272,14 +273,14 @@ class ExistingSchemaNotificationService {
     // Event-specific notification methods with location tracking
     async notifyUserLogin(loginUserId, loginUserName, ipAddress) {
         try {
-            // Get location from IP
+            // Get location from IP using the instance method
             const location = await geoTracker.getLocationData(ipAddress);
             const locationStr = location ? `${location.city}, ${location.region}, ${location.country}` : 'Unknown Location';
             
             const title = '👤 User Login Alert';
             const message = `${loginUserName} has logged in from ${locationStr}`;
             
-            return await this.sendNotificationToAllExcept(loginUserId, title, message, 'user_login', {
+            const result = await this.sendNotificationToAllExcept(loginUserId, title, message, 'user_login', {
                 priority: 'low',
                 relatedEntityType: 'user',
                 relatedEntityId: loginUserId,
@@ -291,6 +292,9 @@ class ExistingSchemaNotificationService {
                     timestamp: new Date().toISOString()
                 }
             });
+            
+            console.log(`📱 Login notification sent to ${result.totalUsers || 0} users`);
+            return result;
         } catch (error) {
             console.error('Login notification error:', error);
             return { success: false, error: error.message };

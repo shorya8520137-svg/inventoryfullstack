@@ -22,7 +22,8 @@ const NotificationBell = () => {
             const token = localStorage.getItem('token');
             if (!token || !user) return;
 
-            const response = await fetch('/api/notifications', {
+            const apiBase = process.env.NEXT_PUBLIC_API_BASE || 'https://16.171.141.4.nip.io';
+            const response = await fetch(`${apiBase}/api/notifications`, {
                 headers: {
                     'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json'
@@ -35,6 +36,8 @@ const NotificationBell = () => {
                     setNotifications(data.data.notifications || []);
                     setUnreadCount(data.data.unreadCount || 0);
                 }
+            } else {
+                console.error('Failed to fetch notifications:', response.status, response.statusText);
             }
         } catch (error) {
             console.error('Failed to fetch notifications:', error);
@@ -47,7 +50,8 @@ const NotificationBell = () => {
             const token = localStorage.getItem('token');
             if (!token) return;
 
-            const response = await fetch(`/api/notifications/${notificationId}/read`, {
+            const apiBase = process.env.NEXT_PUBLIC_API_BASE || 'https://16.171.141.4.nip.io';
+            const response = await fetch(`${apiBase}/api/notifications/${notificationId}/read`, {
                 method: 'PUT',
                 headers: {
                     'Authorization': `Bearer ${token}`,
@@ -78,7 +82,8 @@ const NotificationBell = () => {
             const token = localStorage.getItem('token');
             if (!token) return;
 
-            const response = await fetch('/api/notifications/mark-all-read', {
+            const apiBase = process.env.NEXT_PUBLIC_API_BASE || 'https://16.171.141.4.nip.io';
+            const response = await fetch(`${apiBase}/api/notifications/mark-all-read`, {
                 method: 'PUT',
                 headers: {
                     'Authorization': `Bearer ${token}`,
