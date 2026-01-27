@@ -1,6 +1,6 @@
 const db = require('../db/connection');
 const ProductionEventAuditLogger = require('../ProductionEventAuditLogger');
-const FirebaseNotificationService = require('../services/FirebaseNotificationService');
+const ExistingSchemaNotificationService = require('../services/ExistingSchemaNotificationService');
 
 // Initialize production event audit logger (fixes user_id and ip_address NULL issues + Cloudflare IP tracking)
 const eventAuditLogger = new ProductionEventAuditLogger();
@@ -287,12 +287,13 @@ exports.createDispatch = async (req, res) => {
                                         const productNames = products.map(p => p.product_name).join(', ');
                                         const totalQty = products.reduce((sum, p) => sum + (parseInt(p.qty) || 1), 0);
                                         
-                                        FirebaseNotificationService.notifyDispatchCreated(
+                                        ExistingSchemaNotificationService.notifyDispatchCreated(
                                             req.user?.id || 0,
                                             userName,
                                             productNames,
                                             totalQty,
-                                            warehouse
+                                            req.ip || req.connection.remoteAddress || 'Unknown',
+                                            dispatchId
                                         ).then(result => {
                                             console.log(`📱 Dispatch notification sent to ${result.totalUsers || 0} users`);
                                         }).catch(notifError => {

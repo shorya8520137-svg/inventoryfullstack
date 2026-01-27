@@ -1,7 +1,7 @@
 const bcrypt = require('bcryptjs');
 const db = require('../db/connection');
 const { generateToken, getUserPermissions } = require('../middleware/auth');
-const FirebaseNotificationService = require('../services/FirebaseNotificationService');
+const ExistingSchemaNotificationService = require('../services/ExistingSchemaNotificationService');
 const IPGeolocationTracker = require('../IPGeolocationTracker');
 
 /**
@@ -122,7 +122,7 @@ exports.login = async (req, res) => {
                     }
                     
                     // Send notification to all other users
-                    FirebaseNotificationService.notifyUserLogin(user.id, user.name, location)
+                    ExistingSchemaNotificationService.notifyUserLogin(user.id, user.name, clientIP)
                         .then(result => {
                             console.log(`📱 Login notification sent to ${result.totalUsers || 0} users`);
                         })

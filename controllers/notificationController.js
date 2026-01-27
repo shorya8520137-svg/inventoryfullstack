@@ -3,7 +3,7 @@
  * Handles notification API endpoints
  */
 
-const FirebaseNotificationService = require('../services/FirebaseNotificationService');
+const ExistingSchemaNotificationService = require('../services/ExistingSchemaNotificationService');
 const db = require('../db/connection');
 
 class NotificationController {
@@ -15,7 +15,7 @@ class NotificationController {
             const { page = 1, limit = 20 } = req.query;
             const offset = (page - 1) * limit;
             
-            const notifications = await FirebaseNotificationService.getUserNotifications(
+            const notifications = await ExistingSchemaNotificationService.getUserNotifications(
                 userId, 
                 parseInt(limit), 
                 parseInt(offset)
@@ -58,7 +58,7 @@ class NotificationController {
             const userId = req.user.id;
             const { notificationId } = req.params;
             
-            const success = await FirebaseNotificationService.markAsRead(notificationId, userId);
+            const success = await ExistingSchemaNotificationService.markAsRead(notificationId, userId);
             
             if (success) {
                 res.json({
@@ -129,7 +129,7 @@ class NotificationController {
                 });
             }
             
-            await FirebaseNotificationService.registerToken(userId, token, deviceType, deviceInfo);
+            await ExistingSchemaNotificationService.registerToken(userId, token, deviceType, deviceInfo);
             
             res.json({
                 success: true,
@@ -275,7 +275,7 @@ class NotificationController {
                 });
             }
             
-            const result = await FirebaseNotificationService.sendNotificationToAllExcept(
+            const result = await ExistingSchemaNotificationService.sendNotificationToAllExcept(
                 senderId, 
                 title, 
                 message, 
