@@ -1,4 +1,8 @@
 const db = require('../db/connection');
+const ProductionEventAuditLogger = require('../ProductionEventAuditLogger');
+
+// Initialize production event audit logger
+const eventAuditLogger = new ProductionEventAuditLogger();
 
 /**
  * =====================================================
@@ -98,7 +102,7 @@ exports.createReturn = (req, res) => {
                             }
 
                             // Add ledger entry and complete transaction
-                            addLedgerEntryAndCommit(returnId, barcode, product_type, warehouse, qty, awb, res, db);
+                            addLedgerEntryAndCommit(returnId, barcode, product_type, warehouse, qty, awb, res, db, 'good', req);
                         });
                     } else {
                         // Create new batch
@@ -119,13 +123,13 @@ exports.createReturn = (req, res) => {
                             }
 
                             // Add ledger entry and complete transaction
-                            addLedgerEntryAndCommit(returnId, barcode, product_type, warehouse, qty, awb, res, db);
+                            addLedgerEntryAndCommit(returnId, barcode, product_type, warehouse, qty, awb, res, db, 'good', req);
                         });
                     }
                 });
             } else {
                 // For damaged/defective items, just add ledger entry without adding stock
-                addLedgerEntryAndCommit(returnId, barcode, product_type, warehouse, qty, awb, res, db, condition);
+                addLedgerEntryAndCommit(returnId, barcode, product_type, warehouse, qty, awb, res, db, condition, req);
             }
         });
     });
@@ -134,7 +138,7 @@ exports.createReturn = (req, res) => {
 /**
  * Helper function to add ledger entry and commit transaction
  */
-function addLedgerEntryAndCommit(returnId, barcode, product_type, warehouse, qty, awb, res, db, condition = 'good') {
+function addLedgerEntryAndCommit(returnId, barcode, product_type, warehouse, qty, awb, res, db, condition = 'good', req = null) {
     const ledgerSql = `
         INSERT INTO inventory_ledger_base (
             event_time, movement_type, barcode, product_name,
@@ -160,6 +164,21 @@ function addLedgerEntryAndCommit(returnId, barcode, product_type, warehouse, qty
                 return db.rollback(() =>
                     res.status(500).json({ success: false, message: err.message })
                 );
+            }
+
+            // Log RETURN audit AFTER successful commit
+            if (req && req.user) {
+                console.log('🔍 DEBUG: About to create return audit log');
+                console.log('🔍 req.user:', req.user);
+                
+                // Use EventAuditLogger for consistent audit logging
+                eventAuditLogger.logReturnCreate(req.user, {
+                    return_id: returnId,
+                    product_name: product_type,
+                    quantity: qty,
+                    reason: req.body.return_reason || 'Return processed',
+                    awb: awb
+                }, req, 'success');
             }
 
             res.status(201).json({

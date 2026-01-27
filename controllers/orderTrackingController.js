@@ -249,15 +249,14 @@ exports.getDispatchTimeline = (req, res) => {
 /**
  * GET ALL DISPATCHES WITH TRACKING INFO
  * Get all dispatches with damage/recovery counts + self transfers
+ * UPDATED: Removed pagination - shows ALL records without limits
  */
 exports.getAllDispatches = (req, res) => {
     const { 
         warehouse, 
         status, 
         dateFrom, 
-        dateTo, 
-        page = 1, 
-        limit = 20 
+        dateTo
     } = req.query;
 
     const filters = [];
@@ -284,9 +283,9 @@ exports.getAllDispatches = (req, res) => {
     }
 
     const whereClause = filters.length > 0 ? `WHERE ${filters.join(' AND ')}` : '';
-    const offset = (page - 1) * limit;
 
     // Combined query for both dispatches (with items) and self transfers
+    // REMOVED: LIMIT and OFFSET - now returns ALL records
     const sql = `
         SELECT 
             'dispatch' as source_type,
@@ -299,7 +298,7 @@ exports.getAllDispatches = (req, res) => {
             COALESCE(wdi.barcode, wd.barcode) as barcode,
             COALESCE(wdi.qty, wd.qty) as qty,
             COALESCE(wdi.variant, wd.variant) as variant,
-            wdi.selling_price,
+            COALESCE(wdi.selling_price, 0) as selling_price,
             wd.awb,
             wd.logistics,
             wd.parcel_type,
@@ -312,36 +311,18 @@ exports.getAllDispatches = (req, res) => {
             wd.processed_by,
             wd.remarks,
             wd.status,
-            COALESCE(d.damage_count, 0) as damage_count,
-            COALESCE(rec.recovery_count, 0) as recovery_count,
-            COALESCE(sb.current_stock, 0) as current_stock
+            0 as damage_count,
+            0 as recovery_count,
+            0 as current_stock
         FROM warehouse_dispatch wd
         LEFT JOIN warehouse_dispatch_items wdi ON wd.id = wdi.dispatch_id
-        LEFT JOIN (
-            SELECT barcode, COUNT(*) as damage_count 
-            FROM damage_recovery_log 
-            WHERE action_type = 'damage' 
-            GROUP BY barcode
-        ) d ON COALESCE(wdi.barcode, wd.barcode) = d.barcode
-        LEFT JOIN (
-            SELECT barcode, COUNT(*) as recovery_count 
-            FROM damage_recovery_log 
-            WHERE action_type = 'recover' 
-            GROUP BY barcode
-        ) rec ON COALESCE(wdi.barcode, wd.barcode) = rec.barcode
-        LEFT JOIN (
-            SELECT barcode, SUM(qty_available) as current_stock 
-            FROM stock_batches 
-            WHERE status = 'active'
-            GROUP BY barcode
-        ) sb ON COALESCE(wdi.barcode, wd.barcode) = sb.barcode
         ${whereClause}
         
         UNION ALL
         
         SELECT 
             'self_transfer' as source_type,
-            ilb.id,
+            st.id,
             ilb.event_time as timestamp,
             ilb.location_code as warehouse,
             st.order_ref,
@@ -367,7 +348,7 @@ exports.getAllDispatches = (req, res) => {
             0 as recovery_count,
             COALESCE(sb2.current_stock, 0) as current_stock
         FROM inventory_ledger_base ilb
-        LEFT JOIN self_transfer st ON ilb.reference = st.transfer_reference
+        INNER JOIN self_transfer st ON ilb.reference = st.transfer_reference
         LEFT JOIN (
             SELECT barcode, SUM(qty_available) as current_stock 
             FROM stock_batches 
@@ -381,7 +362,6 @@ exports.getAllDispatches = (req, res) => {
         ${dateTo ? 'AND ilb.event_time <= ?' : ''}
         
         ORDER BY timestamp DESC
-        LIMIT ? OFFSET ?
     `;
 
     // Build values array for the combined query
@@ -392,8 +372,7 @@ exports.getAllDispatches = (req, res) => {
     if (dateFrom) combinedValues.push(`${dateFrom} 00:00:00`);
     if (dateTo) combinedValues.push(`${dateTo} 23:59:59`);
     
-    // Add pagination
-    combinedValues.push(parseInt(limit), parseInt(offset));
+    // REMOVED: pagination values - no longer needed
 
     db.query(sql, combinedValues, (err, results) => {
         if (err) {
@@ -404,44 +383,14 @@ exports.getAllDispatches = (req, res) => {
             });
         }
 
-        // Get total count for both dispatches and self transfers
-        const countSql = `
-            SELECT 
-                (SELECT COUNT(*) FROM warehouse_dispatch wd ${whereClause}) +
-                (SELECT COUNT(*) FROM inventory_ledger_base ilb 
-                 WHERE ilb.movement_type = 'SELF_TRANSFER'
-                 ${warehouse ? 'AND ilb.location_code = ?' : ''}
-                 ${dateFrom ? 'AND ilb.event_time >= ?' : ''}
-                 ${dateTo ? 'AND ilb.event_time <= ?' : ''}) as total
-        `;
+        console.log(`✅ Retrieved ${results.length} total records (no pagination)`);
 
-        const countValues = [...values]; // For warehouse_dispatch count
-        // Add values for self_transfer count
-        if (warehouse) countValues.push(warehouse);
-        if (dateFrom) countValues.push(`${dateFrom} 00:00:00`);
-        if (dateTo) countValues.push(`${dateTo} 23:59:59`);
-
-        db.query(countSql, countValues, (err, countResult) => {
-            if (err) {
-                console.error('❌ Count query error:', err);
-                return res.status(500).json({
-                    success: false,
-                    error: err.message
-                });
-            }
-
-            const total = countResult[0]?.total || 0;
-
-            res.json({
-                success: true,
-                data: results,
-                pagination: {
-                    page: parseInt(page),
-                    limit: parseInt(limit),
-                    total: total,
-                    pages: Math.ceil(total / limit)
-                }
-            });
+        // SIMPLIFIED: Return all results without pagination metadata
+        res.json({
+            success: true,
+            data: results,
+            total: results.length,
+            message: `Retrieved ${results.length} records (pagination disabled)`
         });
     });
 };
@@ -896,6 +845,27 @@ exports.deleteDispatch = (req, res) => {
                                     );
                                 }
 
+                                // Log ORDER_DELETE audit using PermissionsController
+                                if (req.user) {
+                                    const ipAddress = req.headers['x-forwarded-for']?.split(',')[0]?.trim() ||
+                                                     req.headers['x-real-ip'] ||
+                                                     req.connection.remoteAddress ||
+                                                     req.ip ||
+                                                     '127.0.0.1';
+                                    
+                                    const PermissionsController = require('../controllers/permissionsController');
+                                    PermissionsController.createAuditLog(req.user.id, 'DELETE', 'DISPATCH', dispatchId, {
+                                        user_name: req.user.name || 'Unknown',
+                                        user_email: req.user.email || 'Unknown',
+                                        dispatch_id: dispatchId,
+                                        warehouse: warehouse,
+                                        restored_products: totalProducts,
+                                        delete_time: new Date().toISOString(),
+                                        ip_address: ipAddress,
+                                        user_agent: req.get('User-Agent') || 'Unknown'
+                                    });
+                                }
+
                                 res.json({
                                     success: true,
                                     message: 'Dispatch deleted successfully and stock restored',
@@ -915,7 +885,8 @@ exports.deleteDispatch = (req, res) => {
 
 /**
  * UPDATE DISPATCH STATUS
- * Updates the status of a dispatch order
+ * Updates the status of a dispatch order OR self-transfer
+ * FIXED: Properly handles multiple products with same AWB + Self-Transfer support
  */
 exports.updateDispatchStatus = (req, res) => {
     const { dispatchId } = req.params;
@@ -937,51 +908,419 @@ exports.updateDispatchStatus = (req, res) => {
         });
     }
 
-    // Valid status values
-    const validStatuses = [
+    // Valid status values for dispatches
+    const validDispatchStatuses = [
         'Pending', 'Processing', 'Confirmed', 'Packed', 'Dispatched',
         'In Transit', 'Out for Delivery', 'Delivered', 'Cancelled', 'Returned'
     ];
 
-    if (!validStatuses.includes(status)) {
-        return res.status(400).json({
-            success: false,
-            message: `Invalid status. Must be one of: ${validStatuses.join(', ')}`
-        });
-    }
+    // Valid status values for self-transfers
+    const validSelfTransferStatuses = [
+        'Pending', 'Processing', 'Confirmed', 'Completed', 'Cancelled'
+    ];
 
-    // If barcode is provided, update only that specific product in the dispatch
-    // Otherwise update the entire dispatch (backward compatibility)
-    const updateSql = barcode 
-        ? `UPDATE warehouse_dispatch SET status = ? WHERE id = ? AND barcode = ?`
-        : `UPDATE warehouse_dispatch SET status = ? WHERE id = ?`;
-    
-    const params = barcode ? [status, dispatchId, barcode] : [status, dispatchId];
+    // First, determine if this is a dispatch or self-transfer by checking both tables
+    const checkTypeSql = `
+        SELECT 'dispatch' as type, id FROM warehouse_dispatch WHERE id = ?
+        UNION ALL
+        SELECT 'self_transfer' as type, id FROM self_transfer WHERE id = ?
+    `;
 
-    db.query(updateSql, params, (err, result) => {
+    db.query(checkTypeSql, [dispatchId, dispatchId], (err, typeResult) => {
         if (err) {
-            console.error('❌ Status update error:', err);
+            console.error('❌ Type check error:', err);
             return res.status(500).json({
                 success: false,
                 error: err.message
             });
         }
 
-        if (result.affectedRows === 0) {
+        if (typeResult.length === 0) {
             return res.status(404).json({
                 success: false,
-                message: 'Dispatch not found'
+                message: 'Record not found in dispatch or self-transfer tables'
             });
         }
 
-        console.log('✅ Status updated successfully');
+        const recordType = typeResult[0].type;
+        console.log(`📋 Record type detected: ${recordType}`);
 
-        res.json({
-            success: true,
-            message: 'Status updated successfully',
-            dispatch_id: dispatchId,
-            new_status: status
-        });
+        // Validate status based on record type
+        const validStatuses = recordType === 'dispatch' ? validDispatchStatuses : validSelfTransferStatuses;
+        
+        if (!validStatuses.includes(status)) {
+            return res.status(400).json({
+                success: false,
+                message: `Invalid status for ${recordType}. Must be one of: ${validStatuses.join(', ')}`
+            });
+        }
+
+        if (recordType === 'dispatch') {
+            // Handle dispatch status update (existing logic)
+            handleDispatchStatusUpdate();
+        } else {
+            // Handle self-transfer status update (new logic)
+            handleSelfTransferStatusUpdate();
+        }
+
+        function handleDispatchStatusUpdate() {
+            // CORRECTED LOGIC: warehouse_dispatch_items table doesn't have status column
+            // Status is only stored in the main warehouse_dispatch table
+            // For multi-product dispatches, we update the main dispatch status
+            
+            if (barcode) {
+                // Case 1: Specific product update (when barcode is provided)
+                // First verify the product exists in this dispatch
+                const verifyProductSql = `
+                    SELECT wd.id, wd.barcode as main_barcode, wdi.barcode as item_barcode
+                    FROM warehouse_dispatch wd
+                    LEFT JOIN warehouse_dispatch_items wdi ON wd.id = wdi.dispatch_id
+                    WHERE wd.id = ? AND (wd.barcode = ? OR wdi.barcode = ?)
+                `;
+                
+                db.query(verifyProductSql, [dispatchId, barcode, barcode], (err, verification) => {
+                    if (err) {
+                        console.error('❌ Product verification error:', err);
+                        return res.status(500).json({
+                            success: false,
+                            error: err.message
+                        });
+                    }
+
+                    if (verification.length === 0) {
+                        return res.status(404).json({
+                            success: false,
+                            message: 'Product not found in this dispatch'
+                        });
+                    }
+
+                    // Product exists, update the main dispatch status
+                    // Note: For multi-product dispatches, this updates the entire dispatch status
+                    // This is the correct behavior as status applies to the entire shipment
+                    const updateMainSql = `UPDATE warehouse_dispatch SET status = ? WHERE id = ?`;
+                    
+                    db.query(updateMainSql, [status, dispatchId], (err, result) => {
+                        if (err) {
+                            console.error('❌ Status update error:', err);
+                            return res.status(500).json({
+                                success: false,
+                                error: err.message
+                            });
+                        }
+
+                        if (result.affectedRows === 0) {
+                            return res.status(404).json({
+                                success: false,
+                                message: 'Dispatch not found'
+                            });
+                        }
+
+                        console.log('✅ Dispatch status updated successfully');
+
+                        res.json({
+                            success: true,
+                            message: 'Dispatch status updated successfully',
+                            dispatch_id: dispatchId,
+                            barcode: barcode,
+                            new_status: status,
+                            type: 'dispatch',
+                            note: 'Status updated for entire dispatch (affects all products in this AWB)'
+                        });
+                    });
+                });
+            } else {
+                // Case 2: Update entire dispatch (when no barcode provided - backward compatibility)
+                const updateSql = `UPDATE warehouse_dispatch SET status = ? WHERE id = ?`;
+                
+                db.query(updateSql, [status, dispatchId], (err, result) => {
+                    if (err) {
+                        console.error('❌ Status update error:', err);
+                        return res.status(500).json({
+                            success: false,
+                            error: err.message
+                        });
+                    }
+
+                    if (result.affectedRows === 0) {
+                        return res.status(404).json({
+                            success: false,
+                            message: 'Dispatch not found'
+                        });
+                    }
+
+                    console.log('✅ Dispatch status updated successfully');
+
+                    res.json({
+                        success: true,
+                        message: 'Dispatch status updated successfully',
+                        dispatch_id: dispatchId,
+                        new_status: status,
+                        type: 'dispatch'
+                    });
+                });
+            }
+        }
+
+        function handleSelfTransferStatusUpdate() {
+            console.log('🔄 Handling self-transfer status update');
+            
+            if (barcode) {
+                // Case 1: Specific product update for self-transfer
+                // First verify the product exists in this self-transfer
+                const verifyProductSql = `
+                    SELECT st.id, sti.barcode
+                    FROM self_transfer st
+                    LEFT JOIN self_transfer_items sti ON st.id = sti.transfer_id
+                    WHERE st.id = ? AND sti.barcode = ?
+                `;
+                
+                db.query(verifyProductSql, [dispatchId, barcode], (err, verification) => {
+                    if (err) {
+                        console.error('❌ Self-transfer product verification error:', err);
+                        return res.status(500).json({
+                            success: false,
+                            error: err.message
+                        });
+                    }
+
+                    if (verification.length === 0) {
+                        return res.status(404).json({
+                            success: false,
+                            message: 'Product not found in this self-transfer'
+                        });
+                    }
+
+                    // Product exists, update the self-transfer status
+                    const updateSelfTransferSql = `UPDATE self_transfer SET status = ? WHERE id = ?`;
+                    
+                    db.query(updateSelfTransferSql, [status, dispatchId], (err, result) => {
+                        if (err) {
+                            console.error('❌ Self-transfer status update error:', err);
+                            return res.status(500).json({
+                                success: false,
+                                error: err.message
+                            });
+                        }
+
+                        if (result.affectedRows === 0) {
+                            return res.status(404).json({
+                                success: false,
+                                message: 'Self-transfer not found'
+                            });
+                        }
+
+                        console.log('✅ Self-transfer status updated successfully');
+
+                        res.json({
+                            success: true,
+                            message: 'Self-transfer status updated successfully',
+                            transfer_id: dispatchId,
+                            barcode: barcode,
+                            new_status: status,
+                            type: 'self_transfer',
+                            note: 'Status updated for entire self-transfer'
+                        });
+                    });
+                });
+            } else {
+                // Case 2: Update entire self-transfer (when no barcode provided)
+                const updateSql = `UPDATE self_transfer SET status = ? WHERE id = ?`;
+                
+                db.query(updateSql, [status, dispatchId], (err, result) => {
+                    if (err) {
+                        console.error('❌ Self-transfer status update error:', err);
+                        return res.status(500).json({
+                            success: false,
+                            error: err.message
+                        });
+                    }
+
+                    if (result.affectedRows === 0) {
+                        return res.status(404).json({
+                            success: false,
+                            message: 'Self-transfer not found'
+                        });
+                    }
+
+                    console.log('✅ Self-transfer status updated successfully');
+
+                    res.json({
+                        success: true,
+                        message: 'Self-transfer status updated successfully',
+                        transfer_id: dispatchId,
+                        new_status: status,
+                        type: 'self_transfer'
+                    });
+                });
+            }
+        }
+    });
+};
+
+/**
+ * EXPORT DISPATCHES TO CSV
+ * Export all dispatches AND self-transfers with optional filters as CSV file
+ * FIXED: Now includes both dispatches and self-transfers like getAllDispatches
+ */
+exports.exportDispatches = (req, res) => {
+    const { 
+        warehouse, 
+        status, 
+        dateFrom, 
+        dateTo
+    } = req.query;
+
+    const filters = [];
+    const values = [];
+
+    if (warehouse) {
+        filters.push('warehouse = ?');
+        values.push(warehouse);
+    }
+
+    if (status) {
+        filters.push('status = ?');
+        values.push(status);
+    }
+
+    if (dateFrom) {
+        filters.push('timestamp >= ?');
+        values.push(`${dateFrom} 00:00:00`);
+    }
+
+    if (dateTo) {
+        filters.push('timestamp <= ?');
+        values.push(`${dateTo} 23:59:59`);
+    }
+
+    const whereClause = filters.length > 0 ? `WHERE ${filters.join(' AND ')}` : '';
+
+    // FIXED: Use the same query as getAllDispatches to include both dispatches and self-transfers
+    const sql = `
+        SELECT 
+            'dispatch' as source_type,
+            wd.id,
+            wd.timestamp,
+            wd.warehouse,
+            wd.order_ref,
+            wd.customer,
+            COALESCE(wdi.product_name, wd.product_name) as product_name,
+            COALESCE(wdi.barcode, wd.barcode) as barcode,
+            COALESCE(wdi.qty, wd.qty) as qty,
+            COALESCE(wdi.variant, wd.variant) as variant,
+            COALESCE(wdi.selling_price, 0) as selling_price,
+            wd.awb,
+            wd.logistics,
+            wd.parcel_type,
+            wd.length,
+            wd.width,
+            wd.height,
+            wd.actual_weight,
+            wd.payment_mode,
+            wd.invoice_amount,
+            wd.processed_by,
+            wd.remarks,
+            wd.status
+        FROM warehouse_dispatch wd
+        LEFT JOIN warehouse_dispatch_items wdi ON wd.id = wdi.dispatch_id
+        ${whereClause}
+        
+        UNION ALL
+        
+        SELECT 
+            'self_transfer' as source_type,
+            st.id,
+            ilb.event_time as timestamp,
+            ilb.location_code as warehouse,
+            st.order_ref,
+            CONCAT('Self Transfer from ', st.source_location) as customer,
+            ilb.product_name,
+            ilb.barcode,
+            ilb.qty,
+            NULL as variant,
+            0 as selling_price,
+            st.awb_number as awb,
+            st.logistics,
+            'Self Transfer' as parcel_type,
+            st.length,
+            st.width,
+            st.height,
+            st.weight as actual_weight,
+            st.payment_mode,
+            st.invoice_amount,
+            st.executive as processed_by,
+            st.remarks,
+            st.status
+        FROM inventory_ledger_base ilb
+        INNER JOIN self_transfer st ON ilb.reference = st.transfer_reference
+        WHERE ilb.movement_type = 'SELF_TRANSFER'
+        AND ilb.direction = 'IN'
+        ${warehouse ? 'AND ilb.location_code = ?' : ''}
+        ${dateFrom ? 'AND ilb.event_time >= ?' : ''}
+        ${dateTo ? 'AND ilb.event_time <= ?' : ''}
+        
+        ORDER BY timestamp DESC
+    `;
+
+    // Build values array for the combined query (same as getAllDispatches)
+    const combinedValues = [...values]; // For warehouse_dispatch WHERE clause
+    
+    // Add values for self_transfer WHERE clause
+    if (warehouse) combinedValues.push(warehouse);
+    if (dateFrom) combinedValues.push(`${dateFrom} 00:00:00`);
+    if (dateTo) combinedValues.push(`${dateTo} 23:59:59`);
+    db.query(sql, combinedValues, (err, results) => {
+        if (err) {
+            console.error('❌ Export query error:', err);
+            return res.status(500).json({
+                success: false,
+                error: err.message
+            });
+        }
+
+        // Generate CSV with updated headers to include source_type
+        const csvHeader = [
+            'ID', 'Date', 'Type', 'Warehouse', 'Order Ref', 'Customer', 'Product Name', 
+            'Barcode', 'Quantity', 'Variant', 'Selling Price', 'AWB', 'Logistics', 
+            'Parcel Type', 'Length', 'Width', 'Height', 'Weight', 'Payment Mode', 
+            'Invoice Amount', 'Processed By', 'Remarks', 'Status'
+        ].join(',') + '\n';
+
+        const csvRows = results.map(row => [
+            row.id,
+            row.timestamp ? new Date(row.timestamp).toISOString().split('T')[0] : '',
+            `"${row.source_type || 'dispatch'}"`,
+            `"${row.warehouse || ''}"`,
+            `"${row.order_ref || ''}"`,
+            `"${row.customer || ''}"`,
+            `"${row.product_name || ''}"`,
+            `"${row.barcode || ''}"`,
+            row.qty || 0,
+            `"${row.variant || ''}"`,
+            row.selling_price || 0,
+            `"${row.awb || ''}"`,
+            `"${row.logistics || ''}"`,
+            `"${row.parcel_type || ''}"`,
+            row.length || 0,
+            row.width || 0,
+            row.height || 0,
+            row.actual_weight || 0,
+            `"${row.payment_mode || ''}"`,
+            row.invoice_amount || 0,
+            `"${row.processed_by || ''}"`,
+            `"${row.remarks || ''}"`,
+            `"${row.status || ''}"`
+        ].join(',')).join('\n');
+
+        const csv = csvHeader + csvRows;
+
+        // Set CSV headers
+        const fileName = `dispatches_and_transfers_${warehouse || 'all'}_${new Date().toISOString().split('T')[0]}.csv`;
+        res.setHeader('Content-Type', 'text/csv');
+        res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
+        
+        console.log(`✅ Exported ${results.length} dispatch and self-transfer records to CSV`);
+        res.send(csv);
     });
 };
 

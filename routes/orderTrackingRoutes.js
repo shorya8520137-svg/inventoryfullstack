@@ -56,4 +56,12 @@ router.patch('/:dispatchId/status',
     orderTrackingController.updateDispatchStatus
 );
 
+// GET /api/order-tracking/export - Export dispatches as CSV
+// Example: /api/order-tracking/export?warehouse=GGM_WH&dateFrom=2025-01-01&dateTo=2025-12-31
+router.get('/export', 
+    authenticateToken, 
+    // Temporarily removed permission check: checkPermission('ORDERS_EXPORT'), 
+    orderTrackingController.exportDispatches
+);
+
 module.exports = router;

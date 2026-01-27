@@ -95,6 +95,32 @@ exports.addStock = (req, res) => {
                         );
                     }
 
+                    // Log INVENTORY_ADD audit using PermissionsController
+                    if (req.user) {
+                        const ipAddress = req.headers['x-forwarded-for']?.split(',')[0]?.trim() ||
+                                         req.headers['x-real-ip'] ||
+                                         req.connection.remoteAddress ||
+                                         req.ip ||
+                                         '127.0.0.1';
+                        
+                        const PermissionsController = require('../controllers/permissionsController');
+                        PermissionsController.createAuditLog(req.user.id, 'CREATE', 'INVENTORY', null, {
+                            user_name: req.user.name || 'Unknown',
+                            user_email: req.user.email || 'Unknown',
+                            product_name,
+                            barcode,
+                            variant,
+                            warehouse,
+                            quantity,
+                            unit_cost,
+                            source_type,
+                            reference,
+                            create_time: new Date().toISOString(),
+                            ip_address: ipAddress,
+                            user_agent: req.get('User-Agent') || 'Unknown'
+                        });
+                    }
+
                     res.status(201).json({
                         success: true,
                         message: 'Stock added successfully',

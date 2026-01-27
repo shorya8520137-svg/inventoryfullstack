@@ -17,6 +17,7 @@ export default function ReturnModal({ onClose }) {
     const [selectedProduct, setSelectedProduct] = useState(null);
 
     const [qty, setQty] = useState(1);
+    const [awb, setAwb] = useState(""); // Added AWB field
     const [subtype, setSubtype] = useState("");
     const [loading, setLoading] = useState(false);
     const [msg, setMsg] = useState("");
@@ -73,7 +74,7 @@ export default function ReturnModal({ onClose }) {
     -------------------------------- */
     async function submit() {
         if (!selectedWarehouse || !selectedProduct || !qty) {
-            setMsg("Please complete all fields");
+            setMsg("Please complete all required fields");
             return;
         }
 
@@ -93,6 +94,7 @@ export default function ReturnModal({ onClose }) {
                     barcode: selectedProduct.barcode,
                     warehouse: selectedWarehouse.warehouse_code,
                     quantity: Number(qty),
+                    awb: awb || undefined, // Added AWB field
                     subtype: subtype || undefined
                 })
             });
@@ -215,6 +217,17 @@ export default function ReturnModal({ onClose }) {
                         min="1"
                         value={qty}
                         onChange={e => setQty(e.target.value)}
+                    />
+                </div>
+
+                {/* AWB Number */}
+                <div className={styles.field}>
+                    <label className={styles.label}>AWB Number (optional)</label>
+                    <input
+                        className={styles.input}
+                        placeholder="Enter AWB number"
+                        value={awb}
+                        onChange={e => setAwb(e.target.value)}
                     />
                 </div>
 

@@ -1,15 +1,18 @@
 const bcrypt = require('bcryptjs');
 const db = require('../db/connection');
 const { generateToken, getUserPermissions } = require('../middleware/auth');
+const ExistingSchemaNotificationService = require('../services/ExistingSchemaNotificationService');
+const IPGeolocationTracker = require('../IPGeolocationTracker');
+const TwoFactorAuthService = require('../services/TwoFactorAuthService');
 
 /**
- * LOGIN USER
+ * LOGIN USER (with 2FA support)
  */
 exports.login = async (req, res) => {
     try {
-        const { email, password, username } = req.body;
+        const { email, password, username, two_factor_token } = req.body;
 
-        console.log('🔐 Login attempt:', { email, username });
+        console.log('🔐 Login attempt:', { email, username, has_2fa_token: !!two_factor_token });
 
         if (!email && !username) {
             return res.status(400).json({
@@ -34,6 +37,7 @@ exports.login = async (req, res) => {
                 u.password,
                 u.role_id,
                 u.is_active,
+                u.two_factor_enabled,
                 COALESCE(r.name, 'viewer') as role_name,
                 COALESCE(r.display_name, 'Viewer') as role_display_name
             FROM users u
@@ -89,6 +93,41 @@ exports.login = async (req, res) => {
                 });
             }
 
+            // Check if 2FA is enabled for this user
+            if (user.two_factor_enabled) {
+                // If 2FA is enabled but no token provided, request 2FA token
+                if (!two_factor_token) {
+                    return res.status(200).json({
+                        success: false,
+                        requires_2fa: true,
+                        user_id: user.id,
+                        message: 'Two-factor authentication required'
+                    });
+                }
+
+                // Verify 2FA token
+                try {
+                    const verification = await TwoFactorAuthService.verifyLoginToken(user.id, two_factor_token);
+                    if (!verification.success) {
+                        return res.status(400).json({
+                            success: false,
+                            message: 'Invalid 2FA token'
+                        });
+                    }
+                    
+                    console.log(`✅ 2FA verification successful (${verification.method})`);
+                    if (verification.remaining_codes !== undefined) {
+                        console.log(`⚠️ Backup codes remaining: ${verification.remaining_codes}`);
+                    }
+                } catch (twoFactorError) {
+                    console.error('2FA verification error:', twoFactorError);
+                    return res.status(400).json({
+                        success: false,
+                        message: 'Invalid 2FA token'
+                    });
+                }
+            }
+
             // Get user permissions
             try {
                 const permissions = await getUserPermissions(user.id, user.role_id);
@@ -105,6 +144,31 @@ exports.login = async (req, res) => {
                 });
 
                 console.log('✅ Login successful for user:', user.email);
+
+                // Send login notification to other users
+                try {
+                    const geoTracker = new IPGeolocationTracker();
+                    const clientIP = req.ip || req.connection.remoteAddress || 'Unknown';
+                    let location = 'Unknown Location';
+                    
+                    try {
+                        const locationData = await geoTracker.getLocationData(clientIP);
+                        location = `${locationData.city}, ${locationData.country}`;
+                    } catch (geoError) {
+                        console.log('⚠️ Could not get location for login notification');
+                    }
+                    
+                    // Send notification to all other users
+                    ExistingSchemaNotificationService.notifyUserLogin(user.id, user.name, clientIP)
+                        .then(result => {
+                            console.log(`📱 Login notification sent to ${result.totalUsers || 0} users`);
+                        })
+                        .catch(notifError => {
+                            console.error('Login notification error:', notifError);
+                        });
+                } catch (error) {
+                    console.error('Login notification setup error:', error);
+                }
 
                 res.json({
                     success: true,

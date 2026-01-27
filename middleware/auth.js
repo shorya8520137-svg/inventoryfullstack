@@ -122,6 +122,11 @@ const checkPermission = (permissionName) => {
 };
 
 /**
+ * Alias for requirePermission (for compatibility)
+ */
+const requirePermission = checkPermission;
+
+/**
  * Get user permissions
  */
 const getUserPermissions = async (userId, roleId) => {
@@ -148,6 +153,7 @@ module.exports = {
     generateToken,
     authenticateToken,
     checkPermission,
+    requirePermission,
     getUserPermissions,
     JWT_SECRET
 };

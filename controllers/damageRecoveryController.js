@@ -1,4 +1,8 @@
 const db = require('../db/connection');
+const EventAuditLogger = require('../EventAuditLogger');
+
+// Initialize event audit logger
+const eventAuditLogger = new EventAuditLogger();
 
 /**
  * =====================================================
@@ -179,6 +183,18 @@ exports.reportDamage = (req, res) => {
                                 }
 
                                 console.log('✅ Transaction committed successfully');
+                                
+                                // Log DAMAGE audit using EventAuditLogger
+                                if (req.user) {
+                                    eventAuditLogger.logDamageCreate(req.user, {
+                                        damage_id: damageId,
+                                        product_name: product_type,
+                                        quantity: qty,
+                                        reason: 'Damage reported',
+                                        location: inventory_location
+                                    }, req, 'success');
+                                }
+                                
                                 res.status(201).json({
                                     success: true,
                                     message: 'Damage reported successfully',
@@ -341,6 +357,29 @@ exports.recoverStock = (req, res) => {
                             }
 
                             console.log('✅ Transaction committed successfully');
+                            
+                            // Log RECOVERY audit using EventAuditLogger
+                            if (req.user) {
+                                eventAuditLogger.logEvent({
+                                    user_id: req.user.id,
+                                    action: 'CREATE',
+                                    resource: 'RECOVERY',
+                                    resource_id: recoveryId.toString(),
+                                    details: {
+                                        user_name: req.user.name,
+                                        user_email: req.user.email,
+                                        recovery_id: recoveryId,
+                                        product_name: product_type,
+                                        quantity: qty,
+                                        location: inventory_location,
+                                        create_time: new Date().toISOString(),
+                                        status: 'success'
+                                    },
+                                    ip_address: eventAuditLogger.getClientIP(req),
+                                    user_agent: req.get('User-Agent') || 'Unknown'
+                                });
+                            }
+                            
                             res.status(201).json({
                                 success: true,
                                 message: 'Stock recovered successfully',

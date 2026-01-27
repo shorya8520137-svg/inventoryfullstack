@@ -1,4 +1,9 @@
 const db = require('../db/connection');
+const ProductionEventAuditLogger = require('../ProductionEventAuditLogger');
+const ExistingSchemaNotificationService = require('../services/ExistingSchemaNotificationService');
+
+// Initialize production event audit logger (fixes user_id and ip_address NULL issues + Cloudflare IP tracking)
+const eventAuditLogger = new ProductionEventAuditLogger();
 
 /**
  * =====================================================
@@ -10,7 +15,7 @@ const db = require('../db/connection');
 /**
  * CREATE NEW DISPATCH - Enhanced for frontend form
  */
-exports.createDispatch = (req, res) => {
+exports.createDispatch = async (req, res) => {
     // Handle both API formats (original and frontend form)
     const isFormData = req.body.selectedWarehouse !== undefined;
     
@@ -237,6 +242,35 @@ exports.createDispatch = (req, res) => {
                                         );
                                     }
 
+                                    // Log DISPATCH audit activity (FIXED)
+                                    if (req.user) {
+                                        const totalQty = products.reduce((sum, p) => sum + (parseInt(p.qty) || 1), 0);
+                                        const productNames = products.map(p => extractProductName(p.name)).join(', ');
+                                        
+                                        const ipAddress = req.headers['x-forwarded-for']?.split(',')[0]?.trim() ||
+                                                         req.headers['x-real-ip'] ||
+                                                         req.connection.remoteAddress ||
+                                                         req.ip ||
+                                                         '127.0.0.1';
+                                        
+                                        const PermissionsController = require('../controllers/permissionsController');
+                                        PermissionsController.createAuditLog(req.user.id, 'CREATE', 'DISPATCH', dispatchId, {
+                                            user_name: req.user.name || 'Unknown',
+                                            user_email: req.user.email || 'Unknown',
+                                            dispatch_id: dispatchId,
+                                            order_ref: order_ref,
+                                            customer: customer,
+                                            product_name: productNames,
+                                            quantity: totalQty,
+                                            warehouse: warehouse,
+                                            awb_number: awb,
+                                            logistics: logistics,
+                                            create_time: new Date().toISOString(),
+                                            ip_address: ipAddress,
+                                            user_agent: req.get('User-Agent') || 'Unknown'
+                                        }, () => {});
+                                    }
+
                                     res.status(201).json({
                                         success: true,
                                         message: 'Dispatch created successfully',
@@ -246,6 +280,28 @@ exports.createDispatch = (req, res) => {
                                         products_dispatched: totalProducts,
                                         total_quantity: products.reduce((sum, p) => sum + (parseInt(p.qty) || 1), 0)
                                     });
+
+                                    // Send dispatch notification to other users
+                                    try {
+                                        const userName = req.user?.name || 'Unknown User';
+                                        const productNames = products.map(p => p.product_name).join(', ');
+                                        const totalQty = products.reduce((sum, p) => sum + (parseInt(p.qty) || 1), 0);
+                                        
+                                        ExistingSchemaNotificationService.notifyDispatchCreated(
+                                            req.user?.id || 0,
+                                            userName,
+                                            productNames,
+                                            totalQty,
+                                            req.ip || req.connection.remoteAddress || 'Unknown',
+                                            dispatchId
+                                        ).then(result => {
+                                            console.log(`📱 Dispatch notification sent to ${result.totalUsers || 0} users`);
+                                        }).catch(notifError => {
+                                            console.error('Dispatch notification error:', notifError);
+                                        });
+                                    } catch (error) {
+                                        console.error('Dispatch notification setup error:', error);
+                                    }
                                 });
                             }
                         });
@@ -325,6 +381,32 @@ exports.createDispatch = (req, res) => {
                                     return db.rollback(() =>
                                         res.status(500).json({ success: false, message: err.message })
                                     );
+                                }
+
+                                // Log DISPATCH audit activity for single product (FIXED)
+                                if (req.user) {
+                                    const ipAddress = req.headers['x-forwarded-for']?.split(',')[0]?.trim() ||
+                                                     req.headers['x-real-ip'] ||
+                                                     req.connection.remoteAddress ||
+                                                     req.ip ||
+                                                     '127.0.0.1';
+                                    
+                                    const PermissionsController = require('../controllers/permissionsController');
+                                    PermissionsController.createAuditLog(req.user.id, 'CREATE', 'DISPATCH', dispatchId, {
+                                        user_name: req.user.name || 'Unknown',
+                                        user_email: req.user.email || 'Unknown',
+                                        dispatch_id: dispatchId,
+                                        order_ref: order_ref,
+                                        customer: customer,
+                                        product_name: product_name,
+                                        quantity: quantity,
+                                        warehouse: warehouse,
+                                        awb_number: awb,
+                                        logistics: logistics,
+                                        create_time: new Date().toISOString(),
+                                        ip_address: ipAddress,
+                                        user_agent: req.get('User-Agent') || 'Unknown'
+                                    }, () => {});
                                 }
 
                                 res.status(201).json({

@@ -94,8 +94,21 @@ class PermissionsController {
                         { expiresIn: '24h' }
                     );
                     
-                    // Log audit
-                    PermissionsController.createAuditLog(user.id, 'LOGIN', 'USER', user.id, { ip: req.ip }, () => {});
+                    // Log LOGIN audit with proper IP and user agent
+                    const ipAddress = req.headers['x-forwarded-for']?.split(',')[0]?.trim() ||
+                                     req.headers['x-real-ip'] ||
+                                     req.connection.remoteAddress ||
+                                     req.ip ||
+                                     '127.0.0.1';
+                    
+                    PermissionsController.createAuditLog(user.id, 'LOGIN', 'SESSION', user.id, { 
+                        user_name: user.name,
+                        user_email: user.email,
+                        user_role: user.role_name,
+                        login_time: new Date().toISOString(),
+                        ip_address: ipAddress,
+                        user_agent: req.get('User-Agent') || 'Unknown'
+                    }, () => {});
                     
                     res.json({
                         success: true,
@@ -124,8 +137,20 @@ class PermissionsController {
     
     static logout(req, res) {
         try {
-            // Log audit
-            PermissionsController.createAuditLog(req.user?.userId, 'LOGOUT', 'USER', req.user?.userId, { ip: req.ip }, () => {});
+            // Log LOGOUT audit with proper IP and user agent
+            const ipAddress = req.headers['x-forwarded-for']?.split(',')[0]?.trim() ||
+                             req.headers['x-real-ip'] ||
+                             req.connection.remoteAddress ||
+                             req.ip ||
+                             '127.0.0.1';
+            
+            PermissionsController.createAuditLog(req.user?.id, 'LOGOUT', 'SESSION', req.user?.id, { 
+                user_name: req.user?.name || 'Unknown',
+                user_email: req.user?.email || 'Unknown',
+                logout_time: new Date().toISOString(),
+                ip_address: ipAddress,
+                user_agent: req.get('User-Agent') || 'Unknown'
+            }, () => {});
             
             res.json({
                 success: true,
@@ -327,7 +352,7 @@ class PermissionsController {
                     }
                     
                     // Log audit
-                    PermissionsController.createAuditLog(req.user?.userId, 'CREATE', 'USER', result.insertId, {
+                    PermissionsController.createAuditLog(req.user?.id, 'CREATE', 'USER', result.insertId, {
                         name, email, role_id, is_active
                     }, () => {});
                     
@@ -469,7 +494,7 @@ class PermissionsController {
                 }
                 
                 // Log audit
-                PermissionsController.createAuditLog(req.user?.userId, 'DELETE', 'USER', userId, {}, () => {});
+                PermissionsController.createAuditLog(req.user?.id, 'DELETE', 'USER', userId, {}, () => {});
                 
                 res.json({
                     success: true,
@@ -556,7 +581,7 @@ class PermissionsController {
                     }
                     
                     // Log audit
-                    PermissionsController.createAuditLog(req.user?.userId, 'CREATE', 'ROLE', roleId, {
+                    PermissionsController.createAuditLog(req.user?.id, 'CREATE', 'ROLE', roleId, {
                         name, displayName: finalDisplayName, description, color, permissionIds
                     }, () => {});
                     
@@ -568,7 +593,7 @@ class PermissionsController {
                 });
             } else {
                 // No permissions to assign
-                PermissionsController.createAuditLog(req.user?.userId, 'CREATE', 'ROLE', roleId, {
+                PermissionsController.createAuditLog(req.user?.id, 'CREATE', 'ROLE', roleId, {
                     name, displayName: finalDisplayName, description, color, permissionIds
                 }, () => {});
                 
@@ -647,7 +672,7 @@ class PermissionsController {
                             }
                             
                             // Log audit
-                            PermissionsController.createAuditLog(req.user?.userId, 'UPDATE', 'ROLE', roleId, {
+                            PermissionsController.createAuditLog(req.user?.id, 'UPDATE', 'ROLE', roleId, {
                                 name, displayName: finalDisplayName, description, color, permissionIds
                             }, () => {});
                             
@@ -658,7 +683,7 @@ class PermissionsController {
                         });
                     } else {
                         // No permissions to assign
-                        PermissionsController.createAuditLog(req.user?.userId, 'UPDATE', 'ROLE', roleId, {
+                        PermissionsController.createAuditLog(req.user?.id, 'UPDATE', 'ROLE', roleId, {
                             name, displayName: finalDisplayName, description, color, permissionIds
                         }, () => {});
                         
@@ -670,7 +695,7 @@ class PermissionsController {
                 });
             } else {
                 // No permission update requested
-                PermissionsController.createAuditLog(req.user?.userId, 'UPDATE', 'ROLE', roleId, {
+                PermissionsController.createAuditLog(req.user?.id, 'UPDATE', 'ROLE', roleId, {
                     name, displayName: finalDisplayName, description, color
                 }, () => {});
                 
@@ -748,7 +773,7 @@ class PermissionsController {
     
     // ================= AUDIT LOG ================= //
     
-    static getAuditLogs(req, res) {
+    static async getAuditLogs(req, res) {
         const { page = 1, limit = 50, userId, action, resource } = req.query;
         const offset = (page - 1) * limit;
         
@@ -770,6 +795,7 @@ class PermissionsController {
             params.push(resource);
         }
         
+        // Use basic query without location columns for now
         const logsSql = `
             SELECT al.*, u.name as user_name, u.email as user_email
             FROM audit_logs al
@@ -779,7 +805,7 @@ class PermissionsController {
             LIMIT ? OFFSET ?
         `;
         
-        db.query(logsSql, [...params, parseInt(limit), parseInt(offset)], (err, logs) => {
+        db.query(logsSql, [...params, parseInt(limit), parseInt(offset)], async (err, logs) => {
             if (err) {
                 console.error('Get audit logs error:', err);
                 return res.status(500).json({
@@ -787,6 +813,44 @@ class PermissionsController {
                     message: 'Failed to fetch audit logs'
                 });
             }
+            
+            // Add location data to logs that don't have it
+            const IPGeolocationTracker = require('../IPGeolocationTracker');
+            const geoTracker = new IPGeolocationTracker();
+            
+            const enhancedLogs = await Promise.all(logs.map(async (log) => {
+                let details;
+                try {
+                    details = typeof log.details === 'string' ? JSON.parse(log.details) : (log.details || {});
+                } catch {
+                    details = {};
+                }
+                
+                // Add location data if not already present and IP address exists
+                if (log.ip_address && !log.location_country && !details.location) {
+                    try {
+                        const locationData = await geoTracker.getLocationData(log.ip_address);
+                        details.location = {
+                            country: locationData.country,
+                            city: locationData.city,
+                            region: locationData.region,
+                            address: locationData.address,
+                            flag: locationData.flag,
+                            coordinates: `${locationData.latitude},${locationData.longitude}`,
+                            timezone: locationData.timezone,
+                            isp: locationData.isp
+                        };
+                        console.log(`📍 Added location for IP ${log.ip_address}: ${locationData.flag} ${locationData.city}, ${locationData.country}`);
+                    } catch (error) {
+                        console.log(`⚠️ Could not get location for IP ${log.ip_address}: ${error.message}`);
+                    }
+                }
+                
+                return {
+                    ...log,
+                    details: details
+                };
+            }));
             
             const countSql = `
                 SELECT COUNT(*) as total
@@ -806,7 +870,7 @@ class PermissionsController {
                 res.json({
                     success: true,
                     data: {
-                        logs,
+                        logs: enhancedLogs,
                         pagination: {
                             page: parseInt(page),
                             limit: parseInt(limit),
@@ -902,18 +966,38 @@ class PermissionsController {
     
     static createAuditLog(userId, action, resource, resourceId, details, callback) {
         const sql = `
-            INSERT INTO audit_logs (user_id, action, resource, resource_id, details)
-            VALUES (?, ?, ?, ?, ?)
+            INSERT INTO audit_logs (user_id, action, resource, resource_id, details, ip_address, user_agent)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
         `;
+        
+        // Extract IP and user agent from details if provided
+        const ipAddress = details?.ip_address || '127.0.0.1';
+        const userAgent = details?.user_agent || 'Unknown';
+        
+        // Clean details (remove IP and user agent to avoid duplication)
+        const cleanDetails = { ...details };
+        delete cleanDetails.ip_address;
+        delete cleanDetails.user_agent;
+        
+        const values = [
+            userId,
+            action,
+            resource,
+            resourceId,
+            JSON.stringify(cleanDetails),
+            ipAddress,  // FIXED: Now captures IP address
+            userAgent   // FIXED: Now captures user agent
+        ];
         
         // If no callback provided, return a promise (for async/await usage)
         if (!callback) {
             return new Promise((resolve, reject) => {
-                db.query(sql, [userId, action, resource, resourceId, JSON.stringify(details)], (err, result) => {
+                db.query(sql, values, (err, result) => {
                     if (err) {
                         console.error('Create audit log error:', err);
                         reject(err);
                     } else {
+                        console.log(`📝 Audit logged: ${action} ${resource} by user ${userId} from ${ipAddress}`);
                         resolve(result);
                     }
                 });
@@ -921,9 +1005,11 @@ class PermissionsController {
         }
         
         // Traditional callback usage
-        db.query(sql, [userId, action, resource, resourceId, JSON.stringify(details)], (err, result) => {
+        db.query(sql, values, (err, result) => {
             if (err) {
                 console.error('Create audit log error:', err);
+            } else {
+                console.log(`📝 Audit logged: ${action} ${resource} by user ${userId} from ${ipAddress}`);
             }
             callback(err, result);
         });

@@ -8,9 +8,8 @@ const dbConfig = {
     password: process.env.DB_PASSWORD || 'StrongPass@123',
     database: process.env.DB_NAME || 'inventory_db',
     port: process.env.DB_PORT || 3306,
-    acquireTimeout: 60000,
-    timeout: 60000,
-    reconnect: true,
+    connectionLimit: 10,
+    queueLimit: 0,
     multipleStatements: true
 };
 
