@@ -209,6 +209,13 @@ export default function LoginPage() {
                     </button>
                 </form>
             </div>
+
+            {/* Background Elements */}
+            <div className={styles.backgroundElements}>
+                <div className={styles.circle1}></div>
+                <div className={styles.circle2}></div>
+                <div className={styles.circle3}></div>
+            </div>
         </div>
     );
 }
