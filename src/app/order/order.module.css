@@ -3039,3 +3039,260 @@
 .chipClose:hover {
     background: rgba(255, 255, 255, 0.2);
 }
+
+/* ================= MISSING CSS CLASSES FOR ORDERSHEET.JSX ================= */
+
+/* Success Toast */
+.successToast {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: #10b981;
+    color: white;
+    padding: 12px 16px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    z-index: 1000;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+/* Search Components */
+.smartSearchWrapper {
+    flex: 1;
+    position: relative;
+    max-width: 400px;
+}
+
+.searchInputContainer {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 6px 8px;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    background: #ffffff;
+    flex-wrap: wrap;
+}
+
+.chip {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    background: #e0e7ff;
+    color: #3730a3;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 500;
+}
+
+.chipClose {
+    background: none;
+    border: none;
+    color: #6366f1;
+    cursor: pointer;
+    font-size: 14px;
+    padding: 0;
+    width: 16px;
+    height: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.smartSearchInput {
+    border: none;
+    outline: none;
+    flex: 1;
+    min-width: 120px;
+    font-size: 13px;
+    padding: 4px 0;
+}
+
+.dateInput {
+    padding: 6px 8px;
+    border: 1px solid #d1d5db;
+    border-radius: 4px;
+    font-size: 12px;
+    width: 130px;
+}
+
+/* Loading and Error States */
+.loadingState {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px;
+    color: #6b7280;
+}
+
+.spinner {
+    width: 24px;
+    height: 24px;
+    border: 2px solid #e5e7eb;
+    border-top: 2px solid #3b82f6;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-bottom: 12px;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.errorState {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px;
+    color: #dc2626;
+}
+
+.errorState button {
+    margin-top: 12px;
+    padding: 6px 12px;
+    background: #dc2626;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+/* Bulk Actions */
+.bulkActions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    margin-bottom: 16px;
+}
+
+.selectAllContainer {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.selectAllCheckbox {
+    width: 16px;
+    height: 16px;
+}
+
+.selectAllLabel {
+    font-size: 13px;
+    font-weight: 500;
+    color: #374151;
+}
+
+.selectedCount {
+    font-size: 13px;
+    color: #6b7280;
+    margin-right: 12px;
+}
+
+.bulkDeleteBtn {
+    padding: 6px 12px;
+    background: #dc2626;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.bulkDeleteBtn:hover:not(:disabled) {
+    background: #b91c1c;
+}
+
+.bulkDeleteBtn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* Table */
+.tableCard {
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    overflow: hidden;
+    margin-bottom: 16px;
+}
+
+.tableWrapper {
+    overflow-x: auto;
+}
+
+.table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.th {
+    background: #f9fafb;
+    padding: 12px 16px;
+    text-align: left;
+    font-size: 12px;
+    font-weight: 600;
+    color: #374151;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.tr {
+    border-bottom: 1px solid #f3f4f6;
+}
+
+.tr:hover {
+    background: #f9fafb;
+}
+
+.td {
+    padding: 12px 16px;
+    font-size: 13px;
+    color: #374151;
+    vertical-align: middle;
+}
+
+/* Pagination */
+.pagination {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    padding: 16px;
+}
+
+.pageBtn {
+    padding: 6px 12px;
+    background: #ffffff;
+    border: 1px solid #d1d5db;
+    border-radius: 4px;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.pageBtn:hover:not(.disabled) {
+    background: #f3f4f6;
+    border-color: #9ca3af;
+}
+
+.pageBtn.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    background: #f9fafb;
+}
+
+.pageInfo {
+    font-size: 13px;
+    color: #6b7280;
+    font-weight: 500;
+}
