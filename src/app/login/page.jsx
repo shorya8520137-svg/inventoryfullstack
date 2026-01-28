@@ -18,13 +18,19 @@ export default function LoginPage() {
         setError("");
         setLoading(true);
 
+        console.log("🚀 Form submitted - JavaScript is working!");
+
         try {
-            const apiBase = process.env.NEXT_PUBLIC_API_BASE;
+            // Use direct API base URL like the working simple login
+            const apiBase = process.env.NEXT_PUBLIC_API_BASE || "https://54.169.107.64:8443";
+            console.log("🔗 API Base:", apiBase);
 
             const requestBody = { email, password };
             if (requires2FA && twoFactorToken) {
                 requestBody.two_factor_token = twoFactorToken;
             }
+
+            console.log("📤 Request body:", requestBody);
 
             const response = await fetch(`${apiBase}/api/auth/login`, {
                 method: 'POST',
@@ -34,20 +40,26 @@ export default function LoginPage() {
                 body: JSON.stringify(requestBody),
             });
 
+            console.log("📥 Response status:", response.status);
             const data = await response.json();
+            console.log("📥 Response data:", data);
 
             if (data.success) {
                 localStorage.setItem('token', data.token);
                 localStorage.setItem('user', JSON.stringify(data.user));
+                console.log("✅ Login successful! Redirecting...");
                 window.location.href = "/products";
             } else if (data.requires_2fa) {
                 setRequires2FA(true);
                 setUserId(data.user_id);
                 setError("");
+                console.log("🔐 2FA required");
             } else {
                 setError(data.message || "Invalid credentials");
+                console.log("❌ Login failed:", data.message);
             }
         } catch (error) {
+            console.error("❌ Network error:", error);
             setError("Login failed. Please try again.");
         } finally {
             setLoading(false);
