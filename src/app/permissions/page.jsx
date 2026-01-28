@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { api } from "@/utils/api";
+import DeleteConfirmationModal from "@/components/DeleteConfirmationModal";
 import styles from "./permissions.module.css";
 
 export default function PermissionsPage() {
@@ -29,6 +30,14 @@ export default function PermissionsPage() {
     
     // Audit logs state
     const [auditLogs, setAuditLogs] = useState([]);
+    
+    // Delete confirmation modal state
+    const [deleteModal, setDeleteModal] = useState({
+        isOpen: false,
+        type: null, // 'user' or 'role'
+        item: null,
+        isLoading: false
+    });
 
     // Check permissions
     const canManageUsers = hasPermission('SYSTEM_USER_MANAGEMENT');
@@ -95,13 +104,51 @@ export default function PermissionsPage() {
     };
 
     const handleDeleteUser = async (userId) => {
-        if (!confirm("Are you sure you want to delete this user?")) return;
+        const user = users.find(u => u.id === userId);
+        if (!user) return;
+        
+        setDeleteModal({
+            isOpen: true,
+            type: 'user',
+            item: user,
+            isLoading: false
+        });
+    };
+
+    const handleDeleteRole = async (roleId) => {
+        const role = roles.find(r => r.id === roleId);
+        if (!role) return;
+        
+        setDeleteModal({
+            isOpen: true,
+            type: 'role',
+            item: role,
+            isLoading: false
+        });
+    };
+
+    const confirmDelete = async () => {
+        if (!deleteModal.item) return;
+        
+        setDeleteModal(prev => ({ ...prev, isLoading: true }));
+        
         try {
-            await api.deleteUser(userId);
+            if (deleteModal.type === 'user') {
+                await api.deleteUser(deleteModal.item.id);
+            } else if (deleteModal.type === 'role') {
+                await api.deleteRole(deleteModal.item.id);
+            }
+            
             await loadInitialData();
+            setDeleteModal({ isOpen: false, type: null, item: null, isLoading: false });
         } catch (err) {
             setError(err.message);
+            setDeleteModal(prev => ({ ...prev, isLoading: false }));
         }
+    };
+
+    const cancelDelete = () => {
+        setDeleteModal({ isOpen: false, type: null, item: null, isLoading: false });
     };
 
     const handleCreateRole = async (roleData) => {
@@ -121,16 +168,6 @@ export default function PermissionsPage() {
             await loadInitialData();
             setShowRoleModal(false);
             setSelectedRole(null);
-        } catch (err) {
-            setError(err.message);
-        }
-    };
-
-    const handleDeleteRole = async (roleId) => {
-        if (!confirm("Are you sure you want to delete this role?")) return;
-        try {
-            await api.deleteRole(roleId);
-            await loadInitialData();
         } catch (err) {
             setError(err.message);
         }
@@ -351,6 +388,35 @@ export default function PermissionsPage() {
                     onUpdate={loadInitialData}
                 />
             )}
+
+            {/* Delete Confirmation Modal */}
+            <DeleteConfirmationModal
+                isOpen={deleteModal.isOpen}
+                onClose={cancelDelete}
+                onConfirm={confirmDelete}
+                title={deleteModal.type === 'user' ? 'Delete User' : 'Delete Role'}
+                message={
+                    deleteModal.type === 'user' 
+                        ? 'Are you sure you want to delete this user account?' 
+                        : 'Are you sure you want to delete this role?'
+                }
+                itemName={deleteModal.item?.name || deleteModal.item?.display_name || ''}
+                itemType={deleteModal.type || 'item'}
+                details={
+                    deleteModal.type === 'user' && deleteModal.item ? {
+                        'Email': deleteModal.item.email,
+                        'Role': deleteModal.item.role_display_name || deleteModal.item.role_name,
+                        'Status': deleteModal.item.status === 'active' ? 'Active' : 'Inactive',
+                        'Last Login': deleteModal.item.last_login ? new Date(deleteModal.item.last_login).toLocaleDateString() : 'Never'
+                    } : deleteModal.type === 'role' && deleteModal.item ? {
+                        'Display Name': deleteModal.item.display_name,
+                        'Description': deleteModal.item.description || 'No description',
+                        'Users': `${deleteModal.item.user_count || 0} users assigned`
+                    } : null
+                }
+                isLoading={deleteModal.isLoading}
+                destructive={true}
+            />
         </div>
     );
 }
