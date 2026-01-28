@@ -168,13 +168,13 @@ const InventoryMenu = ({ onOpenOperation }) => {
             whileHover={{ scale: 1.02 }}
             transition={{ duration: 0.2 }}
         >
-            <motion.div 
-                className="h-8 w-8 shrink-0 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 border border-blue-200 flex items-center justify-center font-bold text-white shadow-sm"
+            <motion.img 
+                src="/hunhuny.jpeg" 
+                alt="hunyhuny logo"
+                className="h-8 w-8 shrink-0 rounded-lg border border-blue-200 shadow-sm object-cover"
                 whileHover={{ rotate: 5 }}
                 transition={{ duration: 0.2 }}
-            >
-                <Box size={16} />
-            </motion.div>
+            />
             <AnimatePresence>
                 {!collapsed && (
                     <motion.div 

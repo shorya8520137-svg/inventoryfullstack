@@ -80,23 +80,18 @@ export default function LoginPage() {
                         justifyContent: 'center',
                         marginBottom: '24px'
                     }}>
-                        <div style={{
-                            width: '48px',
-                            height: '48px',
-                            backgroundColor: '#4c5a7a',
-                            borderRadius: '12px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            marginRight: '12px'
-                        }}>
-                            <div style={{
-                                width: '24px',
-                                height: '24px',
-                                backgroundColor: 'white',
-                                borderRadius: '6px'
-                            }}></div>
-                        </div>
+                        <img 
+                            src="/hunhuny.jpeg" 
+                            alt="hunyhuny logo"
+                            style={{
+                                width: '48px',
+                                height: '48px',
+                                borderRadius: '12px',
+                                objectFit: 'cover',
+                                marginRight: '12px',
+                                border: '2px solid #e5e7eb'
+                            }}
+                        />
                         <div style={{ textAlign: 'left' }}>
                             <div style={{ 
                                 fontSize: '24px', 
