@@ -88,7 +88,7 @@ class NotificationController {
             
             const query = `
                 UPDATE notifications 
-                SET is_read = TRUE, updated_at = CURRENT_TIMESTAMP
+                SET is_read = TRUE, read_at = CURRENT_TIMESTAMP
                 WHERE user_id = ? AND is_read = FALSE
             `;
             
