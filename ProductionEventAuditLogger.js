@@ -111,6 +111,19 @@ class ProductionEventAuditLogger {
         }
     }
 
+    // Log return creation (alias for compatibility)
+    async logReturnCreate(user, returnData, req = null) {
+        return await this.logReturnEvent(
+            user.id,
+            user.name,
+            user.email,
+            user.role_name || user.role,
+            'CREATE',
+            returnData,
+            req
+        );
+    }
+
     // Log dispatch creation (alias for compatibility)
     async logDispatchCreate(user, dispatchData, req = null) {
         return await this.logDispatchEvent(

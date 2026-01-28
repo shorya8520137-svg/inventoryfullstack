@@ -109,6 +109,55 @@ class EventAuditLogger {
         }
     }
 
+    // Log return creation event (for returns controller compatibility)
+    async logReturnCreate(user, returnData, req = null) {
+        try {
+            const ipAddress = req ? this.getClientIP(req) : '127.0.0.1';
+            const userAgent = req ? (req.get('User-Agent') || 'Unknown') : 'Unknown';
+            
+            // Get location data
+            const location = await this.geoTracker.getLocationData(ipAddress);
+            
+            const auditData = {
+                user_id: user.id,
+                user_name: user.name,
+                user_email: user.email,
+                user_role: user.role_name || user.role,
+                action: 'CREATE',
+                resource_type: 'RETURN',
+                resource_id: returnData.return_id || null,
+                resource_name: `${returnData.product_name} Return`,
+                description: `${user.name} created return for ${returnData.quantity}x ${returnData.product_name}`,
+                details: JSON.stringify({
+                    product_name: returnData.product_name,
+                    quantity: returnData.quantity,
+                    reason: returnData.reason,
+                    awb: returnData.awb,
+                    return_id: returnData.return_id,
+                    location_info: location
+                }),
+                ip_address: ipAddress,
+                user_agent: userAgent,
+                request_method: req ? req.method : 'POST',
+                request_url: req ? req.originalUrl : '/api/returns',
+                location_country: location?.country,
+                location_city: location?.city,
+                location_region: location?.region,
+                location_coordinates: location?.coordinates
+            };
+
+            await this.insertAuditLog(auditData);
+            
+            console.log(`↩️ Return audit logged: ${user.name} created return for ${returnData.product_name}`);
+            
+            return { success: true, auditData };
+            
+        } catch (error) {
+            console.error('Return audit logging error:', error);
+            return { success: false, error: error.message };
+        }
+    }
+
     // Generic event logging method
     async logEvent(eventData) {
         try {
