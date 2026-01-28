@@ -26,23 +26,32 @@ export default function ClientLayout({ children }) {
     const router = useRouter();
 
     // Don't show sidebar on login page
-    const isLoginPage = pathname === "/login";
+    const isLoginPage = pathname === "/login" || pathname === "/simple-login";
 
-    // Redirect to login if not authenticated (except on login page)
-    if (!loading && !user && !isLoginPage) {
+    // Wait for loading to complete before any redirects
+    if (loading) {
+        return (
+            <div className="flex items-center justify-center min-h-screen">
+                <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
+            </div>
+        );
+    }
+
+    // Show login page without sidebar (no redirects on login page)
+    if (isLoginPage) {
+        return <>{children}</>;
+    }
+
+    // Redirect to login if not authenticated (only after loading is complete)
+    if (!user) {
         router.push("/login");
         return null;
     }
 
-    // If on login page and already logged in, redirect to products
-    if (!loading && user && isLoginPage) {
+    // If authenticated and on login page, redirect to products
+    if (user && isLoginPage) {
         router.push("/products");
         return null;
-    }
-
-    // Show login page without sidebar
-    if (isLoginPage) {
-        return <>{children}</>;
     }
     const [openFIFO, setOpenFIFO] = useState(false);
     const [operationsOpen, setOperationsOpen] = useState(false);

@@ -20,12 +20,12 @@ export default function LoginPage() {
 
         try {
             const apiBase = process.env.NEXT_PUBLIC_API_BASE;
-            
+
             const requestBody = { email, password };
             if (requires2FA && twoFactorToken) {
                 requestBody.two_factor_token = twoFactorToken;
             }
-            
+
             const response = await fetch(`${apiBase}/api/auth/login`, {
                 method: 'POST',
                 headers: {
@@ -41,7 +41,6 @@ export default function LoginPage() {
                 localStorage.setItem('user', JSON.stringify(data.user));
                 window.location.href = "/products";
             } else if (data.requires_2fa) {
-                // 2FA is required
                 setRequires2FA(true);
                 setUserId(data.user_id);
                 setError("");
@@ -82,8 +81,8 @@ export default function LoginPage() {
                         {requires2FA ? "Two-Factor Authentication" : "Welcome Back"}
                     </h1>
                     <p className={styles.subtitle}>
-                        {requires2FA 
-                            ? "Enter the 6-digit code from your authenticator app" 
+                        {requires2FA
+                            ? "Enter the 6-digit code from your authenticator app"
                             : "Sign in to your account"
                         }
                     </p>
@@ -219,4 +218,3 @@ export default function LoginPage() {
         </div>
     );
 }
-
