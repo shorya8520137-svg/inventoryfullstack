@@ -797,7 +797,7 @@ class PermissionsController {
         
         // Use basic query without location columns for now
         const logsSql = `
-            SELECT al.*, u.name as user_name, u.email as user_email
+            SELECT al.*, al.resource_type as resource, u.name as user_name, u.email as user_email
             FROM audit_logs al
             LEFT JOIN users u ON al.user_id = u.id
             WHERE ${whereClause}
