@@ -36,7 +36,7 @@ const NotificationsPage = () => {
             const token = localStorage.getItem('token');
             if (!token) return;
 
-            const response = await fetch(`/api/notifications?page=${pageNum}&limit=20`, {
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE || 'https://54.169.107.64:8443'}/api/notifications?page=${pageNum}&limit=20`, {
                 headers: {
                     'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json'
@@ -68,7 +68,7 @@ const NotificationsPage = () => {
             const token = localStorage.getItem('token');
             if (!token) return;
 
-            const response = await fetch(`/api/notifications/${notificationId}/read`, {
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE || 'https://54.169.107.64:8443'}/api/notifications/${notificationId}/read`, {
                 method: 'PUT',
                 headers: {
                     'Authorization': `Bearer ${token}`,
@@ -97,7 +97,7 @@ const NotificationsPage = () => {
             const token = localStorage.getItem('token');
             if (!token) return;
 
-            const response = await fetch('/api/notifications/mark-all-read', {
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE || 'https://54.169.107.64:8443'}/api/notifications/mark-all-read`, {
                 method: 'PUT',
                 headers: {
                     'Authorization': `Bearer ${token}`,
