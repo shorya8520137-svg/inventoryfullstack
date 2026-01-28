@@ -111,6 +111,45 @@ class ProductionEventAuditLogger {
         }
     }
 
+    // Log dispatch creation (alias for compatibility)
+    async logDispatchCreate(user, dispatchData, req = null) {
+        return await this.logDispatchEvent(
+            user.id,
+            user.name,
+            user.email,
+            user.role_name || user.role,
+            'CREATE',
+            dispatchData,
+            req
+        );
+    }
+
+    // Log damage creation (alias for compatibility)
+    async logDamageCreate(user, damageData, req = null) {
+        return await this.logDamageEvent(
+            user.id,
+            user.name,
+            user.email,
+            user.role_name || user.role,
+            'CREATE',
+            damageData,
+            req
+        );
+    }
+
+    // Log inventory update (alias for compatibility)
+    async logInventoryUpdate(user, inventoryData, req = null) {
+        return await this.logInventoryEvent(
+            user.id,
+            user.name,
+            user.email,
+            user.role_name || user.role,
+            'UPDATE',
+            inventoryData,
+            req
+        );
+    }
+
     // Log damage event
     async logDamageEvent(userId, userName, userEmail, userRole, action, damageData, req) {
         try {
