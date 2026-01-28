@@ -59,6 +59,11 @@ export default function OrderSheet() {
     const [awbFilter, setAwbFilter] = useState("");
     const [amountSort, setAmountSort] = useState(""); // "asc" or "desc"
 
+    // Bulk delete functionality
+    const [selectedOrders, setSelectedOrders] = useState([]);
+    const [selectAll, setSelectAll] = useState(false);
+    const [bulkDeleting, setBulkDeleting] = useState(false);
+
     const statusOptions = [
         { value: 'Pending', label: 'Pending', color: '#f59e0b', bg: '#fef3c7' },
         { value: 'Processing', label: 'Processing', color: '#3b82f6', bg: '#dbeafe' },
@@ -523,6 +528,84 @@ export default function OrderSheet() {
         setShowDeleteConfirm(null);
     };
 
+    // Bulk delete functionality
+    const handleSelectAll = () => {
+        if (selectAll) {
+            setSelectedOrders([]);
+            setSelectAll(false);
+        } else {
+            setSelectedOrders(paginatedOrders.map(order => order.id));
+            setSelectAll(true);
+        }
+    };
+
+    const handleSelectOrder = (orderId) => {
+        setSelectedOrders(prev => {
+            const newSelected = prev.includes(orderId) 
+                ? prev.filter(id => id !== orderId)
+                : [...prev, orderId];
+            
+            // Update select all state
+            setSelectAll(newSelected.length === paginatedOrders.length);
+            return newSelected;
+        });
+    };
+
+    const handleBulkDelete = async () => {
+        if (selectedOrders.length === 0) return;
+        
+        if (!confirm(`Are you sure you want to delete ${selectedOrders.length} selected orders? This action cannot be undone.`)) {
+            return;
+        }
+
+        setBulkDeleting(true);
+        let successCount = 0;
+        let failCount = 0;
+
+        try {
+            const token = localStorage.getItem('token');
+            
+            for (const orderId of selectedOrders) {
+                try {
+                    const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE}/api/order-tracking/${orderId}`, {
+                        method: 'DELETE',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`
+                        }
+                    });
+
+                    if (response.ok) {
+                        successCount++;
+                    } else {
+                        failCount++;
+                    }
+                } catch (error) {
+                    failCount++;
+                }
+            }
+
+            // Remove successfully deleted orders from local state
+            setOrders(prev => prev.filter(order => !selectedOrders.includes(order.id)));
+            setSelectedOrders([]);
+            setSelectAll(false);
+
+            if (successCount > 0) {
+                setSuccessMsg(`✅ Successfully deleted ${successCount} orders${failCount > 0 ? `, ${failCount} failed` : ''}`);
+            } else {
+                setSuccessMsg(`❌ Failed to delete orders`);
+            }
+            
+            setTimeout(() => setSuccessMsg(""), 4000);
+        } catch (error) {
+            console.error('Bulk delete error:', error);
+            setSuccessMsg(`❌ Bulk delete failed: ${error.message}`);
+            setTimeout(() => setSuccessMsg(""), 3000);
+        } finally {
+            setBulkDeleting(false);
+        }
+    };
+
     // Click outside handler
     useEffect(() => {
         const handleClickOutside = (event) => {
@@ -671,7 +754,7 @@ export default function OrderSheet() {
                 <div className={styles.filterBar}>
                     <div className={styles.smartSearchWrapper} ref={searchRef}>
                         <div className={styles.searchIcon}>
-                            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                            <svg width="16" height="16" viewBox="0 0 20 20" fill="none">
                                 <path d="M9 17C13.4183 17 17 13.4183 17 9C17 4.58172 13.4183 1 9 1C4.58172 1 1 4.58172 1 9C1 13.4183 4.58172 17 9 17Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                                 <path d="M19 19L14.65 14.65" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                             </svg>
@@ -692,7 +775,7 @@ export default function OrderSheet() {
 
                             <input
                                 className={styles.smartSearchInput}
-                                placeholder="Search by customer, product, AWB, order ref..."
+                                placeholder="Search orders..."
                                 value={input}
                                 onChange={(e) => setInput(e.target.value)}
                             onKeyDown={(e) => {
@@ -764,14 +847,51 @@ export default function OrderSheet() {
                             <button onClick={fetchOrders}>Retry</button>
                         </div>
                     ) : (
+                        {/* Bulk Actions Bar */}
+                        {hasPermission(PERMISSIONS.ORDERS_EDIT) && (
+                            <div className={styles.bulkActions}>
+                                <div className={styles.selectAllContainer}>
+                                    <input
+                                        type="checkbox"
+                                        className={styles.selectAllCheckbox}
+                                        checked={selectAll}
+                                        onChange={handleSelectAll}
+                                        id="selectAll"
+                                    />
+                                    <label htmlFor="selectAll" className={styles.selectAllLabel}>
+                                        Select All
+                                    </label>
+                                </div>
+                                
+                                {selectedOrders.length > 0 && (
+                                    <>
+                                        <span className={styles.selectedCount}>
+                                            {selectedOrders.length} selected
+                                        </span>
+                                        <button
+                                            className={styles.bulkDeleteBtn}
+                                            onClick={handleBulkDelete}
+                                            disabled={bulkDeleting}
+                                        >
+                                            {bulkDeleting ? (
+                                                <>⏳ Deleting...</>
+                                            ) : (
+                                                <>🗑️ Delete Selected</>
+                                            )}
+                                        </button>
+                                    </>
+                                )}
+                            </div>
+                        )}
+
                         <div className={styles.tableCard}>
                             <div className={styles.tableWrapper}>
                                 <table className={styles.table}>
                                     <thead>
                                     <tr>
                                         {hasPermission(PERMISSIONS.ORDERS_EDIT) && (
-                                            <th className={`${styles.th} ${styles.delCol}`}>
-                                                Delete
+                                            <th className={`${styles.th} ${styles.selectColumn}`}>
+                                                Select
                                             </th>
                                         )}
                                         <th className={`${styles.th} ${styles.customerCol}`}>
@@ -871,25 +991,13 @@ export default function OrderSheet() {
                                             }}
                                         >
                                             {hasPermission(PERMISSIONS.ORDERS_EDIT) && (
-                                                <td className={`${styles.td} ${styles.delCol}`}>
-                                                    {hasPermission(PERMISSIONS.ORDERS_EDIT) ? (
-                                                        <button 
-                                                            className={`${styles.deleteBtn} ${deletingId === o.id ? styles.deleting : ''}`}
-                                                            onClick={() => confirmDelete(o)}
-                                                            disabled={deletingId === o.id}
-                                                            title={`Delete dispatch for ${o.customer}`}
-                                                        >
-                                                            {deletingId === o.id ? (
-                                                                <span className={styles.loadingSpinner}>✓</span>
-                                                            ) : (
-                                                                <span className={styles.deleteIcon}></span>
-                                                            )}
-                                                        </button>
-                                                    ) : (
-                                                        <div className={styles.noPermissionCell} title="No delete permission">
-                                                            <span className={styles.lockedIcon}>🔒</span>
-                                                        </div>
-                                                    )}
+                                                <td className={`${styles.td} ${styles.checkboxCell}`}>
+                                                    <input
+                                                        type="checkbox"
+                                                        className={styles.rowCheckbox}
+                                                        checked={selectedOrders.includes(o.id)}
+                                                        onChange={() => handleSelectOrder(o.id)}
+                                                    />
                                                 </td>
                                             )}
                                             <td className={`${styles.td} ${styles.customerCol}`}>
