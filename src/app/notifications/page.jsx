@@ -185,10 +185,10 @@ const NotificationsPage = () => {
 
     return (
         <div className="min-h-screen bg-gray-50">
-            <div className="max-w-4xl mx-auto py-8 px-4">
+            <div className="max-w-full mx-auto">
                 {/* Header */}
-                <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6">
-                    <div className="p-6 border-b border-gray-200">
+                <div className="bg-white border-b border-gray-200">
+                    <div className="px-6 py-4">
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-3">
                                 <Bell size={24} className="text-blue-600" />
@@ -221,7 +221,7 @@ const NotificationsPage = () => {
                     </div>
 
                     {/* Filters */}
-                    <div className="p-6">
+                    <div className="px-6 py-4 border-t border-gray-100">
                         <div className="flex flex-wrap gap-4">
                             {/* Read/Unread Filter */}
                             <div className="flex items-center gap-2">
@@ -254,7 +254,7 @@ const NotificationsPage = () => {
                 </div>
 
                 {/* Notifications List */}
-                <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+                <div className="bg-white">
                     {loading && notifications.length === 0 ? (
                         <div className="p-8 text-center">
                             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
