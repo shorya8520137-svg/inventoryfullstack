@@ -61,67 +61,54 @@ export default function LoginPage() {
             justifyContent: 'center',
             background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
             fontFamily: 'system-ui, sans-serif',
-            position: 'relative',
-            overflow: 'hidden'
+            padding: '20px'
         }}>
-            {/* Background Elements */}
-            <div style={{
-                position: 'absolute',
-                top: '-50%',
-                left: '-50%',
-                width: '200%',
-                height: '200%',
-                background: 'radial-gradient(circle, rgba(255,255,255,0.1) 1px, transparent 1px)',
-                backgroundSize: '50px 50px',
-                animation: 'float 20s ease-in-out infinite'
-            }}></div>
-
             <div style={{
                 backgroundColor: 'white',
-                padding: '3rem',
-                borderRadius: '20px',
-                boxShadow: '0 25px 50px rgba(0, 0, 0, 0.25)',
+                borderRadius: '16px',
+                padding: '40px',
                 width: '100%',
-                maxWidth: '450px',
-                position: 'relative',
-                zIndex: 1,
-                backdropFilter: 'blur(10px)'
+                maxWidth: '400px',
+                boxShadow: '0 20px 40px rgba(0, 0, 0, 0.1)',
+                position: 'relative'
             }}>
                 {/* Logo and Header */}
-                <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
+                <div style={{ textAlign: 'center', marginBottom: '32px' }}>
                     <div style={{ 
                         display: 'flex', 
                         alignItems: 'center', 
                         justifyContent: 'center',
-                        marginBottom: '1.5rem'
+                        marginBottom: '24px'
                     }}>
                         <div style={{
                             width: '48px',
                             height: '48px',
-                            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                            backgroundColor: '#4c5a7a',
                             borderRadius: '12px',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
-                            marginRight: '1rem'
+                            marginRight: '12px'
                         }}>
-                            <svg width="24" height="24" viewBox="0 0 32 32" fill="none">
-                                <rect width="32" height="32" rx="8" fill="white" fillOpacity="0.2"/>
-                                <path d="M8 12h16M8 16h16M8 20h12" stroke="white" strokeWidth="2" strokeLinecap="round"/>
-                            </svg>
+                            <div style={{
+                                width: '24px',
+                                height: '24px',
+                                backgroundColor: 'white',
+                                borderRadius: '6px'
+                            }}></div>
                         </div>
-                        <div>
+                        <div style={{ textAlign: 'left' }}>
                             <div style={{ 
-                                fontSize: '1.5rem', 
+                                fontSize: '24px', 
                                 fontWeight: 'bold', 
-                                color: '#1f2937',
+                                color: '#4c5a7a',
                                 lineHeight: '1.2'
                             }}>
                                 hunyhuny
                             </div>
                             <div style={{ 
-                                fontSize: '0.875rem', 
-                                color: '#6b7280',
+                                fontSize: '14px', 
+                                color: '#9ca3af',
                                 lineHeight: '1.2'
                             }}>
                                 Inventory Management
@@ -129,17 +116,17 @@ export default function LoginPage() {
                         </div>
                     </div>
                     <h1 style={{ 
-                        fontSize: '2rem', 
+                        fontSize: '28px', 
                         fontWeight: 'bold', 
-                        color: '#1f2937',
-                        margin: '0 0 0.5rem 0'
+                        color: '#374151',
+                        margin: '0 0 8px 0'
                     }}>
                         Welcome Back
                     </h1>
                     <p style={{ 
-                        color: '#6b7280', 
+                        color: '#9ca3af', 
                         margin: '0',
-                        fontSize: '1rem'
+                        fontSize: '16px'
                     }}>
                         Sign in to your account
                     </p>
@@ -149,36 +136,36 @@ export default function LoginPage() {
                     {error && (
                         <div style={{
                             backgroundColor: '#fef2f2',
-                            border: '1px solid #ef4444',
-                            padding: '1rem',
+                            border: '1px solid #fecaca',
+                            padding: '12px 16px',
                             borderRadius: '8px',
-                            marginBottom: '1.5rem',
+                            marginBottom: '20px',
                             color: '#dc2626',
+                            fontSize: '14px',
                             display: 'flex',
-                            alignItems: 'center',
-                            fontSize: '0.875rem'
+                            alignItems: 'center'
                         }}>
-                            <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor" style={{ marginRight: '0.5rem' }}>
+                            <svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor" style={{ marginRight: '8px', flexShrink: 0 }}>
                                 <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
                             </svg>
-                            <span>{error}</span>
+                            {error}
                         </div>
                     )}
 
-                    <div style={{ marginBottom: '1.5rem' }}>
+                    <div style={{ marginBottom: '20px' }}>
                         <label style={{ 
                             display: 'block', 
-                            marginBottom: '0.5rem', 
+                            marginBottom: '8px', 
                             color: '#374151',
                             fontWeight: '500',
-                            fontSize: '0.875rem'
+                            fontSize: '14px'
                         }}>
                             Email Address
                         </label>
                         <div style={{ position: 'relative' }}>
                             <svg style={{
                                 position: 'absolute',
-                                left: '1rem',
+                                left: '16px',
                                 top: '50%',
                                 transform: 'translateY(-50%)',
                                 color: '#9ca3af',
@@ -192,39 +179,46 @@ export default function LoginPage() {
                                 type="email"
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
-                                placeholder="admin@company.com"
+                                placeholder="Enter your email"
                                 required
                                 autoFocus
                                 style={{
                                     width: '100%',
-                                    padding: '0.75rem 1rem 0.75rem 3rem',
-                                    border: '2px solid #e5e7eb',
+                                    padding: '16px 16px 16px 48px',
+                                    border: '1px solid #e5e7eb',
                                     borderRadius: '8px',
-                                    fontSize: '1rem',
-                                    transition: 'border-color 0.2s',
+                                    fontSize: '16px',
                                     outline: 'none',
-                                    boxSizing: 'border-box'
+                                    boxSizing: 'border-box',
+                                    backgroundColor: '#f9fafb',
+                                    transition: 'all 0.2s'
                                 }}
-                                onFocus={(e) => e.target.style.borderColor = '#667eea'}
-                                onBlur={(e) => e.target.style.borderColor = '#e5e7eb'}
+                                onFocus={(e) => {
+                                    e.target.style.borderColor = '#667eea';
+                                    e.target.style.backgroundColor = 'white';
+                                }}
+                                onBlur={(e) => {
+                                    e.target.style.borderColor = '#e5e7eb';
+                                    e.target.style.backgroundColor = '#f9fafb';
+                                }}
                             />
                         </div>
                     </div>
 
-                    <div style={{ marginBottom: '2rem' }}>
+                    <div style={{ marginBottom: '24px' }}>
                         <label style={{ 
                             display: 'block', 
-                            marginBottom: '0.5rem', 
+                            marginBottom: '8px', 
                             color: '#374151',
                             fontWeight: '500',
-                            fontSize: '0.875rem'
+                            fontSize: '14px'
                         }}>
                             Password
                         </label>
                         <div style={{ position: 'relative' }}>
                             <svg style={{
                                 position: 'absolute',
-                                left: '1rem',
+                                left: '16px',
                                 top: '50%',
                                 transform: 'translateY(-50%)',
                                 color: '#9ca3af',
@@ -237,27 +231,34 @@ export default function LoginPage() {
                                 type={showPassword ? "text" : "password"}
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
-                                placeholder="Admin@123"
+                                placeholder="Enter your password"
                                 required
                                 style={{
                                     width: '100%',
-                                    padding: '0.75rem 3rem 0.75rem 3rem',
-                                    border: '2px solid #e5e7eb',
+                                    padding: '16px 48px 16px 48px',
+                                    border: '1px solid #e5e7eb',
                                     borderRadius: '8px',
-                                    fontSize: '1rem',
-                                    transition: 'border-color 0.2s',
+                                    fontSize: '16px',
                                     outline: 'none',
-                                    boxSizing: 'border-box'
+                                    boxSizing: 'border-box',
+                                    backgroundColor: '#f9fafb',
+                                    transition: 'all 0.2s'
                                 }}
-                                onFocus={(e) => e.target.style.borderColor = '#667eea'}
-                                onBlur={(e) => e.target.style.borderColor = '#e5e7eb'}
+                                onFocus={(e) => {
+                                    e.target.style.borderColor = '#667eea';
+                                    e.target.style.backgroundColor = 'white';
+                                }}
+                                onBlur={(e) => {
+                                    e.target.style.borderColor = '#e5e7eb';
+                                    e.target.style.backgroundColor = '#f9fafb';
+                                }}
                             />
                             <button
                                 type="button"
                                 onClick={() => setShowPassword(!showPassword)}
                                 style={{
                                     position: 'absolute',
-                                    right: '1rem',
+                                    right: '16px',
                                     top: '50%',
                                     transform: 'translateY(-50%)',
                                     background: 'none',
@@ -290,30 +291,28 @@ export default function LoginPage() {
                         disabled={loading}
                         style={{
                             width: '100%',
-                            padding: '0.875rem',
-                            background: loading ? '#9ca3af' : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                            padding: '16px',
+                            background: loading ? '#9ca3af' : '#4f46e5',
                             color: 'white',
                             border: 'none',
                             borderRadius: '8px',
-                            fontSize: '1rem',
+                            fontSize: '16px',
                             fontWeight: '600',
                             cursor: loading ? 'not-allowed' : 'pointer',
                             transition: 'all 0.2s',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
-                            boxShadow: loading ? 'none' : '0 4px 15px rgba(102, 126, 234, 0.4)'
+                            gap: '8px'
                         }}
                         onMouseOver={(e) => {
                             if (!loading) {
-                                e.target.style.transform = 'translateY(-2px)';
-                                e.target.style.boxShadow = '0 8px 25px rgba(102, 126, 234, 0.6)';
+                                e.target.style.backgroundColor = '#4338ca';
                             }
                         }}
                         onMouseOut={(e) => {
                             if (!loading) {
-                                e.target.style.transform = 'translateY(0)';
-                                e.target.style.boxShadow = '0 4px 15px rgba(102, 126, 234, 0.4)';
+                                e.target.style.backgroundColor = '#4f46e5';
                             }
                         }}
                     >
@@ -325,14 +324,13 @@ export default function LoginPage() {
                                     border: '2px solid #ffffff',
                                     borderTop: '2px solid transparent',
                                     borderRadius: '50%',
-                                    animation: 'spin 1s linear infinite',
-                                    marginRight: '0.5rem'
+                                    animation: 'spin 1s linear infinite'
                                 }}></div>
                                 Signing in...
                             </>
                         ) : (
                             <>
-                                <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor" style={{ marginRight: '0.5rem' }}>
+                                <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
                                     <path fillRule="evenodd" d="M3 3a1 1 0 000 2v8a2 2 0 002 2h2.586l-1.293 1.293a1 1 0 101.414 1.414L10 15.414l2.293 2.293a1 1 0 001.414-1.414L12.414 15H15a2 2 0 002-2V5a1 1 0 100-2H3zm11.707 4.707a1 1 0 00-1.414-1.414L10 9.586 8.707 8.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                                 </svg>
                                 Sign In
@@ -340,31 +338,12 @@ export default function LoginPage() {
                         )}
                     </button>
                 </form>
-
-                <div style={{ 
-                    marginTop: '1.5rem', 
-                    fontSize: '0.875rem', 
-                    color: '#6b7280', 
-                    textAlign: 'center',
-                    padding: '1rem',
-                    backgroundColor: '#f9fafb',
-                    borderRadius: '8px'
-                }}>
-                    <p style={{ margin: '0' }}>Test credentials:</p>
-                    <p style={{ margin: '0.25rem 0 0 0', fontFamily: 'monospace' }}>
-                        admin@company.com / Admin@123
-                    </p>
-                </div>
             </div>
 
             <style jsx>{`
                 @keyframes spin {
                     0% { transform: rotate(0deg); }
                     100% { transform: rotate(360deg); }
-                }
-                @keyframes float {
-                    0%, 100% { transform: translateY(0px) rotate(0deg); }
-                    50% { transform: translateY(-20px) rotate(180deg); }
                 }
             `}</style>
         </div>
