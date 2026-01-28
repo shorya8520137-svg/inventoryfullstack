@@ -37,7 +37,7 @@ export default function TopNavBar() {
 
                 {/* Actions Section */}
                 <div className={styles.actionsSection}>
-                    {/* User Profile - Moved to Left */}
+                    {/* User Profile - Clean Design */}
                     <div className={styles.userProfile}>
                         <div className={styles.userAvatar}>
                             <img 

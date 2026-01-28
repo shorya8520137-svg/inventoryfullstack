@@ -104,33 +104,6 @@ const NotificationBell = () => {
         }
     };
 
-    // Clear all notifications
-    const clearAllNotifications = async () => {
-        try {
-            setLoading(true);
-            const token = localStorage.getItem('token');
-            if (!token) return;
-
-            const apiBase = process.env.NEXT_PUBLIC_API_BASE || 'https://54.169.107.64:8443';
-            const response = await fetch(`${apiBase}/api/notifications/clear-all`, {
-                method: 'DELETE',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                }
-            });
-
-            if (response.ok) {
-                setNotifications([]);
-                setUnreadCount(0);
-            }
-        } catch (error) {
-            console.error('Failed to clear all notifications:', error);
-        } finally {
-            setLoading(false);
-        }
-    };
-
     // Format time ago
     const timeAgo = (dateString) => {
         const now = new Date();
@@ -238,17 +211,6 @@ const NotificationBell = () => {
                                 >
                                     <Check size={14} />
                                     <span>Mark all read</span>
-                                </button>
-                            )}
-                            {notifications.length > 0 && (
-                                <button
-                                    onClick={clearAllNotifications}
-                                    disabled={loading}
-                                    className="text-sm text-red-600 hover:text-red-800 disabled:opacity-50 flex items-center gap-1 px-2 py-1 rounded-md hover:bg-red-100 transition-colors"
-                                    title="Clear all notifications"
-                                >
-                                    <X size={14} />
-                                    <span>Clear all</span>
                                 </button>
                             )}
                             <button
