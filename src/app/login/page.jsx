@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import styles from "./login.module.css";
 
 export default function LoginPage() {
     const [email, setEmail] = useState("");
@@ -54,77 +53,222 @@ export default function LoginPage() {
         }
     };
 
-    const handleBack = () => {
-        // Simplified - no 2FA for now
-    };
-
     return (
-        <div className={styles.container}>
-            <div className={styles.loginCard}>
-                <div className={styles.header}>
-                    <div className={styles.logo}>
-                        <div className={styles.logoIcon}>
-                            <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
-                                <rect width="32" height="32" rx="8" fill="currentColor"/>
+        <div style={{ 
+            minHeight: '100vh', 
+            display: 'flex', 
+            alignItems: 'center', 
+            justifyContent: 'center',
+            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            fontFamily: 'system-ui, sans-serif',
+            position: 'relative',
+            overflow: 'hidden'
+        }}>
+            {/* Background Elements */}
+            <div style={{
+                position: 'absolute',
+                top: '-50%',
+                left: '-50%',
+                width: '200%',
+                height: '200%',
+                background: 'radial-gradient(circle, rgba(255,255,255,0.1) 1px, transparent 1px)',
+                backgroundSize: '50px 50px',
+                animation: 'float 20s ease-in-out infinite'
+            }}></div>
+
+            <div style={{
+                backgroundColor: 'white',
+                padding: '3rem',
+                borderRadius: '20px',
+                boxShadow: '0 25px 50px rgba(0, 0, 0, 0.25)',
+                width: '100%',
+                maxWidth: '450px',
+                position: 'relative',
+                zIndex: 1,
+                backdropFilter: 'blur(10px)'
+            }}>
+                {/* Logo and Header */}
+                <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
+                    <div style={{ 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        justifyContent: 'center',
+                        marginBottom: '1.5rem'
+                    }}>
+                        <div style={{
+                            width: '48px',
+                            height: '48px',
+                            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                            borderRadius: '12px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            marginRight: '1rem'
+                        }}>
+                            <svg width="24" height="24" viewBox="0 0 32 32" fill="none">
+                                <rect width="32" height="32" rx="8" fill="white" fillOpacity="0.2"/>
                                 <path d="M8 12h16M8 16h16M8 20h12" stroke="white" strokeWidth="2" strokeLinecap="round"/>
                             </svg>
                         </div>
-                        <div className={styles.logoText}>
-                            <span className={styles.companyName}>hunyhuny</span>
-                            <span className={styles.tagline}>Inventory Management</span>
+                        <div>
+                            <div style={{ 
+                                fontSize: '1.5rem', 
+                                fontWeight: 'bold', 
+                                color: '#1f2937',
+                                lineHeight: '1.2'
+                            }}>
+                                hunyhuny
+                            </div>
+                            <div style={{ 
+                                fontSize: '0.875rem', 
+                                color: '#6b7280',
+                                lineHeight: '1.2'
+                            }}>
+                                Inventory Management
+                            </div>
                         </div>
                     </div>
-                    <h1 className={styles.title}>Welcome Back</h1>
-                    <p className={styles.subtitle}>Sign in to your account</p>
+                    <h1 style={{ 
+                        fontSize: '2rem', 
+                        fontWeight: 'bold', 
+                        color: '#1f2937',
+                        margin: '0 0 0.5rem 0'
+                    }}>
+                        Welcome Back
+                    </h1>
+                    <p style={{ 
+                        color: '#6b7280', 
+                        margin: '0',
+                        fontSize: '1rem'
+                    }}>
+                        Sign in to your account
+                    </p>
                 </div>
 
-                <form onSubmit={handleSubmit} className={styles.form}>
+                <form onSubmit={handleSubmit}>
                     {error && (
-                        <div className={styles.errorMessage}>
-                            <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+                        <div style={{
+                            backgroundColor: '#fef2f2',
+                            border: '1px solid #ef4444',
+                            padding: '1rem',
+                            borderRadius: '8px',
+                            marginBottom: '1.5rem',
+                            color: '#dc2626',
+                            display: 'flex',
+                            alignItems: 'center',
+                            fontSize: '0.875rem'
+                        }}>
+                            <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor" style={{ marginRight: '0.5rem' }}>
                                 <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
                             </svg>
                             <span>{error}</span>
                         </div>
                     )}
 
-                    <div className={styles.formGroup}>
-                        <label className={styles.label}>Email Address</label>
-                        <div className={styles.inputWrapper}>
-                            <svg className={styles.inputIcon} width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+                    <div style={{ marginBottom: '1.5rem' }}>
+                        <label style={{ 
+                            display: 'block', 
+                            marginBottom: '0.5rem', 
+                            color: '#374151',
+                            fontWeight: '500',
+                            fontSize: '0.875rem'
+                        }}>
+                            Email Address
+                        </label>
+                        <div style={{ position: 'relative' }}>
+                            <svg style={{
+                                position: 'absolute',
+                                left: '1rem',
+                                top: '50%',
+                                transform: 'translateY(-50%)',
+                                color: '#9ca3af',
+                                width: '20px',
+                                height: '20px'
+                            }} viewBox="0 0 20 20" fill="currentColor">
                                 <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z" />
                                 <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z" />
                             </svg>
                             <input
                                 type="email"
-                                className={styles.input}
-                                placeholder="admin@company.com"
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
+                                placeholder="admin@company.com"
                                 required
                                 autoFocus
+                                style={{
+                                    width: '100%',
+                                    padding: '0.75rem 1rem 0.75rem 3rem',
+                                    border: '2px solid #e5e7eb',
+                                    borderRadius: '8px',
+                                    fontSize: '1rem',
+                                    transition: 'border-color 0.2s',
+                                    outline: 'none',
+                                    boxSizing: 'border-box'
+                                }}
+                                onFocus={(e) => e.target.style.borderColor = '#667eea'}
+                                onBlur={(e) => e.target.style.borderColor = '#e5e7eb'}
                             />
                         </div>
                     </div>
 
-                    <div className={styles.formGroup}>
-                        <label className={styles.label}>Password</label>
-                        <div className={styles.inputWrapper}>
-                            <svg className={styles.inputIcon} width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+                    <div style={{ marginBottom: '2rem' }}>
+                        <label style={{ 
+                            display: 'block', 
+                            marginBottom: '0.5rem', 
+                            color: '#374151',
+                            fontWeight: '500',
+                            fontSize: '0.875rem'
+                        }}>
+                            Password
+                        </label>
+                        <div style={{ position: 'relative' }}>
+                            <svg style={{
+                                position: 'absolute',
+                                left: '1rem',
+                                top: '50%',
+                                transform: 'translateY(-50%)',
+                                color: '#9ca3af',
+                                width: '20px',
+                                height: '20px'
+                            }} viewBox="0 0 20 20" fill="currentColor">
                                 <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
                             </svg>
                             <input
                                 type={showPassword ? "text" : "password"}
-                                className={styles.input}
-                                placeholder="Admin@123"
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
+                                placeholder="Admin@123"
                                 required
+                                style={{
+                                    width: '100%',
+                                    padding: '0.75rem 3rem 0.75rem 3rem',
+                                    border: '2px solid #e5e7eb',
+                                    borderRadius: '8px',
+                                    fontSize: '1rem',
+                                    transition: 'border-color 0.2s',
+                                    outline: 'none',
+                                    boxSizing: 'border-box'
+                                }}
+                                onFocus={(e) => e.target.style.borderColor = '#667eea'}
+                                onBlur={(e) => e.target.style.borderColor = '#e5e7eb'}
                             />
                             <button
                                 type="button"
-                                className={styles.passwordToggle}
                                 onClick={() => setShowPassword(!showPassword)}
+                                style={{
+                                    position: 'absolute',
+                                    right: '1rem',
+                                    top: '50%',
+                                    transform: 'translateY(-50%)',
+                                    background: 'none',
+                                    border: 'none',
+                                    color: '#9ca3af',
+                                    cursor: 'pointer',
+                                    padding: '0',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center'
+                                }}
                             >
                                 {showPassword ? (
                                     <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
@@ -143,17 +287,52 @@ export default function LoginPage() {
 
                     <button
                         type="submit"
-                        className={`${styles.submitBtn} ${loading ? styles.loading : ""}`}
                         disabled={loading}
+                        style={{
+                            width: '100%',
+                            padding: '0.875rem',
+                            background: loading ? '#9ca3af' : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '8px',
+                            fontSize: '1rem',
+                            fontWeight: '600',
+                            cursor: loading ? 'not-allowed' : 'pointer',
+                            transition: 'all 0.2s',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            boxShadow: loading ? 'none' : '0 4px 15px rgba(102, 126, 234, 0.4)'
+                        }}
+                        onMouseOver={(e) => {
+                            if (!loading) {
+                                e.target.style.transform = 'translateY(-2px)';
+                                e.target.style.boxShadow = '0 8px 25px rgba(102, 126, 234, 0.6)';
+                            }
+                        }}
+                        onMouseOut={(e) => {
+                            if (!loading) {
+                                e.target.style.transform = 'translateY(0)';
+                                e.target.style.boxShadow = '0 4px 15px rgba(102, 126, 234, 0.4)';
+                            }
+                        }}
                     >
                         {loading ? (
                             <>
-                                <div className={styles.spinner}></div>
+                                <div style={{
+                                    width: '20px',
+                                    height: '20px',
+                                    border: '2px solid #ffffff',
+                                    borderTop: '2px solid transparent',
+                                    borderRadius: '50%',
+                                    animation: 'spin 1s linear infinite',
+                                    marginRight: '0.5rem'
+                                }}></div>
                                 Signing in...
                             </>
                         ) : (
                             <>
-                                <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+                                <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor" style={{ marginRight: '0.5rem' }}>
                                     <path fillRule="evenodd" d="M3 3a1 1 0 000 2v8a2 2 0 002 2h2.586l-1.293 1.293a1 1 0 101.414 1.414L10 15.414l2.293 2.293a1 1 0 001.414-1.414L12.414 15H15a2 2 0 002-2V5a1 1 0 100-2H3zm11.707 4.707a1 1 0 00-1.414-1.414L10 9.586 8.707 8.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                                 </svg>
                                 Sign In
@@ -162,17 +341,32 @@ export default function LoginPage() {
                     </button>
                 </form>
 
-                <div style={{ marginTop: '1rem', fontSize: '0.875rem', color: '#6b7280', textAlign: 'center' }}>
-                    <p>Test credentials: admin@company.com / Admin@123</p>
+                <div style={{ 
+                    marginTop: '1.5rem', 
+                    fontSize: '0.875rem', 
+                    color: '#6b7280', 
+                    textAlign: 'center',
+                    padding: '1rem',
+                    backgroundColor: '#f9fafb',
+                    borderRadius: '8px'
+                }}>
+                    <p style={{ margin: '0' }}>Test credentials:</p>
+                    <p style={{ margin: '0.25rem 0 0 0', fontFamily: 'monospace' }}>
+                        admin@company.com / Admin@123
+                    </p>
                 </div>
             </div>
 
-            {/* Background Elements */}
-            <div className={styles.backgroundElements}>
-                <div className={styles.circle1}></div>
-                <div className={styles.circle2}></div>
-                <div className={styles.circle3}></div>
-            </div>
+            <style jsx>{`
+                @keyframes spin {
+                    0% { transform: rotate(0deg); }
+                    100% { transform: rotate(360deg); }
+                }
+                @keyframes float {
+                    0%, 100% { transform: translateY(0px) rotate(0deg); }
+                    50% { transform: translateY(-20px) rotate(180deg); }
+                }
+            `}</style>
         </div>
     );
 }
