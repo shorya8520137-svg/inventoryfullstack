@@ -37,20 +37,24 @@ export default function TopNavBar() {
 
                 {/* Actions Section */}
                 <div className={styles.actionsSection}>
-                    {/* Real-time Notifications */}
-                    <div className={styles.notificationWrapper}>
-                        <NotificationBell />
-                    </div>
-
-                    {/* User Profile */}
+                    {/* User Profile - Moved to Left */}
                     <div className={styles.userProfile}>
                         <div className={styles.userAvatar}>
-                            <User size={16} />
+                            <img 
+                                src="/hunhuny.jpeg" 
+                                alt="Profile"
+                                className={styles.profileImage}
+                            />
                         </div>
                         <div className={styles.userInfo}>
-                            <span className={styles.userName}>{user?.name || "Admin"}</span>
+                            <span className={styles.userName}>{user?.name || "System Administrator"}</span>
                             <span className={styles.userRole}>Administrator</span>
                         </div>
+                    </div>
+
+                    {/* Real-time Notifications - Moved to Right */}
+                    <div className={styles.notificationWrapper}>
+                        <NotificationBell />
                     </div>
                 </div>
             </div>

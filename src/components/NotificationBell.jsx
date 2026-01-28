@@ -22,7 +22,7 @@ const NotificationBell = () => {
             const token = localStorage.getItem('token');
             if (!token || !user) return;
 
-            const apiBase = process.env.NEXT_PUBLIC_API_BASE || 'https://16.171.141.4.nip.io';
+            const apiBase = process.env.NEXT_PUBLIC_API_BASE || 'https://54.169.107.64:8443';
             const response = await fetch(`${apiBase}/api/notifications`, {
                 headers: {
                     'Authorization': `Bearer ${token}`,
@@ -50,7 +50,7 @@ const NotificationBell = () => {
             const token = localStorage.getItem('token');
             if (!token) return;
 
-            const apiBase = process.env.NEXT_PUBLIC_API_BASE || 'https://16.171.141.4.nip.io';
+            const apiBase = process.env.NEXT_PUBLIC_API_BASE || 'https://54.169.107.64:8443';
             const response = await fetch(`${apiBase}/api/notifications/${notificationId}/read`, {
                 method: 'PUT',
                 headers: {
@@ -82,7 +82,7 @@ const NotificationBell = () => {
             const token = localStorage.getItem('token');
             if (!token) return;
 
-            const apiBase = process.env.NEXT_PUBLIC_API_BASE || 'https://16.171.141.4.nip.io';
+            const apiBase = process.env.NEXT_PUBLIC_API_BASE || 'https://54.169.107.64:8443';
             const response = await fetch(`${apiBase}/api/notifications/mark-all-read`, {
                 method: 'PUT',
                 headers: {
@@ -99,6 +99,33 @@ const NotificationBell = () => {
             }
         } catch (error) {
             console.error('Failed to mark all as read:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // Clear all notifications
+    const clearAllNotifications = async () => {
+        try {
+            setLoading(true);
+            const token = localStorage.getItem('token');
+            if (!token) return;
+
+            const apiBase = process.env.NEXT_PUBLIC_API_BASE || 'https://54.169.107.64:8443';
+            const response = await fetch(`${apiBase}/api/notifications/clear-all`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (response.ok) {
+                setNotifications([]);
+                setUnreadCount(0);
+            }
+        } catch (error) {
+            console.error('Failed to clear all notifications:', error);
         } finally {
             setLoading(false);
         }
@@ -184,9 +211,15 @@ const NotificationBell = () => {
                 )}
             </button>
 
-            {/* Notification Dropdown */}
+            {/* Notification Dropdown with Animation */}
             {isOpen && (
-                <div className="absolute right-0 top-full mt-2 w-96 bg-white rounded-xl shadow-2xl border border-gray-200 z-50 max-h-[500px] overflow-hidden">
+                <div 
+                    className="absolute right-0 top-full mt-2 w-96 bg-white rounded-xl shadow-2xl border border-gray-200 z-50 max-h-[500px] overflow-hidden animate-in slide-in-from-top-2 duration-200"
+                    style={{
+                        animation: 'slideDown 0.2s ease-out forwards',
+                        transformOrigin: 'top right'
+                    }}
+                >
                     {/* Header */}
                     <div className="flex items-center justify-between p-4 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-indigo-50">
                         <div>
@@ -205,6 +238,17 @@ const NotificationBell = () => {
                                 >
                                     <Check size={14} />
                                     <span>Mark all read</span>
+                                </button>
+                            )}
+                            {notifications.length > 0 && (
+                                <button
+                                    onClick={clearAllNotifications}
+                                    disabled={loading}
+                                    className="text-sm text-red-600 hover:text-red-800 disabled:opacity-50 flex items-center gap-1 px-2 py-1 rounded-md hover:bg-red-100 transition-colors"
+                                    title="Clear all notifications"
+                                >
+                                    <X size={14} />
+                                    <span>Clear all</span>
                                 </button>
                             )}
                             <button
@@ -295,6 +339,38 @@ const NotificationBell = () => {
                     onClick={() => setIsOpen(false)}
                 />
             )}
+
+            {/* CSS Animations */}
+            <style jsx>{`
+                @keyframes slideDown {
+                    from {
+                        opacity: 0;
+                        transform: translateY(-10px) scale(0.95);
+                    }
+                    to {
+                        opacity: 1;
+                        transform: translateY(0) scale(1);
+                    }
+                }
+                
+                .custom-scrollbar::-webkit-scrollbar {
+                    width: 6px;
+                }
+                
+                .custom-scrollbar::-webkit-scrollbar-track {
+                    background: #f1f5f9;
+                    border-radius: 3px;
+                }
+                
+                .custom-scrollbar::-webkit-scrollbar-thumb {
+                    background: #cbd5e1;
+                    border-radius: 3px;
+                }
+                
+                .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+                    background: #94a3b8;
+                }
+            `}</style>
         </div>
     );
 };
