@@ -164,21 +164,21 @@ class EventAuditLogger {
             const location = await this.geoTracker.getLocationData(eventData.ip_address || '127.0.0.1');
             
             const auditData = {
-                user_id: eventData.user_id,
+                user_id: eventData.user_id || null,
                 user_name: eventData.user_name || 'Unknown',
                 user_email: eventData.user_email || null,
                 user_role: eventData.user_role || 'Unknown',
-                action: eventData.action,
-                resource_type: eventData.resource_type,
-                resource_id: eventData.resource_id,
-                resource_name: eventData.resource_name,
-                description: eventData.description,
+                action: eventData.action || 'UNKNOWN',
+                resource_type: eventData.resource_type || eventData.resource || 'UNKNOWN',
+                resource_id: eventData.resource_id || null,
+                resource_name: eventData.resource_name || `${eventData.resource_type || eventData.resource || 'Unknown'} Event`,
+                description: eventData.description || `${eventData.action || 'Action'} performed on ${eventData.resource_type || eventData.resource || 'resource'}`,
                 details: JSON.stringify({
                     ...eventData.details,
                     location_info: location
                 }),
-                ip_address: eventData.ip_address,
-                user_agent: eventData.user_agent,
+                ip_address: eventData.ip_address || '127.0.0.1',
+                user_agent: eventData.user_agent || 'Unknown',
                 request_method: eventData.request_method || 'POST',
                 request_url: eventData.request_url || '/api/event',
                 location_country: location?.country,
@@ -189,7 +189,7 @@ class EventAuditLogger {
 
             await this.insertAuditLog(auditData);
             
-            console.log(`📝 Event audit logged: ${eventData.action} ${eventData.resource_type}`);
+            console.log(`📝 Event audit logged: ${eventData.action} ${eventData.resource_type || eventData.resource}`);
             
             return { success: true, auditData };
             

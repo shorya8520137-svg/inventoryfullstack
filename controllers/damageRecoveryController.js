@@ -362,9 +362,14 @@ exports.recoverStock = (req, res) => {
                             if (req.user) {
                                 eventAuditLogger.logEvent({
                                     user_id: req.user.id,
+                                    user_name: req.user.name,
+                                    user_email: req.user.email,
+                                    user_role: req.user.role_name || req.user.role,
                                     action: 'CREATE',
-                                    resource: 'RECOVERY',
+                                    resource_type: 'RECOVERY',
                                     resource_id: recoveryId.toString(),
+                                    resource_name: `${product_type} Recovery`,
+                                    description: `${req.user.name} recovered ${qty}x ${product_type}`,
                                     details: {
                                         user_name: req.user.name,
                                         user_email: req.user.email,
@@ -376,7 +381,9 @@ exports.recoverStock = (req, res) => {
                                         status: 'success'
                                     },
                                     ip_address: eventAuditLogger.getClientIP(req),
-                                    user_agent: req.get('User-Agent') || 'Unknown'
+                                    user_agent: req.get('User-Agent') || 'Unknown',
+                                    request_method: req.method,
+                                    request_url: req.originalUrl
                                 });
                             }
                             
