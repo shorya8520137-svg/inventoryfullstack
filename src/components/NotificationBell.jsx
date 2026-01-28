@@ -22,7 +22,7 @@ const NotificationBell = () => {
             if (!token || !user) return;
 
             const apiBase = process.env.NEXT_PUBLIC_API_BASE || 'https://54.169.107.64:8443';
-            const response = await fetch(`${apiBase}/api/notifications/count`, {
+            const response = await fetch(`${apiBase}/api/notifications`, {
                 headers: {
                     'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json'
