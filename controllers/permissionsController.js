@@ -791,7 +791,7 @@ class PermissionsController {
         }
         
         if (resource) {
-            whereClause += ' AND al.resource = ?';
+            whereClause += ' AND al.resource_type = ?';
             params.push(resource);
         }
         
@@ -966,7 +966,7 @@ class PermissionsController {
     
     static createAuditLog(userId, action, resource, resourceId, details, callback) {
         const sql = `
-            INSERT INTO audit_logs (user_id, action, resource, resource_id, details, ip_address, user_agent)
+            INSERT INTO audit_logs (user_id, action, resource_type, resource_id, details, ip_address, user_agent)
             VALUES (?, ?, ?, ?, ?, ?, ?)
         `;
         
