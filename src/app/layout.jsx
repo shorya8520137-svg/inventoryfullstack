@@ -7,7 +7,7 @@ import { PermissionsProvider } from "@/contexts/PermissionsContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 
 export const metadata = {
-    title: "StockIQ - Inventory Management System",
+    title: "hunyhuny - Smart Inventory Solutions",
     description: "Professional inventory management system with modern UI",
 };
 
