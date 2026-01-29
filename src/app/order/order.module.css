@@ -30,43 +30,41 @@
     gap: 12px;
 }
 
-.filterBar {
-    display: flex;
-    justify-content: space-between;
+/* ================= PROFESSIONAL FILTER BAR - SINGLE ROW ================= */
+.professionalFilterBar {
+    display: grid;
+    grid-template-columns: 1fr auto auto auto;
+    gap: 16px;
     align-items: center;
-    gap: 12px;
-    padding: 12px 20px;
-    background: #ffffff;
-    border-bottom: 1px solid #e5e7eb;
+    padding: 16px 24px;
+    background: #f8fafc;
+    border-bottom: 2px solid #e2e8f0;
+    position: relative;
 }
 
-.smartSearchWrapper {
+.searchGroup {
+    position: relative;
     display: flex;
     align-items: center;
     gap: 8px;
-    flex: 1;
-    max-width: 400px;
-}
-
-.searchIcon {
-    color: #9ca3af;
-    font-size: 18px;
+    min-width: 300px;
 }
 
 .searchInputContainer {
     display: flex;
     align-items: center;
     flex: 1;
-    background: transparent;
+    background: #ffffff;
     border: 1px solid #d1d5db;
-    border-radius: 6px;
-    padding: 8px 12px;
+    border-radius: 8px;
+    padding: 10px 12px;
     transition: all 0.2s ease;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
 .searchInputContainer:focus-within {
     border-color: #3b82f6;
-    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
 .smartSearchInput {
@@ -82,6 +80,82 @@
 .smartSearchInput::placeholder {
     color: #9ca3af;
     font-weight: 400;
+}
+
+.dateGroup {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.dateInput {
+    padding: 10px 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    font-size: 14px;
+    background: #ffffff;
+    color: #1f2937;
+    transition: all 0.2s ease;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.dateInput:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.dateArrow {
+    color: #6b7280;
+    font-weight: 500;
+}
+
+.actionIcons {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.iconBtn {
+    width: 40px;
+    height: 40px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    background: #ffffff;
+    color: #6b7280;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.iconBtn:hover:not(:disabled) {
+    background: #f9fafb;
+    border-color: #9ca3af;
+    color: #374151;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.iconBtn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Export Panel Positioning */
+.exportPanel {
+    position: absolute;
+    top: 100%;
+    right: 24px;
+    z-index: 1000;
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+    min-width: 320px;
+    margin-top: 8px;
 }
 
 .calendarIcon {
@@ -2069,7 +2143,7 @@
     to { transform: rotate(360deg); }
 }
 
-/* ================= DELETE MODAL STYLES ================= */
+/* ================= DELETE MODAL STYLES - RESPONSIVE FIX ================= */
 .modalOverlay {
     position: fixed;
     top: 0;
@@ -2077,24 +2151,28 @@
     right: 0;
     bottom: 0;
     background: rgba(0, 0, 0, 0.5);
-    z-index: 1000;
+    z-index: 9999 !important;
     backdrop-filter: blur(2px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
 }
 
 .deleteModal,
 .confirmModal {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
+    position: relative;
     background: white;
     border-radius: 12px;
     box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-    z-index: 1001;
-    width: 90%;
+    z-index: 10000 !important;
+    width: 100%;
     max-width: 500px;
-    max-height: 80vh;
+    max-height: 85vh;
     overflow: hidden;
+    margin: auto;
+    display: flex;
+    flex-direction: column;
 }
 
 .deleteModalHeader,
@@ -3720,4 +3798,200 @@
     font-size: 13px;
     color: #6b7280;
     font-weight: 500;
+}
+
+/* ================= PROFESSIONAL TABLE OVERRIDES ================= */
+.table .th {
+    color: #1f2937 !important;
+    background: #f8fafc !important;
+    border-bottom: 2px solid #e5e7eb !important;
+}
+
+.table .td {
+    color: #1f2937 !important;
+    border-bottom: 1px solid #f1f5f9 !important;
+}
+
+.table .tr {
+    background: #ffffff !important;
+}
+
+.table .tr:hover {
+    background: #f8fafc !important;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.table .tr:nth-child(even) {
+    background: #fafbfc !important;
+}
+
+.table .tr:nth-child(even):hover {
+    background: #f1f5f9 !important;
+}
+/* ================= RESPONSIVE MODAL FIXES ================= */
+@media (max-width: 768px) {
+    .modalOverlay {
+        padding: 10px;
+    }
+    
+    .deleteModal,
+    .confirmModal {
+        max-width: 95%;
+        max-height: 95vh;
+    }
+    
+    .deleteModalHeader {
+        padding: 16px 20px;
+    }
+    
+    .deleteModalContent {
+        padding: 20px;
+    }
+    
+    .deleteModalActions {
+        padding: 16px 20px;
+        flex-direction: column;
+        gap: 8px;
+    }
+    
+    .cancelDeleteBtn,
+    .confirmDeleteBtn {
+        width: 100%;
+        padding: 12px 16px;
+    }
+}
+
+@media (min-width: 769px) {
+    .modalOverlay {
+        padding: 40px;
+    }
+    
+    .deleteModal,
+    .confirmModal {
+        min-width: 400px;
+    }
+}
+
+/* Force modal visibility on all screen sizes */
+.modalOverlay {
+    visibility: visible !important;
+    opacity: 1 !important;
+    display: flex !important;
+}
+
+.deleteModal,
+.confirmModal {
+    visibility: visible !important;
+    opacity: 1 !important;
+    display: block !important;
+}
+/* ================= MODAL ACTIONS FIX ================= */
+.deleteModal .deleteModalActions,
+.confirmModal .deleteModalActions {
+    display: flex !important;
+    justify-content: flex-end !important;
+    gap: 12px !important;
+    padding: 20px 24px !important;
+    border-top: 1px solid #e5e7eb !important;
+    background: #f9fafb !important;
+    flex-shrink: 0 !important;
+    margin-top: auto !important;
+}
+
+.deleteModal .deleteModalContent,
+.confirmModal .deleteModalContent {
+    padding: 24px !important;
+    flex: 1 !important;
+    overflow-y: auto !important;
+}
+
+.deleteModal .deleteModalHeader,
+.confirmModal .deleteModalHeader {
+    flex-shrink: 0 !important;
+}
+
+/* Ensure buttons are always visible */
+.cancelDeleteBtn,
+.confirmDeleteBtn {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    min-height: 40px !important;
+    white-space: nowrap !important;
+}
+/* ================= IMPROVED SIMPLE DELETE MODAL ================= */
+.simpleDeleteModal {
+    position: fixed !important;
+    top: 50% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) !important;
+    background: white !important;
+    border-radius: 12px !important;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15) !important;
+    z-index: 10000 !important;
+    padding: 32px !important;
+    min-width: 400px !important;
+    max-width: 500px !important;
+    text-align: center !important;
+    border: 1px solid #e5e7eb !important;
+}
+
+.simpleDeleteModal p {
+    margin: 0 0 24px 0 !important;
+    font-size: 18px !important;
+    color: #1f2937 !important;
+    font-weight: 500 !important;
+    line-height: 1.5 !important;
+}
+
+.simpleActions {
+    display: flex !important;
+    gap: 16px !important;
+    justify-content: center !important;
+}
+
+.cancelBtn {
+    padding: 12px 24px !important;
+    background: #f8fafc !important;
+    color: #374151 !important;
+    border: 1px solid #d1d5db !important;
+    border-radius: 8px !important;
+    cursor: pointer !important;
+    font-size: 14px !important;
+    font-weight: 500 !important;
+    transition: all 0.2s ease !important;
+    min-width: 100px !important;
+}
+
+.cancelBtn:hover {
+    background: #f1f5f9 !important;
+    border-color: #9ca3af !important;
+    transform: translateY(-1px) !important;
+}
+
+.okBtn {
+    padding: 12px 24px !important;
+    background: #dc2626 !important;
+    color: white !important;
+    border: 1px solid #dc2626 !important;
+    border-radius: 8px !important;
+    cursor: pointer !important;
+    font-size: 14px !important;
+    font-weight: 500 !important;
+    transition: all 0.2s ease !important;
+    min-width: 100px !important;
+}
+
+.okBtn:hover:not(:disabled) {
+    background: #b91c1c !important;
+    border-color: #b91c1c !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3) !important;
+}
+
+.okBtn:disabled {
+    opacity: 0.6 !important;
+    cursor: not-allowed !important;
+    transform: none !important;
 }

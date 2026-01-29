@@ -560,145 +560,33 @@ export default function OrderSheet() {
 
             {/* Sticky Header */}
             <div className={styles.stickyHeader}>
-                <header className={styles.header}>
-                    <div className={styles.titleWrapper}>
-                        <h1 className={styles.title}>Dispatch Orders</h1>
-                        <div className={styles.stats}>
-                            {filteredOrders.length} records <kbd className={styles.kbd}>/</kbd> Search
-                        </div>
-                    </div>
-                    
-                    <div className={styles.headerActions}>
-                        {/* Refresh Button */}
-                        <button
-                            className={styles.refreshBtn}
-                            onClick={fetchOrders}
-                            disabled={loading}
-                            title="Refresh Orders"
-                        >
-                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                                <path d="M13.65 2.35C12.2 0.9 10.2 0 8 0C3.58 0 0 3.58 0 8C0 12.42 3.58 16 8 16C11.73 16 14.84 13.45 15.73 10H13.65C12.83 12.33 10.61 14 8 14C4.69 14 2 11.31 2 8C2 4.69 4.69 2 8 2C9.66 2 11.14 2.69 12.22 3.78L9 7H16V0L13.65 2.35Z" fill="currentColor"/>
-                            </svg>
-                            Refresh
-                        </button>
-                        
-                        {/* Download Button - Always show for debugging */}
-                        <div className={styles.exportSection}>
-                            <div className={styles.exportDropdown}>
-                                <button
-                                    className={styles.downloadBtn}
-                                    onClick={() => setShowExportDropdown(!showExportDropdown)}
-                                        disabled={exporting}
-                                    >
-                                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                                            <path d="M8 10L12 6H9V0H7V6H4L8 10ZM16 12V14C16 15.1 15.1 16 14 16H2C0.9 16 0 15.1 0 14V12C0 10.9 0.9 10 2 10H5.5L6.5 11H9.5L10.5 10H14C15.1 10 16 10.9 16 12Z" fill="currentColor"/>
-                                        </svg>
-                                        {exporting ? "Preparing..." : "Download"}
-                                    </button>
-                                    
-                                    {showExportDropdown && (
-                                    <div className={styles.exportPanel}>
-                                        <div className={styles.exportHeader}>
-                                            <h4>Download Order Data</h4>
-                                            <button
-                                                className={styles.closeExport}
-                                                onClick={() => setShowExportDropdown(false)}
-                                            >
-                                                ✕
-                                            </button>
-                                        </div>
-                                        
-                                        <div className={styles.warehouseSelection}>
-                                            <div className={styles.selectionActions}>
-                                                <button
-                                                    className={styles.selectAllBtn}
-                                                    onClick={selectAllWarehouses}
-                                                >
-                                                    Select All
-                                                </button>
-                                                <button
-                                                    className={styles.deselectAllBtn}
-                                                    onClick={deselectAllWarehouses}
-                                                >
-                                                    Deselect All
-                                                </button>
-                                            </div>
-                                            
-                                            <div className={styles.warehouseList}>
-                                                {getUniqueWarehouses().map((warehouse) => {
-                                                    const warehouseCount = filteredOrders.filter(order => order.warehouse === warehouse).length;
-                                                    return (
-                                                        <label
-                                                            key={warehouse}
-                                                            className={styles.warehouseCheckbox}
-                                                        >
-                                                            <input
-                                                                type="checkbox"
-                                                                checked={selectedWarehouses.includes(warehouse)}
-                                                                onChange={() => handleWarehouseToggle(warehouse)}
-                                                            />
-                                                            <span className={styles.checkboxLabel}>
-                                                                {warehouse}
-                                                                <span className={styles.warehouseCount}>({warehouseCount})</span>
-                                                            </span>
-                                                        </label>
-                                                    );
-                                                })}
-                                            </div>
-                                        </div>
-                                        
-                                        <div className={styles.exportActions}>
-                                            <div className={styles.exportInfo}>
-                                                {selectedWarehouses.length} warehouse(s) selected
-                                            </div>
-                                            <button
-                                                className={styles.confirmDownloadBtn}
-                                                onClick={exportToCSV}
-                                                disabled={selectedWarehouses.length === 0 || exporting}
-                                            >
-                                                {exporting ? "Preparing..." : "Download CSV"}
-                                            </button>
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                </div>
-                </header>
-
-                {/* AI-Powered Smart Search Bar */}
-                <div className={styles.filterBar}>
-                    <div className={styles.smartSearchWrapper} ref={searchRef}>
-                        <div className={styles.searchIcon}>
-                            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                                <path d="M9 17C13.4183 17 17 13.4183 17 9C17 4.58172 13.4183 1 9 1C4.58172 1 1 4.58172 1 9C1 13.4183 4.58172 17 9 17Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                                <path d="M19 19L14.65 14.65" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                            </svg>
-                        </div>
+                {/* Professional Filter Bar - Single Row Layout */}
+                <div className={styles.professionalFilterBar}>
+                    {/* Search Bar */}
+                    <div className={styles.searchGroup}>
                         <div className={styles.searchInputContainer}>
                             {tokens.map((t, i) => (
                                 <span key={i} className={styles.chip} tabIndex={0}>
                                     {t}
                                     <button
-                                    onClick={() => removeToken(t)}
-                                    className={styles.chipClose}
-                                    tabIndex={-1}
-                                >
-                                    ×
-                                </button>
-                            </span>
-                        ))}
-
+                                        onClick={() => removeToken(t)}
+                                        className={styles.chipClose}
+                                        tabIndex={-1}
+                                    >
+                                        ×
+                                    </button>
+                                </span>
+                            ))}
                             <input
                                 className={styles.smartSearchInput}
                                 placeholder="Search by customer, product, AWB, order ref..."
                                 value={input}
                                 onChange={(e) => setInput(e.target.value)}
-                            onKeyDown={(e) => {
-                                if (e.key === "Enter") addToken(input);
-                            }}
-                        />
-
+                                onKeyDown={(e) => {
+                                    if (e.key === "Enter") addToken(input);
+                                }}
+                            />
+                        </div>
                         {showSuggest && suggestions.length > 0 && (
                             <ul className={styles.aiSuggestionList} role="listbox">
                                 {suggestions.map((s, i) => (
@@ -715,17 +603,10 @@ export default function OrderSheet() {
                                 ))}
                             </ul>
                         )}
-                        </div>
-                        {input && (
-                            <div className={styles.aiIndicator}>
-                                <span className={styles.aiDot}></span>
-                                <span className={styles.aiDot}></span>
-                                <span className={styles.aiDot}></span>
-                            </div>
-                        )}
                     </div>
 
-                    <div className={styles.dateFilter}>
+                    {/* Date Filters */}
+                    <div className={styles.dateGroup}>
                         <input
                             type="date"
                             value={fromDate}
@@ -740,6 +621,100 @@ export default function OrderSheet() {
                             className={styles.dateInput}
                         />
                     </div>
+
+                    {/* Action Icons */}
+                    <div className={styles.actionIcons}>
+                        {/* Refresh Icon */}
+                        <button
+                            className={styles.iconBtn}
+                            onClick={fetchOrders}
+                            disabled={loading}
+                            title="Refresh Orders"
+                        >
+                            <svg width="18" height="18" viewBox="0 0 16 16" fill="none">
+                                <path d="M13.65 2.35C12.2 0.9 10.2 0 8 0C3.58 0 0 3.58 0 8C0 12.42 3.58 16 8 16C11.73 16 14.84 13.45 15.73 10H13.65C12.83 12.33 10.61 14 8 14C4.69 14 2 11.31 2 8C2 4.69 4.69 2 8 2C9.66 2 11.14 2.69 12.22 3.78L9 7H16V0L13.65 2.35Z" fill="currentColor"/>
+                            </svg>
+                        </button>
+                        
+                        {/* Download Icon */}
+                        <button
+                            className={styles.iconBtn}
+                            onClick={() => setShowExportDropdown(!showExportDropdown)}
+                            disabled={exporting}
+                            title="Download Orders"
+                        >
+                            <svg width="18" height="18" viewBox="0 0 16 16" fill="none">
+                                <path d="M8 10L12 6H9V0H7V6H4L8 10ZM16 12V14C16 15.1 15.1 16 14 16H2C0.9 16 0 15.1 0 14V12C0 10.9 0.9 10 2 10H5.5L6.5 11H9.5L10.5 10H14C15.1 10 16 10.9 16 12Z" fill="currentColor"/>
+                            </svg>
+                        </button>
+                    </div>
+
+                    {/* Export Dropdown */}
+                    {showExportDropdown && (
+                        <div className={styles.exportPanel}>
+                            <div className={styles.exportHeader}>
+                                <h4>Download Order Data</h4>
+                                <button
+                                    className={styles.closeExport}
+                                    onClick={() => setShowExportDropdown(false)}
+                                >
+                                    ✕
+                                </button>
+                            </div>
+                            
+                            <div className={styles.warehouseSelection}>
+                                <div className={styles.selectionActions}>
+                                    <button
+                                        className={styles.selectAllBtn}
+                                        onClick={selectAllWarehouses}
+                                    >
+                                        Select All
+                                    </button>
+                                    <button
+                                        className={styles.deselectAllBtn}
+                                        onClick={deselectAllWarehouses}
+                                    >
+                                        Deselect All
+                                    </button>
+                                </div>
+                                
+                                <div className={styles.warehouseList}>
+                                    {getUniqueWarehouses().map((warehouse) => {
+                                        const warehouseCount = filteredOrders.filter(order => order.warehouse === warehouse).length;
+                                        return (
+                                            <label
+                                                key={warehouse}
+                                                className={styles.warehouseCheckbox}
+                                            >
+                                                <input
+                                                    type="checkbox"
+                                                    checked={selectedWarehouses.includes(warehouse)}
+                                                    onChange={() => handleWarehouseToggle(warehouse)}
+                                                />
+                                                <span className={styles.checkboxLabel}>
+                                                    {warehouse}
+                                                    <span className={styles.warehouseCount}>({warehouseCount})</span>
+                                                </span>
+                                            </label>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                            
+                            <div className={styles.exportActions}>
+                                <div className={styles.exportInfo}>
+                                    {selectedWarehouses.length} warehouse(s) selected
+                                </div>
+                                <button
+                                    className={styles.confirmDownloadBtn}
+                                    onClick={exportToCSV}
+                                    disabled={selectedWarehouses.length === 0 || exporting}
+                                >
+                                    {exporting ? "Preparing..." : "Download CSV"}
+                                </button>
+                            </div>
+                        </div>
+                    )}
                 </div>
             </div>
 
@@ -1108,46 +1083,25 @@ export default function OrderSheet() {
 
 
 
-            {/* Individual Delete Confirmation Modal */}
+            {/* Simple Delete Confirmation */}
             {showDeleteConfirm && (
                 <>
                     <div className={styles.modalOverlay} onClick={cancelDelete} />
-                    <div className={styles.deleteModal}>
-                        <div className={styles.deleteModalHeader}>
-                            <h3>⚠️ Delete Dispatch</h3>
-                            <button className={styles.closeBtn} onClick={cancelDelete}>✕</button>
-                        </div>
-                        <div className={styles.deleteModalContent}>
-                            <p>Are you sure you want to delete this dispatch?</p>
-                            <div className={styles.deleteDetails}>
-                                <div><strong>Customer:</strong> {showDeleteConfirm.customer}</div>
-                                <div><strong>Product:</strong> {showDeleteConfirm.product_name}</div>
-                                <div><strong>AWB:</strong> {showDeleteConfirm.awb}</div>
-                                <div><strong>Quantity:</strong> {showDeleteConfirm.quantity}</div>
-                            </div>
-                            <div className={styles.deleteWarning}>
-                                <p>⚠️ This action will:</p>
-                                <ul>
-                                    <li>Permanently delete the dispatch record</li>
-                                    <li>Restore {showDeleteConfirm.quantity} units to stock</li>
-                                    <li>Add a reversal entry to the inventory ledger</li>
-                                </ul>
-                            </div>
-                        </div>
-                        <div className={styles.deleteModalActions}>
+                    <div className={styles.simpleDeleteModal}>
+                        <p>Are you sure you want to delete?</p>
+                        <div className={styles.simpleActions}>
                             <button 
-                                className={styles.cancelDeleteBtn}
+                                className={styles.cancelBtn}
                                 onClick={cancelDelete}
-                                disabled={deleting}
                             >
                                 Cancel
                             </button>
                             <button 
-                                className={styles.confirmDeleteBtn}
+                                className={styles.okBtn}
                                 onClick={() => deleteDispatch(showDeleteConfirm.id)}
                                 disabled={deleting}
                             >
-                                {deleting ? '⏳ Deleting...' : '🗑️ Delete & Restore Stock'}
+                                {deleting ? 'Deleting...' : 'OK'}
                             </button>
                         </div>
                     </div>

@@ -276,4 +276,15 @@ export const api = {
     getSystemStats: () => apiRequest('/api/system/stats'),
 };
 
+// Legacy function - use checkAPIHealth from src/services/api instead
+export async function testConnection() {
+    console.warn('DEPRECATED: Use checkAPIHealth from @/services/api instead');
+    try {
+        const response = await fetch(`${API_BASE}/api/health`);
+        return await response.json();
+    } catch (error) {
+        throw new Error(`Connection failed: ${error.message}`);
+    }
+}
+
 export default api;

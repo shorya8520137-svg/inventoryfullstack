@@ -14,7 +14,10 @@ export default function SecurityPage() {
     const [backupCodes, setBackupCodes] = useState([]);
     const [verificationCode, setVerificationCode] = useState("");
     const [showSetup, setShowSetup] = useState(false);
-    const [setupStep, setSetupStep] = useState(1); // 1: QR Code, 2: Verify, 3: Backup Codes
+    const [setupStep, setSetupStep] = useState(1);
+    const [showDisableModal, setShowDisableModal] = useState(false);
+    const [disablePassword, setDisablePassword] = useState("");
+    const [disableToken, setDisableToken] = useState(""); // 1: QR Code, 2: Verify, 3: Backup Codes
 
     useEffect(() => {
         checkTwoFactorStatus();
@@ -115,13 +118,12 @@ export default function SecurityPage() {
     };
 
     const disable2FA = async () => {
-        const password = prompt("Enter your current password to disable 2FA:");
-        if (!password) return;
-        
-        const token = prompt("Enter your current 2FA code to confirm:");
-        if (!token) return;
+        setShowDisableModal(true);
+    };
 
-        if (!confirm("Are you sure you want to disable Two-Factor Authentication? This will make your account less secure.")) {
+    const confirmDisable2FA = async () => {
+        if (!disablePassword.trim() || !disableToken.trim()) {
+            setError("Please enter both password and 2FA code");
             return;
         }
 
@@ -139,8 +141,8 @@ export default function SecurityPage() {
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                    password: password,
-                    token: token
+                    password: disablePassword,
+                    token: disableToken
                 })
             });
             
@@ -315,29 +317,59 @@ export default function SecurityPage() {
             {/* 2FA Setup Process */}
             {showSetup && (
                 <div style={{
-                    backgroundColor: 'white',
-                    border: '1px solid #e5e7eb',
-                    borderRadius: '12px',
-                    padding: '24px'
+                    position: 'fixed',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    backgroundColor: 'rgba(0, 0, 0, 0.75)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    zIndex: 1000,
+                    padding: '20px'
+                }}>
+                    <div style={{
+                        backgroundColor: '#ffffff',
+                        borderRadius: '16px',
+                        padding: '32px',
+                        maxWidth: '500px',
+                        width: '100%',
+                        maxHeight: '90vh',
+                        overflowY: 'auto',
+                        boxShadow: '0 25px 50px rgba(0, 0, 0, 0.15)',
+                        border: '1px solid #e5e7eb'
                 }}>
                     {setupStep === 1 && (
                         <div>
                             <h3 style={{ fontSize: '18px', fontWeight: '600', marginBottom: '16px' }}>
                                 Step 1: Scan QR Code
                             </h3>
-                            <p style={{ color: '#6b7280', marginBottom: '20px' }}>
+                            <p style={{ 
+                                color: '#d1d5db', 
+                                marginBottom: '20px',
+                                lineHeight: '1.5'
+                            }}>
                                 Scan this QR code with your authenticator app (Google Authenticator, Authy, etc.)
                             </p>
                             
                             {qrCodeUrl && (
-                                <div style={{ textAlign: 'center', marginBottom: '20px' }}>
+                                <div style={{ 
+                                    textAlign: 'center', 
+                                    marginBottom: '24px',
+                                    padding: '20px',
+                                    backgroundColor: '#374151',
+                                    borderRadius: '12px',
+                                    border: '1px solid #4b5563'
+                                }}>
                                     <img 
                                         src={qrCodeUrl} 
                                         alt="2FA QR Code" 
                                         style={{ 
-                                            maxWidth: '200px', 
-                                            border: '1px solid #e5e7eb', 
-                                            borderRadius: '8px' 
+                                            maxWidth: '200px',
+                                            borderRadius: '8px',
+                                            backgroundColor: 'white',
+                                            padding: '10px'
                                         }} 
                                     />
                                 </div>
@@ -353,8 +385,12 @@ export default function SecurityPage() {
                                     padding: '12px 24px',
                                     fontSize: '14px',
                                     fontWeight: '500',
-                                    cursor: 'pointer'
+                                    cursor: 'pointer',
+                                    width: '100%',
+                                    transition: 'background-color 0.2s'
                                 }}
+                                onMouseOver={(e) => e.target.style.backgroundColor = '#4338ca'}
+                                onMouseOut={(e) => e.target.style.backgroundColor = '#4f46e5'}
                             >
                                 I've Scanned the Code
                             </button>
@@ -363,29 +399,44 @@ export default function SecurityPage() {
 
                     {setupStep === 2 && (
                         <div>
-                            <h3 style={{ fontSize: '18px', fontWeight: '600', marginBottom: '16px' }}>
+                            <h3 style={{ 
+                                color: '#f9fafb', 
+                                marginBottom: '16px',
+                                fontSize: '18px',
+                                fontWeight: '600'
+                            }}>
                                 Step 2: Verify Setup
                             </h3>
-                            <p style={{ color: '#6b7280', marginBottom: '20px' }}>
+                            <p style={{ 
+                                color: '#d1d5db', 
+                                marginBottom: '20px',
+                                lineHeight: '1.5'
+                            }}>
                                 Enter the 6-digit code from your authenticator app to verify the setup
                             </p>
                             
-                            <div style={{ marginBottom: '20px' }}>
+                            <div style={{ marginBottom: '24px', textAlign: 'center' }}>
                                 <input
                                     type="text"
                                     value={verificationCode}
                                     onChange={(e) => setVerificationCode(e.target.value)}
-                                    placeholder="Enter 6-digit code"
+                                    placeholder="000000"
                                     maxLength="6"
                                     style={{
                                         width: '200px',
-                                        padding: '12px',
-                                        border: '1px solid #d1d5db',
-                                        borderRadius: '8px',
-                                        fontSize: '18px',
+                                        padding: '16px',
+                                        border: '2px solid #4b5563',
+                                        borderRadius: '12px',
+                                        fontSize: '24px',
                                         textAlign: 'center',
-                                        letterSpacing: '0.1em'
+                                        letterSpacing: '0.2em',
+                                        backgroundColor: '#374151',
+                                        color: '#f9fafb',
+                                        outline: 'none',
+                                        transition: 'border-color 0.2s'
                                     }}
+                                    onFocus={(e) => e.target.style.borderColor = '#4f46e5'}
+                                    onBlur={(e) => e.target.style.borderColor = '#4b5563'}
                                 />
                             </div>
                             
@@ -496,6 +547,178 @@ export default function SecurityPage() {
                             </div>
                         </div>
                     )}
+                    </div>
+                </div>
+            )}
+
+            {/* Disable 2FA Modal */}
+            {showDisableModal && (
+                <div style={{
+                    position: 'fixed',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    backgroundColor: 'rgba(0, 0, 0, 0.75)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    zIndex: 1000,
+                    padding: '20px'
+                }}>
+                    <div style={{
+                        backgroundColor: '#ffffff',
+                        borderRadius: '16px',
+                        padding: '32px',
+                        maxWidth: '400px',
+                        width: '100%',
+                        boxShadow: '0 25px 50px rgba(0, 0, 0, 0.15)',
+                        border: '1px solid #e5e7eb'
+                    }}>
+                        <div style={{ 
+                            display: 'flex', 
+                            justifyContent: 'space-between', 
+                            alignItems: 'center', 
+                            marginBottom: '24px' 
+                        }}>
+                            <h2 style={{ 
+                                margin: 0, 
+                                color: '#1f2937', 
+                                fontSize: '20px', 
+                                fontWeight: 'bold' 
+                            }}>
+                                Disable Two-Factor Authentication
+                            </h2>
+                            <button
+                                onClick={() => {
+                                    setShowDisableModal(false);
+                                    setDisablePassword("");
+                                    setDisableToken("");
+                                    setError("");
+                                }}
+                                style={{
+                                    background: 'none',
+                                    border: 'none',
+                                    fontSize: '24px',
+                                    cursor: 'pointer',
+                                    color: '#6b7280',
+                                    padding: '4px'
+                                }}
+                            >
+                                ×
+                            </button>
+                        </div>
+
+                        <p style={{ 
+                            color: '#6b7280', 
+                            marginBottom: '20px',
+                            lineHeight: '1.5'
+                        }}>
+                            Enter your current password and 2FA code to disable two-factor authentication.
+                        </p>
+
+                        <div style={{ marginBottom: '16px' }}>
+                            <label style={{ 
+                                display: 'block', 
+                                color: '#1f2937', 
+                                marginBottom: '8px',
+                                fontSize: '14px',
+                                fontWeight: '500'
+                            }}>
+                                Current Password
+                            </label>
+                            <input
+                                type="password"
+                                value={disablePassword}
+                                onChange={(e) => setDisablePassword(e.target.value)}
+                                placeholder="Enter your password"
+                                style={{
+                                    width: '100%',
+                                    padding: '12px',
+                                    border: '2px solid #e5e7eb',
+                                    borderRadius: '8px',
+                                    fontSize: '14px',
+                                    backgroundColor: '#f9fafb',
+                                    color: '#1f2937',
+                                    outline: 'none',
+                                    boxSizing: 'border-box'
+                                }}
+                            />
+                        </div>
+
+                        <div style={{ marginBottom: '24px' }}>
+                            <label style={{ 
+                                display: 'block', 
+                                color: '#1f2937', 
+                                marginBottom: '8px',
+                                fontSize: '14px',
+                                fontWeight: '500'
+                            }}>
+                                2FA Code
+                            </label>
+                            <input
+                                type="text"
+                                value={disableToken}
+                                onChange={(e) => setDisableToken(e.target.value)}
+                                placeholder="000000"
+                                maxLength="6"
+                                style={{
+                                    width: '100%',
+                                    padding: '12px',
+                                    border: '2px solid #e5e7eb',
+                                    borderRadius: '8px',
+                                    fontSize: '18px',
+                                    textAlign: 'center',
+                                    letterSpacing: '0.1em',
+                                    backgroundColor: '#f9fafb',
+                                    color: '#1f2937',
+                                    outline: 'none',
+                                    boxSizing: 'border-box'
+                                }}
+                            />
+                        </div>
+
+                        <div style={{ display: 'flex', gap: '12px' }}>
+                            <button
+                                onClick={confirmDisable2FA}
+                                disabled={loading || !disablePassword.trim() || !disableToken.trim()}
+                                style={{
+                                    backgroundColor: loading || !disablePassword.trim() || !disableToken.trim() ? '#6b7280' : '#dc2626',
+                                    color: 'white',
+                                    border: 'none',
+                                    borderRadius: '8px',
+                                    padding: '12px 24px',
+                                    fontSize: '14px',
+                                    fontWeight: '500',
+                                    cursor: loading || !disablePassword.trim() || !disableToken.trim() ? 'not-allowed' : 'pointer',
+                                    flex: 1
+                                }}
+                            >
+                                {loading ? 'Disabling...' : 'Disable 2FA'}
+                            </button>
+
+                            <button
+                                onClick={() => {
+                                    setShowDisableModal(false);
+                                    setDisablePassword("");
+                                    setDisableToken("");
+                                    setError("");
+                                }}
+                                style={{
+                                    backgroundColor: '#6b7280',
+                                    color: 'white',
+                                    border: 'none',
+                                    borderRadius: '8px',
+                                    padding: '12px 24px',
+                                    fontSize: '14px',
+                                    fontWeight: '500',
+                                    cursor: 'pointer'
+                                }}
+                            >
+                                Cancel
+                            </button>
+                        </div>
+                    </div>
                 </div>
             )}
         </div>

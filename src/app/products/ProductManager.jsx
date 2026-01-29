@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Download, Upload, Plus, Search, Filter, Edit, Trash2, Package, FileSpreadsheet, AlertCircle, CheckCircle, X, ArrowRightLeft, Clock } from 'lucide-react';
+import { Download, Upload, Plus, Search, Filter, Edit, Trash2, Package, FileSpreadsheet, AlertCircle, CheckCircle, X, ArrowRightLeft, Clock, RefreshCw } from 'lucide-react';
 import styles from './products.module.css';
 import TransferForm from './TransferForm';
 import { productsAPI } from '@/services/api/products';
@@ -702,15 +702,6 @@ const ProductManager = () => {
                                 Bulk Import
                             </button>
                         )}
-                        {hasPermission(PERMISSIONS.PRODUCTS_EXPORT) && (
-                            <button
-                                className={`${styles.btn} ${styles.exportBtn}`}
-                                onClick={handleExportProducts}
-                            >
-                                <Download size={16} />
-                                Export All
-                            </button>
-                        )}
                         {hasPermission(PERMISSIONS.PRODUCTS_SELF_TRANSFER) && (
                             <button
                                 className={`${styles.btn} ${styles.transferBtn}`}
@@ -755,61 +746,78 @@ const ProductManager = () => {
                 </div>
 
                 {/* Filters */}
-                <div className={styles.filtersCard}>
-                    <div className={styles.filtersContent}>
-                        <div className={styles.searchGroup}>
-                            <Search className={styles.searchIcon} size={18} />
-                            <input
-                                type="text"
-                                placeholder="Search by product name or barcode..."
-                                value={searchTerm}
-                                onChange={handleSearchChange}
-                                onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
-                                onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
-                                className={styles.searchInput}
-                            />
-                            
-                            {/* Search Suggestions Dropdown */}
-                            {showSuggestions && suggestions.length > 0 && (
-                                <div className={styles.suggestionsDropdown}>
-                                    {suggestions.map((product, index) => (
-                                        <div
-                                            key={product.p_id || index}
-                                            className={styles.suggestionItem}
-                                            onClick={() => selectSuggestion(product)}
-                                        >
-                                            <div className={styles.suggestionIcon}>
-                                                <Package size={14} />
+                <div className={styles.filtersContent}>
+                    <div className={styles.searchGroup}>
+                        <Search className={styles.searchIcon} size={18} />
+                        <input
+                            type="text"
+                            placeholder="Search by product name or barcode..."
+                            value={searchTerm}
+                            onChange={handleSearchChange}
+                            onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
+                            onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+                            className={styles.searchInput}
+                        />
+                        
+                        {/* Search Suggestions Dropdown */}
+                        {showSuggestions && suggestions.length > 0 && (
+                            <div className={styles.suggestionsDropdown}>
+                                {suggestions.map((product, index) => (
+                                    <div
+                                        key={product.p_id || index}
+                                        className={styles.suggestionItem}
+                                        onClick={() => selectSuggestion(product)}
+                                    >
+                                        <div className={styles.suggestionIcon}>
+                                            <Package size={14} />
+                                        </div>
+                                        <div className={styles.suggestionContent}>
+                                            <div className={styles.suggestionName}>
+                                                {product.product_name}
+                                                {product.product_variant && (
+                                                    <span className={styles.suggestionVariant}> - {product.product_variant}</span>
+                                                )}
                                             </div>
-                                            <div className={styles.suggestionContent}>
-                                                <div className={styles.suggestionName}>
-                                                    {product.product_name}
-                                                    {product.product_variant && (
-                                                        <span className={styles.suggestionVariant}> - {product.product_variant}</span>
-                                                    )}
-                                                </div>
-                                                <div className={styles.suggestionBarcode}>
-                                                    Barcode: {product.barcode}
-                                                </div>
+                                            <div className={styles.suggestionBarcode}>
+                                                Barcode: {product.barcode}
                                             </div>
                                         </div>
-                                    ))}
-                                </div>
-                            )}
-                        </div>
-                        <select
-                            value={selectedCategory}
-                            onChange={(e) => setSelectedCategory(e.target.value)}
-                            className={styles.categorySelect}
-                        >
-                            <option value="">All Categories</option>
-                            {categories.map(category => (
-                                <option key={category.id} value={category.name}>
-                                    {category.display_name}
-                                </option>
-                            ))}
-                        </select>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
                     </div>
+                    
+                    <select
+                        value={selectedCategory}
+                        onChange={(e) => setSelectedCategory(e.target.value)}
+                        className={styles.categorySelect}
+                    >
+                        <option value="">All Categories</option>
+                        {categories.map(category => (
+                            <option key={category.id} value={category.name}>
+                                {category.display_name}
+                            </option>
+                        ))}
+                    </select>
+
+                    <button
+                        className={`${styles.iconBtn} ${styles.refreshBtn}`}
+                        onClick={fetchProducts}
+                        title="Refresh Products"
+                    >
+                        <RefreshCw size={18} />
+                    </button>
+
+                    {hasPermission(PERMISSIONS.PRODUCTS_EXPORT) && (
+                        <button
+                            className={`${styles.iconBtn} ${styles.downloadBtn}`}
+                            onClick={handleExportProducts}
+                            title="Export All Products"
+                        >
+                            <Download size={18} />
+                        </button>
+                    )}
                 </div>
             </div>
 
@@ -817,9 +825,6 @@ const ProductManager = () => {
             <div className={styles.scrollableContent}>
                 {/* Products Table */}
                 <div className={styles.tableCard}>
-                    <div className={styles.tableHeader}>
-                        <h3>Products ({products.length})</h3>
-                    </div>
                     {loading ? (
                         <div className={styles.loading}>
                             <div className={styles.spinner}></div>
@@ -844,7 +849,7 @@ const ProductManager = () => {
                                         <td>
                                             <div className={styles.productInfo}>
                                                 <div className={styles.productAvatar}>
-                                                    <Package size={16} />
+                                                    <Package size={12} />
                                                 </div>
                                                 <div>
                                                     <div className={styles.productName}>{product.product_name}</div>
@@ -890,7 +895,7 @@ const ProductManager = () => {
                                                         onClick={() => handleEdit(product)}
                                                         title="Edit Product"
                                                     >
-                                                        <Edit size={14} />
+                                                        <Edit size={12} />
                                                     </button>
                                                 )}
                                                 {hasPermission(PERMISSIONS.PRODUCTS_DELETE) && (
@@ -899,7 +904,7 @@ const ProductManager = () => {
                                                         onClick={() => handleDelete(product.p_id)}
                                                         title="Delete Product"
                                                     >
-                                                        <Trash2 size={14} />
+                                                        <Trash2 size={12} />
                                                     </button>
                                                 )}
                                             </div>

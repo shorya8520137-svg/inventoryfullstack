@@ -732,7 +732,7 @@ export default function LoginPage() {
                 </form>
 
                 {/* 2FA Setup Link */}
-                {!requires2FA && !show2FASetup && (
+                {false && !requires2FA && !show2FASetup && (
                     <div style={{ 
                         textAlign: 'center', 
                         marginTop: '24px',
@@ -749,7 +749,7 @@ export default function LoginPage() {
                         </p>
                         <button
                             onClick={start2FASetup}
-                            disabled={loading}
+                            disabled={true}
                             style={{
                                 background: 'rgba(96, 165, 250, 0.2)',
                                 border: '1px solid rgba(96, 165, 250, 0.3)',
