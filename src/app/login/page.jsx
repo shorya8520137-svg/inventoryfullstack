@@ -14,6 +14,14 @@ export default function LoginPage() {
     const [twoFactorToken, setTwoFactorToken] = useState("");
     const [userId, setUserId] = useState(null);
     const [isBackupCode, setIsBackupCode] = useState(false);
+    
+    // 2FA Setup Modal States
+    const [show2FASetup, setShow2FASetup] = useState(false);
+    const [setupStep, setSetupStep] = useState(1);
+    const [qrCodeUrl, setQrCodeUrl] = useState("");
+    const [backupCodes, setBackupCodes] = useState([]);
+    const [verificationCode, setVerificationCode] = useState("");
+    const [setupSuccess, setSetupSuccess] = useState("");
 
     // ENHANCED LOGIN LOGIC WITH 2FA SUPPORT
     const handleSubmit = async (e) => {
@@ -101,6 +109,128 @@ export default function LoginPage() {
         setTwoFactorToken("");
         setUserId(null);
         setIsBackupCode(false);
+        setError("");
+    };
+
+    // 2FA Setup Functions
+    const start2FASetup = async () => {
+        if (!email.trim() || !password.trim()) {
+            setError("Please enter your email and password first to set up 2FA");
+            return;
+        }
+
+        setLoading(true);
+        setError("");
+        
+        try {
+            const apiBase = process.env.NEXT_PUBLIC_API_BASE || "https://52.221.231.85:8443";
+            
+            // First login to get token
+            const loginResponse = await fetch(`${apiBase}/api/auth/login`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ email, password }),
+            });
+            
+            const loginData = await loginResponse.json();
+            
+            if (!loginData.success) {
+                setError(loginData.message || 'Invalid credentials');
+                return;
+            }
+            
+            // Now setup 2FA
+            const setupResponse = await fetch(`${apiBase}/api/2fa/setup`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${loginData.token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+            
+            const setupData = await setupResponse.json();
+            
+            if (setupData.success) {
+                setQrCodeUrl(setupData.qrCode);
+                setBackupCodes(setupData.backupCodes);
+                setShow2FASetup(true);
+                setSetupStep(1);
+                setUserId(loginData.user.id);
+            } else {
+                setError(setupData.message || 'Failed to setup 2FA');
+            }
+        } catch (error) {
+            setError('Network error. Please try again.');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const verify2FASetup = async () => {
+        if (!verificationCode.trim()) {
+            setError("Please enter the verification code");
+            return;
+        }
+
+        setLoading(true);
+        setError("");
+        
+        try {
+            const apiBase = process.env.NEXT_PUBLIC_API_BASE || "https://52.221.231.85:8443";
+            
+            // Login again to get fresh token
+            const loginResponse = await fetch(`${apiBase}/api/auth/login`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ email, password }),
+            });
+            
+            const loginData = await loginResponse.json();
+            
+            if (!loginData.success) {
+                setError('Authentication failed. Please try again.');
+                return;
+            }
+            
+            // Use the correct endpoint for setup verification
+            const response = await fetch(`${apiBase}/api/2fa/verify-enable`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${loginData.token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    token: verificationCode.trim()
+                })
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                setSetupStep(3);
+                setSetupSuccess("2FA has been successfully enabled for your account!");
+            } else {
+                setError(data.message || 'Invalid verification code. Please ensure your device time is synchronized and try again.');
+            }
+        } catch (error) {
+            console.error('2FA verification error:', error);
+            setError('Network error. Please try again.');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const close2FASetup = () => {
+        setShow2FASetup(false);
+        setSetupStep(1);
+        setQrCodeUrl("");
+        setBackupCodes([]);
+        setVerificationCode("");
+        setSetupSuccess("");
         setError("");
     };
 
@@ -348,6 +478,29 @@ export default function LoginPage() {
                                 </button>
                             </div>
 
+                            {/* 2FA Help Info */}
+                            <div style={{
+                                backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                                border: '1px solid rgba(59, 130, 246, 0.2)',
+                                borderRadius: '8px',
+                                padding: '12px',
+                                marginBottom: '20px'
+                            }}>
+                                <div style={{ 
+                                    fontSize: '12px', 
+                                    color: 'rgba(255, 255, 255, 0.9)',
+                                    textAlign: 'center',
+                                    lineHeight: '1.4'
+                                }}>
+                                    <div style={{ fontWeight: '500', marginBottom: '4px' }}>
+                                        💡 Need help with 2FA?
+                                    </div>
+                                    <div>
+                                        Open <strong>Google Authenticator</strong> app on your phone and enter the 6-digit code for "hunyhuny"
+                                    </div>
+                                </div>
+                            </div>
+
                             {/* Back Button */}
                             <div style={{ marginBottom: '20px' }}>
                                 <button
@@ -583,6 +736,287 @@ export default function LoginPage() {
                         )}
                     </button>
                 </form>
+
+                {/* 2FA Setup Link */}
+                {!requires2FA && !show2FASetup && (
+                    <div style={{ 
+                        textAlign: 'center', 
+                        marginTop: '24px',
+                        paddingTop: '20px',
+                        borderTop: '1px solid rgba(255, 255, 255, 0.1)'
+                    }}>
+                        <p style={{ 
+                            color: 'rgba(255, 255, 255, 0.8)', 
+                            fontSize: '14px',
+                            margin: '0 0 12px 0',
+                            textShadow: '0 1px 2px rgba(0, 0, 0, 0.3)'
+                        }}>
+                            Want to secure your account?
+                        </p>
+                        <button
+                            onClick={start2FASetup}
+                            disabled={loading}
+                            style={{
+                                background: 'rgba(96, 165, 250, 0.2)',
+                                border: '1px solid rgba(96, 165, 250, 0.3)',
+                                borderRadius: '8px',
+                                padding: '12px 20px',
+                                color: '#60a5fa',
+                                fontSize: '14px',
+                                fontWeight: '500',
+                                cursor: loading ? 'not-allowed' : 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                gap: '8px',
+                                margin: '0 auto',
+                                transition: 'all 0.2s',
+                                opacity: loading ? 0.7 : 1
+                            }}
+                            onMouseOver={(e) => {
+                                if (!loading) {
+                                    e.target.style.backgroundColor = 'rgba(96, 165, 250, 0.3)';
+                                    e.target.style.transform = 'scale(1.02)';
+                                }
+                            }}
+                            onMouseOut={(e) => {
+                                if (!loading) {
+                                    e.target.style.backgroundColor = 'rgba(96, 165, 250, 0.2)';
+                                    e.target.style.transform = 'scale(1)';
+                                }
+                            }}
+                        >
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                                <circle cx="12" cy="16" r="1"/>
+                                <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                            </svg>
+                            {loading ? 'Setting up...' : 'Setup 2FA Now'}
+                        </button>
+                        <div style={{ 
+                            marginTop: '8px',
+                            fontSize: '12px',
+                            color: 'rgba(255, 255, 255, 0.6)',
+                            textShadow: '0 1px 2px rgba(0, 0, 0, 0.3)'
+                        }}>
+                            🔒 Two-Factor Authentication adds extra security to your account
+                        </div>
+                    </div>
+                )}
+
+            {/* 2FA Setup Modal */}
+            {show2FASetup && (
+                <div style={{
+                    position: 'fixed',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    zIndex: 1000,
+                    padding: '20px'
+                }}>
+                    <div style={{
+                        backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                        backdropFilter: 'blur(20px)',
+                        WebkitBackdropFilter: 'blur(20px)',
+                        borderRadius: '16px',
+                        padding: '32px',
+                        maxWidth: '500px',
+                        width: '100%',
+                        maxHeight: '90vh',
+                        overflowY: 'auto',
+                        boxShadow: '0 25px 50px rgba(0, 0, 0, 0.25)'
+                    }}>
+                        {/* Close Button */}
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+                            <h2 style={{ margin: 0, color: '#1f2937', fontSize: '24px', fontWeight: 'bold' }}>
+                                Setup Two-Factor Authentication
+                            </h2>
+                            <button
+                                onClick={close2FASetup}
+                                style={{
+                                    background: 'none',
+                                    border: 'none',
+                                    fontSize: '24px',
+                                    cursor: 'pointer',
+                                    color: '#6b7280',
+                                    padding: '4px'
+                                }}
+                            >
+                                ×
+                            </button>
+                        </div>
+
+                        {/* Error/Success Messages */}
+                        {error && (
+                            <div style={{
+                                backgroundColor: '#fef2f2',
+                                border: '1px solid #fecaca',
+                                padding: '12px 16px',
+                                borderRadius: '8px',
+                                marginBottom: '20px',
+                                color: '#dc2626',
+                                fontSize: '14px'
+                            }}>
+                                {error}
+                            </div>
+                        )}
+
+                        {setupSuccess && (
+                            <div style={{
+                                backgroundColor: '#f0fdf4',
+                                border: '1px solid #bbf7d0',
+                                padding: '12px 16px',
+                                borderRadius: '8px',
+                                marginBottom: '20px',
+                                color: '#16a34a',
+                                fontSize: '14px'
+                            }}>
+                                {setupSuccess}
+                            </div>
+                        )}
+
+                        {/* Step 1: QR Code */}
+                        {setupStep === 1 && (
+                            <div>
+                                <h3 style={{ color: '#1f2937', marginBottom: '16px' }}>Step 1: Scan QR Code</h3>
+                                <p style={{ color: '#6b7280', marginBottom: '20px' }}>
+                                    Scan this QR code with your authenticator app (Google Authenticator, Authy, etc.)
+                                </p>
+                                
+                                {qrCodeUrl && (
+                                    <div style={{ textAlign: 'center', marginBottom: '20px' }}>
+                                        <img 
+                                            src={qrCodeUrl} 
+                                            alt="2FA QR Code" 
+                                            style={{ 
+                                                maxWidth: '200px', 
+                                                border: '1px solid #e5e7eb', 
+                                                borderRadius: '8px' 
+                                            }} 
+                                        />
+                                    </div>
+                                )}
+                                
+                                <button
+                                    onClick={() => setSetupStep(2)}
+                                    style={{
+                                        backgroundColor: '#4f46e5',
+                                        color: 'white',
+                                        border: 'none',
+                                        borderRadius: '8px',
+                                        padding: '12px 24px',
+                                        fontSize: '14px',
+                                        fontWeight: '500',
+                                        cursor: 'pointer',
+                                        width: '100%'
+                                    }}
+                                >
+                                    I've Scanned the Code
+                                </button>
+                            </div>
+                        )}
+
+                        {/* Step 2: Verify */}
+                        {setupStep === 2 && (
+                            <div>
+                                <h3 style={{ color: '#1f2937', marginBottom: '16px' }}>Step 2: Verify Setup</h3>
+                                <p style={{ color: '#6b7280', marginBottom: '20px' }}>
+                                    Enter the 6-digit code from your authenticator app
+                                </p>
+                                
+                                <input
+                                    type="text"
+                                    value={verificationCode}
+                                    onChange={(e) => setVerificationCode(e.target.value)}
+                                    placeholder="Enter 6-digit code"
+                                    maxLength="6"
+                                    style={{
+                                        width: '100%',
+                                        padding: '12px',
+                                        border: '1px solid #d1d5db',
+                                        borderRadius: '8px',
+                                        fontSize: '18px',
+                                        textAlign: 'center',
+                                        letterSpacing: '0.1em',
+                                        marginBottom: '20px',
+                                        boxSizing: 'border-box'
+                                    }}
+                                />
+                                
+                                <div style={{ display: 'flex', gap: '12px' }}>
+                                    <button
+                                        onClick={verify2FASetup}
+                                        disabled={loading || !verificationCode.trim()}
+                                        style={{
+                                            backgroundColor: '#16a34a',
+                                            color: 'white',
+                                            border: 'none',
+                                            borderRadius: '8px',
+                                            padding: '12px 24px',
+                                            fontSize: '14px',
+                                            fontWeight: '500',
+                                            cursor: loading || !verificationCode.trim() ? 'not-allowed' : 'pointer',
+                                            opacity: loading || !verificationCode.trim() ? 0.7 : 1,
+                                            flex: 1
+                                        }}
+                                    >
+                                        {loading ? 'Verifying...' : 'Verify & Enable'}
+                                    </button>
+                                    
+                                    <button
+                                        onClick={() => setSetupStep(1)}
+                                        style={{
+                                            backgroundColor: '#6b7280',
+                                            color: 'white',
+                                            border: 'none',
+                                            borderRadius: '8px',
+                                            padding: '12px 24px',
+                                            fontSize: '14px',
+                                            fontWeight: '500',
+                                            cursor: 'pointer'
+                                        }}
+                                    >
+                                        Back
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Step 3: Success */}
+                        {setupStep === 3 && (
+                            <div style={{ textAlign: 'center' }}>
+                                <div style={{ fontSize: '48px', marginBottom: '16px' }}>✅</div>
+                                <h3 style={{ color: '#16a34a', marginBottom: '16px' }}>2FA Successfully Enabled!</h3>
+                                <p style={{ color: '#6b7280', marginBottom: '20px' }}>
+                                    Your account is now protected with Two-Factor Authentication. You can now login normally.
+                                </p>
+                                
+                                <button
+                                    onClick={close2FASetup}
+                                    style={{
+                                        backgroundColor: '#4f46e5',
+                                        color: 'white',
+                                        border: 'none',
+                                        borderRadius: '8px',
+                                        padding: '12px 24px',
+                                        fontSize: '14px',
+                                        fontWeight: '500',
+                                        cursor: 'pointer',
+                                        width: '100%'
+                                    }}
+                                >
+                                    Continue to Login
+                                </button>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )}
             </div>
 
             <style jsx>{`

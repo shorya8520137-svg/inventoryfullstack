@@ -63,10 +63,21 @@ class TwoFactorController {
             const userId = req.user.id;
             const { token } = req.body;
             
+            console.log(`🔐 2FA verification attempt for user ${userId} with token: ${token}`);
+            
             if (!token) {
                 return res.status(400).json({
                     success: false,
                     message: '2FA token is required'
+                });
+            }
+            
+            // Clean and validate token format
+            const cleanToken = token.toString().replace(/\s/g, '');
+            if (!/^\d{6}$/.test(cleanToken)) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Token must be 6 digits'
                 });
             }
             
@@ -80,18 +91,23 @@ class TwoFactorController {
                 });
             }
             
+            console.log(`🔐 User ${userId} has secret, verifying token...`);
+            
             // Verify token
-            const isValid = TwoFactorAuthService.verifyToken(userStatus.secret, token);
+            const isValid = TwoFactorAuthService.verifyToken(userStatus.secret, cleanToken);
             
             if (!isValid) {
+                console.log(`❌ Token verification failed for user ${userId}`);
                 return res.status(400).json({
                     success: false,
-                    message: 'Invalid 2FA token'
+                    message: 'Invalid 2FA token. Please check your authenticator app and ensure your device time is synchronized.'
                 });
             }
             
             // Enable 2FA
             await TwoFactorAuthService.enable2FA(userId);
+            
+            console.log(`✅ 2FA enabled successfully for user ${userId}`);
             
             res.json({
                 success: true,

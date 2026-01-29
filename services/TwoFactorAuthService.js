@@ -44,12 +44,24 @@ class TwoFactorAuthService {
      * Verify 2FA token
      */
     verifyToken(secret, token) {
-        return speakeasy.totp.verify({
+        // Clean the token (remove spaces, ensure it's 6 digits)
+        const cleanToken = token.toString().replace(/\s/g, '');
+        
+        if (!/^\d{6}$/.test(cleanToken)) {
+            console.log('❌ Invalid token format:', cleanToken);
+            return false;
+        }
+        
+        // Try with larger time window for better compatibility
+        const result = speakeasy.totp.verify({
             secret: secret,
             encoding: 'base32',
-            token: token,
-            window: 2 // Allow 2 time steps (60 seconds) tolerance
+            token: cleanToken,
+            window: 4 // Allow 4 time steps (2 minutes) tolerance for time sync issues
         });
+        
+        console.log(`🔐 Token verification for ${cleanToken}: ${result ? '✅ Valid' : '❌ Invalid'}`);
+        return result;
     }
     
     /**
