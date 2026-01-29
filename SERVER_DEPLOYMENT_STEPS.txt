@@ -1,0 +1,83 @@
+🚀 SERVER DEPLOYMENT STEPS - RUN ON YOUR SERVER
+==============================================================================
+
+The missing IPGeolocationTracker module has been fixed and pushed to GitHub.
+Run these commands on your server (52.221.231.85):
+
+==============================================================================
+STEP 1: PULL THE LATEST CODE
+==============================================================================
+
+cd ~/inventoryfullstack
+git pull origin main
+
+==============================================================================
+STEP 2: VERIFY THE FIX
+==============================================================================
+
+# Check if the missing file is now present
+ls -la IPGeolocationTracker.js
+
+# Should show: IPGeolocationTracker.js file exists
+
+==============================================================================
+STEP 3: RESTART THE SERVER
+==============================================================================
+
+# Stop any running processes
+pkill node
+
+# Start the server
+nohup node server.js > app.log 2>&1 &
+
+# Or if using PM2:
+pm2 restart all
+
+==============================================================================
+STEP 4: VERIFY SERVER IS RUNNING
+==============================================================================
+
+# Check if server started successfully
+curl -k https://52.221.231.85:8443/api/health
+
+# Should return: {"status":"ok","timestamp":"..."}
+
+==============================================================================
+STEP 5: TEST THE 2FA API
+==============================================================================
+
+# Test login API
+curl -k -X POST https://52.221.231.85:8443/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"admin@company.com","password":"admin@123"}' | jq
+
+# Should return login response without JSON parsing errors
+
+==============================================================================
+WHAT WAS FIXED:
+==============================================================================
+
+✅ Created missing IPGeolocationTracker.js module
+✅ Module handles IP geolocation for notification system
+✅ Includes fallbacks for localhost and private IPs
+✅ Uses free ip-api.com service for location lookup
+✅ Includes caching to avoid repeated API calls
+
+==============================================================================
+IF YOU STILL GET ERRORS:
+==============================================================================
+
+1. Check server logs:
+   tail -f app.log
+
+2. Verify all files are present:
+   ls -la services/
+   ls -la IPGeolocationTracker.js
+
+3. Check Node.js version:
+   node --version
+
+4. Restart with verbose logging:
+   DEBUG=* node server.js
+
+==============================================================================
