@@ -152,13 +152,20 @@ export default function LoginPage() {
             
             const setupData = await setupResponse.json();
             
+            console.log('🔐 Setup response:', setupData);
+            
             if (setupData.success) {
-                setQrCodeUrl(setupData.qrCode);
-                setBackupCodes(setupData.backupCodes);
+                console.log('✅ 2FA setup successful');
+                console.log('QR Code URL length:', setupData.data.qrCodeUrl ? setupData.data.qrCodeUrl.length : 0);
+                console.log('Backup codes count:', setupData.data.backupCodes ? setupData.data.backupCodes.length : 0);
+                
+                setQrCodeUrl(setupData.data.qrCodeUrl);
+                setBackupCodes(setupData.data.backupCodes);
                 setShow2FASetup(true);
                 setSetupStep(1);
                 setUserId(loginData.user.id);
             } else {
+                console.error('❌ 2FA setup failed:', setupData.message);
                 setError(setupData.message || 'Failed to setup 2FA');
             }
         } catch (error) {
@@ -888,7 +895,7 @@ export default function LoginPage() {
                                     Scan this QR code with your authenticator app (Google Authenticator, Authy, etc.)
                                 </p>
                                 
-                                {qrCodeUrl && (
+                                {qrCodeUrl ? (
                                     <div style={{ textAlign: 'center', marginBottom: '20px' }}>
                                         <img 
                                             src={qrCodeUrl} 
@@ -897,8 +904,28 @@ export default function LoginPage() {
                                                 maxWidth: '200px', 
                                                 border: '1px solid #e5e7eb', 
                                                 borderRadius: '8px' 
-                                            }} 
+                                            }}
+                                            onError={(e) => {
+                                                console.error('QR Code failed to load:', qrCodeUrl);
+                                                e.target.style.display = 'none';
+                                            }}
                                         />
+                                    </div>
+                                ) : (
+                                    <div style={{ 
+                                        textAlign: 'center', 
+                                        marginBottom: '20px',
+                                        padding: '40px',
+                                        backgroundColor: '#f9fafb',
+                                        border: '2px dashed #d1d5db',
+                                        borderRadius: '8px'
+                                    }}>
+                                        <p style={{ color: '#6b7280', marginBottom: '10px' }}>
+                                            QR Code is loading...
+                                        </p>
+                                        <p style={{ color: '#9ca3af', fontSize: '12px' }}>
+                                            If this persists, try refreshing or use manual setup
+                                        </p>
                                     </div>
                                 )}
                                 
