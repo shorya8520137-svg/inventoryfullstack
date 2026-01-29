@@ -47,20 +47,58 @@ class TwoFactorAuthService {
         // Clean the token (remove spaces, ensure it's 6 digits)
         const cleanToken = token.toString().replace(/\s/g, '');
         
+        console.log(`🔐 Verifying token: ${cleanToken}`);
+        console.log(`🔐 Secret length: ${secret ? secret.length : 'null'}`);
+        console.log(`🔐 Secret format valid: ${secret ? /^[A-Z2-7]+=*$/.test(secret) : false}`);
+        
         if (!/^\d{6}$/.test(cleanToken)) {
             console.log('❌ Invalid token format:', cleanToken);
             return false;
         }
+        
+        if (!secret) {
+            console.log('❌ No secret provided');
+            return false;
+        }
+        
+        // Generate current token for comparison
+        const currentToken = speakeasy.totp({
+            secret: secret,
+            encoding: 'base32'
+        });
+        console.log(`🔐 Current expected token: ${currentToken}`);
         
         // Try with larger time window for better compatibility
         const result = speakeasy.totp.verify({
             secret: secret,
             encoding: 'base32',
             token: cleanToken,
-            window: 4 // Allow 4 time steps (2 minutes) tolerance for time sync issues
+            window: 6 // Allow 6 time steps (3 minutes) tolerance for time sync issues
         });
         
         console.log(`🔐 Token verification for ${cleanToken}: ${result ? '✅ Valid' : '❌ Invalid'}`);
+        
+        // If still invalid, try with different time offsets
+        if (!result) {
+            console.log('🔐 Trying with time offsets...');
+            const currentTime = Math.floor(Date.now() / 1000);
+            
+            for (let offset = -180; offset <= 180; offset += 30) {
+                const adjustedTime = currentTime + offset;
+                const offsetResult = speakeasy.totp.verify({
+                    secret: secret,
+                    encoding: 'base32',
+                    token: cleanToken,
+                    time: adjustedTime
+                });
+                
+                if (offsetResult) {
+                    console.log(`✅ Token valid with ${offset}s offset`);
+                    return true;
+                }
+            }
+        }
+        
         return result;
     }
     

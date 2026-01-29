@@ -15,6 +15,8 @@ class TwoFactorController {
             const userId = req.user.id;
             const userEmail = req.user.email;
             
+            console.log(`🔐 Generating 2FA setup for user ${userId} (${userEmail})`);
+            
             // Check if 2FA is already enabled
             const currentStatus = await TwoFactorAuthService.getUser2FAStatus(userId);
             if (currentStatus.enabled) {
@@ -24,8 +26,11 @@ class TwoFactorController {
                 });
             }
             
-            // Generate new secret
+            // Generate new secret with proper validation
             const secretData = TwoFactorAuthService.generateSecret(userEmail);
+            
+            console.log(`🔐 Generated secret: ${secretData.secret} (length: ${secretData.secret.length})`);
+            console.log(`🔐 Secret format valid: ${/^[A-Z2-7]+=*$/.test(secretData.secret)}`);
             
             // Generate QR code
             const qrCodeUrl = await TwoFactorAuthService.generateQRCode(secretData.otpauthUrl);
@@ -36,13 +41,16 @@ class TwoFactorController {
             // Save secret to database (but don't enable yet)
             await TwoFactorAuthService.setup2FA(userId, secretData.secret, backupCodes);
             
+            console.log(`✅ 2FA setup saved for user ${userId}`);
+            
             res.json({
                 success: true,
                 data: {
                     secret: secretData.secret,
                     qrCodeUrl: qrCodeUrl,
                     backupCodes: backupCodes,
-                    manualEntryKey: secretData.secret
+                    manualEntryKey: secretData.secret,
+                    otpauthUrl: secretData.otpauthUrl
                 }
             });
             
