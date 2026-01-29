@@ -1106,6 +1106,8 @@ export default function InventorySheet() {
                                             <button
                                                 className={styles.actionBtn}
                                                 title="View Details"
+                                                disabled
+                                                style={{ opacity: 0.3, cursor: 'not-allowed' }}
                                             >
                                                 <Eye size={14} />
                                             </button>

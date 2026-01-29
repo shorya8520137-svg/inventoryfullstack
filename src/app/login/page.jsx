@@ -59,18 +59,36 @@ export default function LoginPage() {
             display: 'flex', 
             alignItems: 'center', 
             justifyContent: 'center',
-            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            backgroundImage: 'url(/background.jpeg)',
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            backgroundRepeat: 'no-repeat',
             fontFamily: 'system-ui, sans-serif',
-            padding: '20px'
+            padding: '20px',
+            position: 'relative'
         }}>
+            {/* Light overlay for better text readability */}
             <div style={{
-                backgroundColor: 'white',
-                borderRadius: '16px',
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                backgroundColor: 'rgba(0, 0, 0, 0.2)',
+                zIndex: 1
+            }}></div>
+            <div style={{
+                backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                backdropFilter: 'blur(15px)',
+                WebkitBackdropFilter: 'blur(15px)',
+                border: '1px solid rgba(255, 255, 255, 0.15)',
+                borderRadius: '20px',
                 padding: '40px',
                 width: '100%',
                 maxWidth: '400px',
-                boxShadow: '0 20px 40px rgba(0, 0, 0, 0.1)',
-                position: 'relative'
+                boxShadow: '0 25px 50px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(255, 255, 255, 0.05)',
+                position: 'relative',
+                zIndex: 2
             }}>
                 {/* Logo and Header */}
                 <div style={{ textAlign: 'center', marginBottom: '32px' }}>
@@ -96,15 +114,17 @@ export default function LoginPage() {
                             <div style={{ 
                                 fontSize: '24px', 
                                 fontWeight: 'bold', 
-                                color: '#4c5a7a',
-                                lineHeight: '1.2'
+                                color: '#ffffff',
+                                lineHeight: '1.2',
+                                textShadow: '0 2px 4px rgba(0, 0, 0, 0.3)'
                             }}>
                                 hunyhuny
                             </div>
                             <div style={{ 
                                 fontSize: '14px', 
-                                color: '#9ca3af',
-                                lineHeight: '1.2'
+                                color: 'rgba(255, 255, 255, 0.8)',
+                                lineHeight: '1.2',
+                                textShadow: '0 1px 2px rgba(0, 0, 0, 0.3)'
                             }}>
                                 Inventory Management
                             </div>
@@ -113,15 +133,17 @@ export default function LoginPage() {
                     <h1 style={{ 
                         fontSize: '28px', 
                         fontWeight: 'bold', 
-                        color: '#374151',
-                        margin: '0 0 8px 0'
+                        color: '#ffffff',
+                        margin: '0 0 8px 0',
+                        textShadow: '0 2px 4px rgba(0, 0, 0, 0.3)'
                     }}>
                         Welcome Back
                     </h1>
                     <p style={{ 
-                        color: '#9ca3af', 
+                        color: 'rgba(255, 255, 255, 0.9)', 
                         margin: '0',
-                        fontSize: '16px'
+                        fontSize: '16px',
+                        textShadow: '0 1px 2px rgba(0, 0, 0, 0.3)'
                     }}>
                         Sign in to your account
                     </p>
@@ -151,9 +173,10 @@ export default function LoginPage() {
                         <label style={{ 
                             display: 'block', 
                             marginBottom: '8px', 
-                            color: '#374151',
+                            color: '#ffffff',
                             fontWeight: '500',
-                            fontSize: '14px'
+                            fontSize: '14px',
+                            textShadow: '0 1px 2px rgba(0, 0, 0, 0.3)'
                         }}>
                             Email Address
                         </label>
@@ -163,7 +186,7 @@ export default function LoginPage() {
                                 left: '16px',
                                 top: '50%',
                                 transform: 'translateY(-50%)',
-                                color: '#9ca3af',
+                                color: 'rgba(255, 255, 255, 0.7)',
                                 width: '20px',
                                 height: '20px'
                             }} viewBox="0 0 20 20" fill="currentColor">
@@ -180,21 +203,26 @@ export default function LoginPage() {
                                 style={{
                                     width: '100%',
                                     padding: '16px 16px 16px 48px',
-                                    border: '1px solid #e5e7eb',
-                                    borderRadius: '8px',
+                                    border: '1px solid rgba(255, 255, 255, 0.15)',
+                                    borderRadius: '12px',
                                     fontSize: '16px',
                                     outline: 'none',
                                     boxSizing: 'border-box',
-                                    backgroundColor: '#f9fafb',
+                                    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                                    backdropFilter: 'blur(8px)',
+                                    WebkitBackdropFilter: 'blur(8px)',
+                                    color: '#ffffff',
                                     transition: 'all 0.2s'
                                 }}
                                 onFocus={(e) => {
-                                    e.target.style.borderColor = '#667eea';
-                                    e.target.style.backgroundColor = 'white';
+                                    e.target.style.borderColor = 'rgba(255, 255, 255, 0.3)';
+                                    e.target.style.backgroundColor = 'rgba(255, 255, 255, 0.08)';
+                                    e.target.style.boxShadow = '0 0 0 2px rgba(255, 255, 255, 0.08)';
                                 }}
                                 onBlur={(e) => {
-                                    e.target.style.borderColor = '#e5e7eb';
-                                    e.target.style.backgroundColor = '#f9fafb';
+                                    e.target.style.borderColor = 'rgba(255, 255, 255, 0.15)';
+                                    e.target.style.backgroundColor = 'rgba(255, 255, 255, 0.05)';
+                                    e.target.style.boxShadow = 'none';
                                 }}
                             />
                         </div>
@@ -204,9 +232,10 @@ export default function LoginPage() {
                         <label style={{ 
                             display: 'block', 
                             marginBottom: '8px', 
-                            color: '#374151',
+                            color: '#ffffff',
                             fontWeight: '500',
-                            fontSize: '14px'
+                            fontSize: '14px',
+                            textShadow: '0 1px 2px rgba(0, 0, 0, 0.3)'
                         }}>
                             Password
                         </label>
@@ -216,7 +245,7 @@ export default function LoginPage() {
                                 left: '16px',
                                 top: '50%',
                                 transform: 'translateY(-50%)',
-                                color: '#9ca3af',
+                                color: 'rgba(255, 255, 255, 0.7)',
                                 width: '20px',
                                 height: '20px'
                             }} viewBox="0 0 20 20" fill="currentColor">
@@ -231,21 +260,26 @@ export default function LoginPage() {
                                 style={{
                                     width: '100%',
                                     padding: '16px 48px 16px 48px',
-                                    border: '1px solid #e5e7eb',
-                                    borderRadius: '8px',
+                                    border: '1px solid rgba(255, 255, 255, 0.15)',
+                                    borderRadius: '12px',
                                     fontSize: '16px',
                                     outline: 'none',
                                     boxSizing: 'border-box',
-                                    backgroundColor: '#f9fafb',
+                                    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                                    backdropFilter: 'blur(8px)',
+                                    WebkitBackdropFilter: 'blur(8px)',
+                                    color: '#ffffff',
                                     transition: 'all 0.2s'
                                 }}
                                 onFocus={(e) => {
-                                    e.target.style.borderColor = '#667eea';
-                                    e.target.style.backgroundColor = 'white';
+                                    e.target.style.borderColor = 'rgba(255, 255, 255, 0.3)';
+                                    e.target.style.backgroundColor = 'rgba(255, 255, 255, 0.08)';
+                                    e.target.style.boxShadow = '0 0 0 2px rgba(255, 255, 255, 0.08)';
                                 }}
                                 onBlur={(e) => {
-                                    e.target.style.borderColor = '#e5e7eb';
-                                    e.target.style.backgroundColor = '#f9fafb';
+                                    e.target.style.borderColor = 'rgba(255, 255, 255, 0.15)';
+                                    e.target.style.backgroundColor = 'rgba(255, 255, 255, 0.05)';
+                                    e.target.style.boxShadow = 'none';
                                 }}
                             />
                             <button
@@ -258,7 +292,7 @@ export default function LoginPage() {
                                     transform: 'translateY(-50%)',
                                     background: 'none',
                                     border: 'none',
-                                    color: '#9ca3af',
+                                    color: 'rgba(255, 255, 255, 0.7)',
                                     cursor: 'pointer',
                                     padding: '0',
                                     display: 'flex',
@@ -339,6 +373,18 @@ export default function LoginPage() {
                 @keyframes spin {
                     0% { transform: rotate(0deg); }
                     100% { transform: rotate(360deg); }
+                }
+                input::placeholder {
+                    color: rgba(255, 255, 255, 0.6) !important;
+                }
+                input::-webkit-input-placeholder {
+                    color: rgba(255, 255, 255, 0.6) !important;
+                }
+                input::-moz-placeholder {
+                    color: rgba(255, 255, 255, 0.6) !important;
+                }
+                input:-ms-input-placeholder {
+                    color: rgba(255, 255, 255, 0.6) !important;
                 }
             `}</style>
         </div>
