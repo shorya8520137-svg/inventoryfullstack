@@ -165,17 +165,25 @@ class TwoFactorAuthService {
                         let backupCodes = null;
                         if (user.two_factor_backup_codes) {
                             try {
-                                // Try to parse as JSON first
-                                backupCodes = JSON.parse(user.two_factor_backup_codes);
-                            } catch (jsonError) {
-                                // If JSON parsing fails, try to split as comma-separated string
-                                try {
-                                    backupCodes = user.two_factor_backup_codes.split(',').map(code => code.trim());
-                                    console.log('⚠️ Backup codes were stored as string, converted to array');
-                                } catch (splitError) {
-                                    console.error('❌ Failed to parse backup codes:', splitError);
+                                // Check if it's already an array (parsed by MySQL)
+                                if (Array.isArray(user.two_factor_backup_codes)) {
+                                    backupCodes = user.two_factor_backup_codes;
+                                } else if (typeof user.two_factor_backup_codes === 'string') {
+                                    // Try to parse as JSON first
+                                    try {
+                                        backupCodes = JSON.parse(user.two_factor_backup_codes);
+                                    } catch (jsonError) {
+                                        // If JSON parsing fails, try to split as comma-separated string
+                                        backupCodes = user.two_factor_backup_codes.split(',').map(code => code.trim());
+                                        console.log('⚠️ Backup codes were stored as string, converted to array');
+                                    }
+                                } else {
+                                    console.log('⚠️ Backup codes in unexpected format:', typeof user.two_factor_backup_codes);
                                     backupCodes = null;
                                 }
+                            } catch (error) {
+                                console.error('❌ Failed to parse backup codes:', error);
+                                backupCodes = null;
                             }
                         }
                         
