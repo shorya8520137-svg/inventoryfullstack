@@ -33,8 +33,8 @@ export default function SecurityPage() {
             });
             
             const data = await response.json();
-            if (data.success !== false) {
-                setTwoFactorEnabled(data.enabled || false);
+            if (data.success) {
+                setTwoFactorEnabled(data.data.enabled || false);
             }
         } catch (error) {
             console.error('Error checking 2FA status:', error);
@@ -60,8 +60,8 @@ export default function SecurityPage() {
             const data = await response.json();
             
             if (data.success) {
-                setQrCodeUrl(data.qrCode);
-                setBackupCodes(data.backupCodes);
+                setQrCodeUrl(data.data.qrCodeUrl);
+                setBackupCodes(data.data.backupCodes);
                 setShowSetup(true);
                 setSetupStep(1);
             } else {
@@ -87,7 +87,7 @@ export default function SecurityPage() {
             const token = getToken();
             const apiBase = process.env.NEXT_PUBLIC_API_BASE || "https://52.221.231.85:8443";
             
-            const response = await fetch(`${apiBase}/api/2fa/verify`, {
+            const response = await fetch(`${apiBase}/api/2fa/verify-enable`, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${token}`,
@@ -115,6 +115,12 @@ export default function SecurityPage() {
     };
 
     const disable2FA = async () => {
+        const password = prompt("Enter your current password to disable 2FA:");
+        if (!password) return;
+        
+        const token = prompt("Enter your current 2FA code to confirm:");
+        if (!token) return;
+
         if (!confirm("Are you sure you want to disable Two-Factor Authentication? This will make your account less secure.")) {
             return;
         }
@@ -123,15 +129,19 @@ export default function SecurityPage() {
         setError("");
         
         try {
-            const token = getToken();
+            const authToken = getToken();
             const apiBase = process.env.NEXT_PUBLIC_API_BASE || "https://52.221.231.85:8443";
             
             const response = await fetch(`${apiBase}/api/2fa/disable`, {
                 method: 'POST',
                 headers: {
-                    'Authorization': `Bearer ${token}`,
+                    'Authorization': `Bearer ${authToken}`,
                     'Content-Type': 'application/json'
-                }
+                },
+                body: JSON.stringify({
+                    password: password,
+                    token: token
+                })
             });
             
             const data = await response.json();
