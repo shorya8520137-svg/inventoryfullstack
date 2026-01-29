@@ -286,37 +286,24 @@ export default function LoginPage() {
                         justifyContent: 'center',
                         marginBottom: '24px'
                     }}>
-                        <img 
-                            src="/hunhuny.jpeg" 
-                            alt="hunyhuny logo"
-                            style={{
-                                width: '48px',
-                                height: '48px',
-                                borderRadius: '12px',
-                                objectFit: 'cover',
-                                marginRight: '12px',
-                                border: '2px solid #e5e7eb'
-                            }}
-                        />
-                        <div style={{ textAlign: 'left' }}>
-                            <div style={{ 
-                                fontSize: '24px', 
-                                fontWeight: 'bold', 
-                                color: '#ffffff',
-                                lineHeight: '1.2',
-                                textShadow: '0 2px 4px rgba(0, 0, 0, 0.3)'
-                            }}>
-                                hunyhuny
-                            </div>
-                            <div style={{ 
-                                fontSize: '14px', 
-                                color: 'rgba(255, 255, 255, 0.8)',
-                                lineHeight: '1.2',
-                                textShadow: '0 1px 2px rgba(0, 0, 0, 0.3)'
-                            }}>
-                                Inventory Management
-                            </div>
+                        <div style={{ 
+                            fontSize: '36px', 
+                            fontWeight: 'bold',
+                            lineHeight: '1.2',
+                            textShadow: '0 2px 4px rgba(0, 0, 0, 0.3)',
+                            letterSpacing: '-1px'
+                        }}>
+                            <span style={{ color: '#1e40af' }}>huny</span>
+                            <span style={{ color: '#ec4899' }}>huny</span>
                         </div>
+                    </div>
+                    <div style={{ 
+                        fontSize: '14px', 
+                        color: 'rgba(255, 255, 255, 0.8)',
+                        lineHeight: '1.2',
+                        textShadow: '0 1px 2px rgba(0, 0, 0, 0.3)'
+                    }}>
+                        Smart Inventory Solutions
                     </div>
                     <h1 style={{ 
                         fontSize: '28px', 
@@ -325,7 +312,7 @@ export default function LoginPage() {
                         margin: '0 0 8px 0',
                         textShadow: '0 2px 4px rgba(0, 0, 0, 0.3)'
                     }}>
-                        Welcome Back
+                        Welcome to hunyhuny
                     </h1>
                     <p style={{ 
                         color: 'rgba(255, 255, 255, 0.9)', 
@@ -333,7 +320,7 @@ export default function LoginPage() {
                         fontSize: '16px',
                         textShadow: '0 1px 2px rgba(0, 0, 0, 0.3)'
                     }}>
-                        Sign in to your account
+                        Access your smart inventory dashboard
                     </p>
                 </div>
 
