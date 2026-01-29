@@ -160,10 +160,29 @@ class TwoFactorAuthService {
                 } else {
                     if (results.length > 0) {
                         const user = results[0];
+                        
+                        // Safe backup codes parsing
+                        let backupCodes = null;
+                        if (user.two_factor_backup_codes) {
+                            try {
+                                // Try to parse as JSON first
+                                backupCodes = JSON.parse(user.two_factor_backup_codes);
+                            } catch (jsonError) {
+                                // If JSON parsing fails, try to split as comma-separated string
+                                try {
+                                    backupCodes = user.two_factor_backup_codes.split(',').map(code => code.trim());
+                                    console.log('⚠️ Backup codes were stored as string, converted to array');
+                                } catch (splitError) {
+                                    console.error('❌ Failed to parse backup codes:', splitError);
+                                    backupCodes = null;
+                                }
+                            }
+                        }
+                        
                         resolve({
                             enabled: user.two_factor_enabled,
                             secret: user.two_factor_secret,
-                            backupCodes: user.two_factor_backup_codes ? JSON.parse(user.two_factor_backup_codes) : null,
+                            backupCodes: backupCodes,
                             setupAt: user.two_factor_setup_at
                         });
                     } else {
