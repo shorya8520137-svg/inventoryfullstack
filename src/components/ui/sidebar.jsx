@@ -16,7 +16,8 @@ import {
     LogOut,
     Plus,
     Shield,
-    Activity
+    Activity,
+    Lock
 } from "lucide-react";
 import { cva } from "class-variance-authority";
 import { motion, AnimatePresence } from "framer-motion";
@@ -523,6 +524,22 @@ const InventoryMenu = ({ onOpenOperation }) => {
                             </motion.div>
                         </SidebarMenuItem>
                     )}
+
+                    {/* SECURITY SETTINGS */}
+                    <SidebarMenuItem>
+                        <motion.div
+                            whileHover={{ scale: 1.02, x: 2 }}
+                            whileTap={{ scale: 0.98 }}
+                        >
+                            <Link 
+                                href="/security" 
+                                className={cn(sidebarMenuButtonVariants({ active: pathname === "/security", collapsed }))}
+                            >
+                                <Lock size={collapsed ? 16 : 16} />
+                                {!collapsed && <span>Security</span>}
+                            </Link>
+                        </motion.div>
+                    </SidebarMenuItem>
 
                     {/* ACCESS CONTROL - DISABLED - Code removed for cleaner build */}
 
