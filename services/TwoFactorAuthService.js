@@ -41,7 +41,7 @@ class TwoFactorAuthService {
     }
     
     /**
-     * Verify 2FA token
+     * Verify 2FA token with enhanced time synchronization
      */
     verifyToken(secret, token) {
         // Clean the token (remove spaces, ensure it's 6 digits)
@@ -68,38 +68,57 @@ class TwoFactorAuthService {
         });
         console.log(`🔐 Current expected token: ${currentToken}`);
         
-        // Try with larger time window for better compatibility
-        const result = speakeasy.totp.verify({
+        // Try with multiple verification approaches
+        
+        // 1. Standard verification with large window (10 time steps = 5 minutes)
+        const standardResult = speakeasy.totp.verify({
             secret: secret,
             encoding: 'base32',
             token: cleanToken,
-            window: 6 // Allow 6 time steps (3 minutes) tolerance for time sync issues
+            window: 10 // Allow 10 time steps (5 minutes) tolerance
         });
         
-        console.log(`🔐 Token verification for ${cleanToken}: ${result ? '✅ Valid' : '❌ Invalid'}`);
+        if (standardResult) {
+            console.log(`✅ Token verification successful (standard method)`);
+            return true;
+        }
         
-        // If still invalid, try with different time offsets
-        if (!result) {
-            console.log('🔐 Trying with time offsets...');
-            const currentTime = Math.floor(Date.now() / 1000);
+        // 2. Manual time offset verification (more aggressive)
+        console.log('🔐 Trying manual time offsets...');
+        const currentTime = Math.floor(Date.now() / 1000);
+        
+        // Try offsets from -10 minutes to +10 minutes in 30-second steps
+        for (let offset = -600; offset <= 600; offset += 30) {
+            const adjustedTime = currentTime + offset;
+            const offsetResult = speakeasy.totp.verify({
+                secret: secret,
+                encoding: 'base32',
+                token: cleanToken,
+                time: adjustedTime,
+                window: 0 // No additional window for manual offset
+            });
             
-            for (let offset = -180; offset <= 180; offset += 30) {
-                const adjustedTime = currentTime + offset;
-                const offsetResult = speakeasy.totp.verify({
-                    secret: secret,
-                    encoding: 'base32',
-                    token: cleanToken,
-                    time: adjustedTime
-                });
-                
-                if (offsetResult) {
-                    console.log(`✅ Token valid with ${offset}s offset`);
-                    return true;
-                }
+            if (offsetResult) {
+                console.log(`✅ Token valid with ${offset}s offset (${Math.round(offset/60)}m ${offset%60}s)`);
+                return true;
             }
         }
         
-        return result;
+        // 3. Generate tokens for debugging
+        console.log('🔐 Recent expected tokens:');
+        for (let i = -3; i <= 3; i++) {
+            const timeStep = currentTime + (i * 30);
+            const expectedToken = speakeasy.totp({
+                secret: secret,
+                encoding: 'base32',
+                time: timeStep
+            });
+            const timeDesc = i === 0 ? 'NOW' : `${i > 0 ? '+' : ''}${i * 30}s`;
+            console.log(`  ${timeDesc.padEnd(6)}: ${expectedToken}`);
+        }
+        
+        console.log(`❌ Token verification failed for ${cleanToken}`);
+        return false;
     }
     
     /**
