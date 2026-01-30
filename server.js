@@ -18,6 +18,9 @@ app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 app.use(morgan("dev"));
 
+// Trust proxy for CloudFlare and other reverse proxies
+app.set('trust proxy', true);
+
 // Serve static files from uploads directory
 app.use('/uploads', express.static('uploads'));
 

@@ -307,6 +307,43 @@ class ProductionEventAuditLogger {
         }, req, userId);
     }
 
+    async logReturnCreate(req, userId, returnData) {
+        return this.logEvent('RETURN_CREATE', {
+            action: 'CREATE_RETURN',
+            user_id: userId,
+            return_id: returnData.return_id,
+            product_name: returnData.product_name,
+            quantity: returnData.quantity,
+            reason: returnData.reason,
+            awb: returnData.awb,
+            condition: returnData.condition || 'good'
+        }, req, userId);
+    }
+
+    async logDamageCreate(req, userId, damageData) {
+        return this.logEvent('DAMAGE_CREATE', {
+            action: 'CREATE_DAMAGE',
+            user_id: userId,
+            damage_id: damageData.damage_id,
+            product_name: damageData.product_name,
+            quantity: damageData.quantity,
+            reason: damageData.reason,
+            location: damageData.location
+        }, req, userId);
+    }
+
+    async logRecoveryCreate(req, userId, recoveryData) {
+        return this.logEvent('RECOVERY_CREATE', {
+            action: 'CREATE_RECOVERY',
+            user_id: userId,
+            recovery_id: recoveryData.recovery_id,
+            product_name: recoveryData.product_name,
+            quantity: recoveryData.quantity,
+            recovery_type: recoveryData.recovery_type,
+            notes: recoveryData.notes
+        }, req, userId);
+    }
+
     /**
      * Get audit logs with filters
      */

@@ -171,14 +171,15 @@ function addLedgerEntryAndCommit(returnId, barcode, product_type, warehouse, qty
                 console.log('🔍 DEBUG: About to create return audit log');
                 console.log('🔍 req.user:', req.user);
                 
-                // Use EventAuditLogger for consistent audit logging
-                eventAuditLogger.logReturnCreate(req.user, {
+                // Use ProductionEventAuditLogger for consistent audit logging
+                eventAuditLogger.logReturnCreate(req, req.user.id, {
                     return_id: returnId,
                     product_name: product_type,
                     quantity: qty,
                     reason: req.body.return_reason || 'Return processed',
-                    awb: awb
-                }, req, 'success');
+                    awb: awb,
+                    condition: condition
+                });
             }
 
             res.status(201).json({

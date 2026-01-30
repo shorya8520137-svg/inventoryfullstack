@@ -1,8 +1,8 @@
 const db = require('../db/connection');
-const EventAuditLogger = require('../EventAuditLogger');
+const ProductionEventAuditLogger = require('../ProductionEventAuditLogger');
 
-// Initialize event audit logger
-const eventAuditLogger = new EventAuditLogger();
+// Initialize production event audit logger
+const eventAuditLogger = new ProductionEventAuditLogger();
 
 /**
  * =====================================================
@@ -184,15 +184,15 @@ exports.reportDamage = (req, res) => {
 
                                 console.log('✅ Transaction committed successfully');
                                 
-                                // Log DAMAGE audit using EventAuditLogger
+                                // Log DAMAGE audit using ProductionEventAuditLogger
                                 if (req.user) {
-                                    eventAuditLogger.logDamageCreate(req.user, {
+                                    eventAuditLogger.logDamageCreate(req, req.user.id, {
                                         damage_id: damageId,
                                         product_name: product_type,
                                         quantity: qty,
                                         reason: 'Damage reported',
                                         location: inventory_location
-                                    }, req, 'success');
+                                    });
                                 }
                                 
                                 res.status(201).json({
@@ -358,32 +358,14 @@ exports.recoverStock = (req, res) => {
 
                             console.log('✅ Transaction committed successfully');
                             
-                            // Log RECOVERY audit using EventAuditLogger
+                            // Log RECOVERY audit using ProductionEventAuditLogger
                             if (req.user) {
-                                eventAuditLogger.logEvent({
-                                    user_id: req.user.id,
-                                    user_name: req.user.name,
-                                    user_email: req.user.email,
-                                    user_role: req.user.role_name || req.user.role,
-                                    action: 'CREATE',
-                                    resource_type: 'RECOVERY',
-                                    resource_id: recoveryId.toString(),
-                                    resource_name: `${product_type} Recovery`,
-                                    description: `${req.user.name} recovered ${qty}x ${product_type}`,
-                                    details: {
-                                        user_name: req.user.name,
-                                        user_email: req.user.email,
-                                        recovery_id: recoveryId,
-                                        product_name: product_type,
-                                        quantity: qty,
-                                        location: inventory_location,
-                                        create_time: new Date().toISOString(),
-                                        status: 'success'
-                                    },
-                                    ip_address: eventAuditLogger.getClientIP(req),
-                                    user_agent: req.get('User-Agent') || 'Unknown',
-                                    request_method: req.method,
-                                    request_url: req.originalUrl
+                                eventAuditLogger.logRecoveryCreate(req, req.user.id, {
+                                    recovery_id: recoveryId,
+                                    product_name: product_type,
+                                    quantity: qty,
+                                    recovery_type: 'manual',
+                                    notes: `${req.user.name} recovered ${qty}x ${product_type}`
                                 });
                             }
                             

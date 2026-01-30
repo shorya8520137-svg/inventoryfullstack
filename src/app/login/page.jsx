@@ -32,7 +32,7 @@ export default function LoginPage() {
         console.log("🚀 Form submitted - JavaScript is working!");
 
         try {
-            const apiBase = process.env.NEXT_PUBLIC_API_BASE || "https://52.221.231.85:8443";
+            const apiBase = process.env.NEXT_PUBLIC_API_BASE || "https://54.169.31.95:8443";
             console.log("🔗 API Base:", apiBase);
 
             // Prepare request body
@@ -123,7 +123,7 @@ export default function LoginPage() {
         setError("");
         
         try {
-            const apiBase = process.env.NEXT_PUBLIC_API_BASE || "https://52.221.231.85:8443";
+            const apiBase = process.env.NEXT_PUBLIC_API_BASE || "https://54.169.31.95:8443";
             
             // First login to get token
             const loginResponse = await fetch(`${apiBase}/api/auth/login`, {
@@ -185,7 +185,7 @@ export default function LoginPage() {
         setError("");
         
         try {
-            const apiBase = process.env.NEXT_PUBLIC_API_BASE || "https://52.221.231.85:8443";
+            const apiBase = process.env.NEXT_PUBLIC_API_BASE || "https://54.169.31.95:8443";
             
             // Login again to get fresh token
             const loginResponse = await fetch(`${apiBase}/api/auth/login`, {
