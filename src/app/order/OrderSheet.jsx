@@ -528,7 +528,7 @@ export default function OrderSheet() {
             if (openStatusDropdown && !event.target.closest(`.${styles.statusDropdownContainer}`)) {
                 setOpenStatusDropdown(null);
             }
-            if (showExportDropdown && !event.target.closest(`.${styles.exportDropdown}`)) {
+            if (showExportDropdown && !event.target.closest(`.${styles.exportPanel}`)) {
                 setShowExportDropdown(false);
             }
         };
