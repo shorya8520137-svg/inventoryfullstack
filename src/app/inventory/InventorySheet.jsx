@@ -694,6 +694,11 @@ export default function InventorySheet() {
                     </button>
 
                     {/* Export Dropdown */}
+                    {console.log('🔍 INVENTORY_EXPORT Permission Check:', {
+                        hasPermission: hasPermission(PERMISSIONS.INVENTORY_EXPORT),
+                        PERMISSIONS_INVENTORY_EXPORT: PERMISSIONS.INVENTORY_EXPORT,
+                        allUserPermissions: hasPermission ? 'Available' : 'Not Available'
+                    })}
                     {hasPermission(PERMISSIONS.INVENTORY_EXPORT) && (
                         <div className={styles.exportDropdown}>
                             <select
@@ -719,6 +724,24 @@ export default function InventorySheet() {
                             </select>
                         </div>
                     )}
+
+                    {/* Temporary Debug Export Button - Remove after testing */}
+                    <button
+                        onClick={() => exportToCSV('current')}
+                        style={{
+                            padding: '8px 12px',
+                            background: '#f59e0b',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '6px',
+                            fontSize: '12px',
+                            cursor: 'pointer',
+                            marginLeft: '8px'
+                        }}
+                        title="Debug Export - Remove after testing"
+                    >
+                        🔧 Test Export
+                    </button>
                 </div>
             </div>
 

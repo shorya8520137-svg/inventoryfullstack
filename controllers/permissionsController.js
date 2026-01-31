@@ -534,10 +534,11 @@ class PermissionsController {
         const sql = `
             SELECT r.id, r.name, r.display_name, r.description, r.color, r.priority, r.is_active,
                    COUNT(DISTINCT u.id) as user_count,
-                   COUNT(DISTINCT rp.permission_id) as permission_count
+                   COUNT(DISTINCT CASE WHEN p.is_active = true THEN rp.permission_id END) as permission_count
             FROM roles r
             LEFT JOIN users u ON r.id = u.role_id AND u.is_active = 1
             LEFT JOIN role_permissions rp ON r.id = rp.role_id
+            LEFT JOIN permissions p ON rp.permission_id = p.id
             WHERE r.is_active = true
             GROUP BY r.id, r.name, r.display_name, r.description, r.color, r.priority, r.is_active
             ORDER BY r.priority
