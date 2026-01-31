@@ -10,11 +10,11 @@ Users need to accept the self-signed certificate in their browser first.
 
 1. **Open the backend URL directly in browser:**
    ```
-   https://52.221.231.85:8443
+   https://54.169.31.95:8443
    ```
 
 2. **Accept the certificate warning:**
-   - Chrome: Click "Advanced" → "Proceed to 52.221.231.85 (unsafe)"
+   - Chrome: Click "Advanced" → "Proceed to 54.169.31.95 (unsafe)"
    - Firefox: Click "Advanced" → "Accept the Risk and Continue"
    - Safari: Click "Show Details" → "visit this website"
 

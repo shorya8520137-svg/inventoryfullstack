@@ -373,11 +373,11 @@ class PermissionsController {
         }
     }
     
-    static updateUser(req, res) {
+    static async updateUser(req, res) {
         const { userId } = req.params;
-        const { name, email, roleId, role_id } = req.body;
+        const { name, email, password, roleId, role_id } = req.body;
         
-        console.log('🔍 UPDATE USER - Input:', { userId, name, email, roleId, role_id });
+        console.log('🔍 UPDATE USER - Input:', { userId, name, email, password: password ? '***PROVIDED***' : 'NOT_PROVIDED', roleId, role_id });
         
         // Use role_id if provided, otherwise use roleId
         const finalRoleId = role_id || roleId;
@@ -394,7 +394,7 @@ class PermissionsController {
         const checkSql = 'SELECT id, name, email, role_id FROM users WHERE id = ?';
         console.log('🔍 Checking user existence with SQL:', checkSql, [userId]);
         
-        db.query(checkSql, [userId], (err, existingUsers) => {
+        db.query(checkSql, [userId], async (err, existingUsers) => {
             if (err) {
                 console.error('🔍 Database check error:', err);
                 return res.status(500).json({
@@ -431,6 +431,22 @@ class PermissionsController {
                 updateValues.push(finalRoleId);
             }
             
+            // Handle password update
+            if (password && password.trim() !== '') {
+                try {
+                    const hashedPassword = await bcrypt.hash(password, 10);
+                    updateFields.push('password = ?');
+                    updateValues.push(hashedPassword);
+                    console.log('🔍 Password will be updated (hashed)');
+                } catch (hashErr) {
+                    console.error('🔍 Password hashing error:', hashErr);
+                    return res.status(500).json({
+                        success: false,
+                        message: 'Failed to process password'
+                    });
+                }
+            }
+            
             if (updateFields.length === 0) {
                 return res.status(400).json({
                     success: false,
@@ -442,7 +458,7 @@ class PermissionsController {
             updateValues.push(userId);
             
             const updateSql = `UPDATE users SET ${updateFields.join(', ')} WHERE id = ?`;
-            console.log('🔍 Executing update SQL:', updateSql, updateValues);
+            console.log('🔍 Executing update SQL:', updateSql, updateValues.map((val, idx) => updateFields[idx]?.includes('password') ? '***HASHED_PASSWORD***' : val));
             
             db.query(updateSql, updateValues, (updateErr, result) => {
                 if (updateErr) {
@@ -454,6 +470,14 @@ class PermissionsController {
                 }
                 
                 console.log('🔍 Update result:', result);
+                
+                // Log audit with password update info
+                const auditData = { name, email, role_id: finalRoleId };
+                if (password && password.trim() !== '') {
+                    auditData.password_updated = true;
+                }
+                
+                PermissionsController.createAuditLog(req.user?.id, 'UPDATE', 'USER', userId, auditData, () => {});
                 
                 res.json({
                     success: true,
