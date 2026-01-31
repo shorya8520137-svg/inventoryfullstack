@@ -330,6 +330,7 @@ exports.getInventoryByWarehouse = (req, res) => {
 exports.exportInventory = (req, res) => {
     const {
         warehouse,
+        warehouses, // Handle multiple warehouses
         dateFrom,
         dateTo,
         search,
@@ -339,7 +340,17 @@ exports.exportInventory = (req, res) => {
     const filters = [`status = 'active'`];
     const values = [];
 
-    if (warehouse) {
+    // Handle both single warehouse and multiple warehouses
+    if (warehouses) {
+        // Multiple warehouses (comma-separated)
+        const warehouseList = warehouses.split(',').map(w => w.trim()).filter(w => w);
+        if (warehouseList.length > 0) {
+            const placeholders = warehouseList.map(() => '?').join(',');
+            filters.push(`warehouse IN (${placeholders})`);
+            values.push(...warehouseList);
+        }
+    } else if (warehouse) {
+        // Single warehouse
         filters.push('warehouse = ?');
         values.push(warehouse);
     }
