@@ -552,10 +552,57 @@ class PermissionsController {
                 });
             }
             
-            // Return roles without nested permissions for now to avoid callback issues
-            res.json({
-                success: true,
-                data: roles || []
+            // Get permissions for each role
+            if (!roles || roles.length === 0) {
+                return res.json({
+                    success: true,
+                    data: []
+                });
+            }
+            
+            // Fetch permissions for all roles
+            const roleIds = roles.map(r => r.id);
+            const permissionsSql = `
+                SELECT rp.role_id, p.id, p.name, p.display_name, p.category
+                FROM role_permissions rp
+                JOIN permissions p ON rp.permission_id = p.id
+                WHERE rp.role_id IN (${roleIds.map(() => '?').join(',')}) AND p.is_active = true
+                ORDER BY p.category, p.name
+            `;
+            
+            db.query(permissionsSql, roleIds, (permErr, permissions) => {
+                if (permErr) {
+                    console.error('Get role permissions error:', permErr);
+                    return res.status(500).json({
+                        success: false,
+                        message: 'Failed to fetch role permissions'
+                    });
+                }
+                
+                // Group permissions by role_id
+                const permissionsByRole = {};
+                permissions.forEach(perm => {
+                    if (!permissionsByRole[perm.role_id]) {
+                        permissionsByRole[perm.role_id] = [];
+                    }
+                    permissionsByRole[perm.role_id].push({
+                        id: perm.id,
+                        name: perm.name,
+                        display_name: perm.display_name,
+                        category: perm.category
+                    });
+                });
+                
+                // Add permissions to each role
+                const rolesWithPermissions = roles.map(role => ({
+                    ...role,
+                    permissions: permissionsByRole[role.id] || []
+                }));
+                
+                res.json({
+                    success: true,
+                    data: rolesWithPermissions
+                });
             });
         });
     }
